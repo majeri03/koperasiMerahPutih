@@ -4,6 +4,7 @@ import { Menu } from "lucide-react";
 import { useState } from "react";
 import clsx from "clsx";
 
+// Tautan ini sudah benar setelah menggunakan Route Group
 const nav = [
   { href: "/", label: "Beranda" },
   { href: "/berita", label: "Berita" },
@@ -38,6 +39,7 @@ export default function Navbar() {
               </li>
             ))}
             <li>
+              {/* PERUBAHAN DI SINI: Hapus /publik dari tautan Masuk */}
               <Link
                 href="/auth/login"
                 className="px-4 py-2 rounded-lg border border-white hover:bg-white/10"
@@ -63,6 +65,7 @@ export default function Navbar() {
               </li>
             ))}
             <li>
+              {/* PERUBAHAN DI SINI: Hapus /publik dari tautan Masuk untuk mobile */}
               <Link
                 href="/auth/login"
                 onClick={() => setOpen(false)}

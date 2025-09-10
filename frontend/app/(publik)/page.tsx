@@ -4,19 +4,21 @@ import Gallery, { GALLERY_IMAGES } from "@/components/Gallery";
 import Link from "next/link";
 import { fetchLatest } from "@/lib/news";
 import NewsCard from "@/components/NewsCard";
+import QuoteFader from "@/components/QuoteFader"
 
 export default async function Home() {
   const latest = await fetchLatest(3);
   return (
     <>
       {/* HERO */}
-      <section className="relative min-h-[60vh] flex items-center justify-center text-center">
+      {/* Perubahan di sini: min-h-screen untuk memenuhi layar, dan teks putih agar terlihat jelas */}
+      <section className="relative h-screen flex items-center justify-center text-center text-white">
         <Image
-        src="https://cdn.pixabay.com/photo/2023/05/04/02/24/bali-7969001_1280.jpg"
-        alt="Koperasi"
-        fill
-        priority
-        className="object-cover"
+          src="https://cdn.pixabay.com/photo/2023/05/04/02/24/bali-7969001_1280.jpg"
+          alt="Koperasi"
+          fill
+          priority
+          className="object-cover"
       />
         <div className="absolute inset-0 bg-gradient-to-b  to-white/95" />
         <div className="relative z-10 container px-4">
@@ -27,27 +29,51 @@ export default async function Home() {
             Bersama membangun kesejahteraan anggota melalui simpanan, pinjaman,
             dan layanan koperasi modern.
           </p>
-          <div className="mt-8 flex justify-center gap-4">
-            <Button>Daftar Anggota</Button>
-            <Button variant="outline">Lihat Berita</Button>
-          </div>
+            <div className="mt-8 flex justify-center gap-4">
+              <Link href="/auth/daftar">
+                <Button>Daftar Anggota</Button>
+              </Link>
+              <Link href="/berita">
+                <Button variant="outline">Lihat Berita</Button>
+              </Link>
+            </div>
         </div>
       </section>
+
+
       {/* 3 SEJARAH */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4 space-y-6">
-          <h2 className="text-2xl font-bold text-brand-red-600">Tentang Merah Putih</h2>
-          <p className="text-gray-700">
-            Koperasi Desa/Kelurahan Merah Putih dibentuk berdasarkan semangat Pasal 33 UUD 1945...
-            Diluncurkan presiden RI pada 3 Maret 2025 dan resmi mulai Juli 2025 bertepatan Hari Koperasi Nasional.
-          </p>
-          <div className="flex flex-col md:flex-row gap-6">
-            <blockquote className="border-l-4 border-brand-red-600 pl-4 italic text-gray-800">
-              “Koperasi adalah alatnya orang lemah... Tapi kalau bersatu, mereka jadi kekuatan...” – Presiden Prabowo Subianto
-            </blockquote>
+      <section className="py-16 md:py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            
+            {/* ... Kolom Kiri: Gambar ... */}
+            <div className="relative w-full h-80 lg:h-full rounded-2xl overflow-hidden shadow-lg">
+              <Image
+                src="https://cdn.pixabay.com/photo/2024/06/18/21/37/bali-8838762_640.jpg" 
+                alt="Tentang Koperasi Merah Putih"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              />
+            </div>
+
+            {/* Kolom Kanan: Teks dan Kutipan */}
+            <div className="space-y-6">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-brand-red-600 leading-tight">
+                Membangun Ekonomi Kerakyatan Berbasis Gotong Royong
+              </h2>
+              <p className="text-gray-700 leading-relaxed">
+                Koperasi Desa/Kelurahan Merah Putih dibentuk berdasarkan semangat Pasal 33 UUD 1945, sebagai fondasi untuk memperkuat ketahanan ekonomi rakyat. Diluncurkan secara resmi pada 3 Maret 2025, kami berkomitmen untuk menjadi motor penggerak kesejahteraan masyarakat.
+              </p>
+
+              {/* Ganti komponen di sini */}
+              <QuoteFader />
+
+            </div>
           </div>
         </div>
       </section>
+
 
       {/* 3 FITUR */}
       <section className="py-12 md:py-16 bg-white">
