@@ -5,11 +5,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { Home, PiggyBank, CreditCard, User, LogOut, X } from "lucide-react";
 import clsx from "clsx";
 
+// PERBAIKAN 1: Pastikan link ini sesuai dengan struktur folder Anda
 const navLinks = [
-  { href: "/anggota", label: "Dashboard", icon: Home },
-  { href: "/anggota/simpanan", label: "Simpanan", icon: PiggyBank },
-  { href: "/anggota/pinjaman", label: "Pinjaman", icon: CreditCard },
-  { href: "/anggota/profil", label: "Profil Saya", icon: User },
+  { href: "/dashboard/anggota", label: "Dashboard", icon: Home },
+  { href: "/dashboard/anggota/simpanan", label: "Simpanan", icon: PiggyBank },
+  { href: "/dashboard/anggota/pinjaman", label: "Pinjaman", icon: CreditCard },
+  { href: "/dashboard/anggota/profil", label: "Profil Saya", icon: User },
 ];
 
 type Props = {
@@ -23,7 +24,7 @@ export default function AnggotaSidebar({ isSidebarOpen, toggleSidebar }: Props) 
 
   const handleLogout = () => {
     console.log("Proses logout dijalankan...");
-    router.push("/auth/login");
+    router.push("/auth/login"); // Arahkan ke halaman login publik
   };
 
   return (
@@ -39,7 +40,7 @@ export default function AnggotaSidebar({ isSidebarOpen, toggleSidebar }: Props) 
 
       <aside
         className={clsx(
-          "fixed inset-y-0 left-0 w-64 bg-brand-red-700 text-white flex-col z-40 transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
+          "fixed inset-y-0 left-0 w-64 bg-brand-red-700 text-white flex flex-col z-40 transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -53,25 +54,34 @@ export default function AnggotaSidebar({ isSidebarOpen, toggleSidebar }: Props) 
           </button>
         </div>
         <nav className="flex-1 p-4 space-y-2">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={toggleSidebar} // Tutup sidebar saat link diklik di mobile
-              className={clsx(
-                "flex items-center gap-3 rounded-lg px-4 py-2 transition-all text-white/80 hover:bg-white hover:text-brand-red-700",
-                { "bg-white text-brand-red-700 font-semibold": pathname === link.href }
-              )}
-            >
-              <link.icon size={20} />
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            // Cek apakah link saat ini aktif
+            const isActive = pathname === link.href;
+
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => isSidebarOpen && toggleSidebar()} // Tutup sidebar saat link diklik di mobile
+                // PERBAIKAN 2: Logika className diubah agar lebih jelas
+                className={clsx(
+                  "flex items-center gap-3 rounded-lg px-4 py-2 transition-all",
+                  {
+                    "bg-white text-brand-red-700 font-semibold": isActive, // Style untuk link aktif
+                    "text-white/80 hover:bg-white/20": !isActive, // Style untuk link tidak aktif
+                  }
+                )}
+              >
+                <link.icon size={20} />
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
         <div className="p-4 border-t border-white/10">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 rounded-lg px-4 py-2 text-white/80 hover:bg-white hover:text-brand-red-700"
+            className="w-full flex items-center gap-3 rounded-lg px-4 py-2 text-white/80 hover:bg-white/20"
           >
             <LogOut size={20} />
             <span>Keluar</span>
