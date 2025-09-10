@@ -7,6 +7,12 @@ export class TenancyMiddleware implements NestMiddleware {
     const host = req.hostname;
 
     const subdomain = host.split('.')[0];
+    if (subdomain !== 'localhost') {
+      req.tenantId = subdomain;
+      console.log(`[TenancyMiddleware] Tenant accessed: ${subdomain}`);
+    } else {
+      console.log(`[TenancyMiddleware] No tenant (localhost access)`);
+    }
 
     req['tenantId'] = subdomain;
 
