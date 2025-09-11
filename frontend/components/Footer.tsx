@@ -1,3 +1,5 @@
+// File: frontend/components/layout/Footer.tsx
+
 import Link from "next/link";
 import { Facebook, Instagram, Twitter } from "lucide-react";
 
@@ -16,15 +18,16 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* Kolom 2 */}
+        {/* Kolom 2: Tautan Cepat (BAGIAN YANG DIPERBAIKI) */}
         <div>
           <h3 className="text-lg font-bold text-white mb-3">Tautan Cepat</h3>
           <ul className="space-y-2 text-sm">
+            {/* Link-link ini sekarang menggunakan path yang benar */}
             <li><Link href="/" className="hover:text-red-400">Beranda</Link></li>
-            <li><Link href="(publik)/tentang" className="hover:text-red-400">Tentang Kami</Link></li>
-            <li><Link href="(publik)/produk" className="hover:text-red-400">Produk & Layanan</Link></li>
-            <li><Link href="(publik)/berita" className="hover:text-red-400">Berita</Link></li>
-            <li><Link href="(publik)/kontak" className="hover:text-red-400">Kontak</Link></li>
+            <li><Link href="#" className="hover:text-red-400">Tentang Kami</Link></li>
+            <li><Link href="/katalog" className="hover:text-red-400">Produk & Layanan</Link></li>
+            <li><Link href="/berita" className="hover:text-red-400">Berita</Link></li>
+            <li><Link href="/kontak" className="hover:text-red-400">Kontak</Link></li>
           </ul>
         </div>
 
@@ -53,7 +56,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-white text-center text-sm text-gray-400 py-4">
+      <div className="border-t border-white/20 text-center text-sm text-gray-300 py-4">
         © {new Date().getFullYear()} Koperasi Merah Putih. Hak Cipta Dilindungi.
       </div>
     </footer>

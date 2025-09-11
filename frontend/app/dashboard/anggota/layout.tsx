@@ -1,10 +1,11 @@
-"use client"; // Tambahkan ini karena kita akan menggunakan state
+"use client"; // Diperlukan karena menggunakan state untuk sidebar
 
 import { useState, ReactNode } from "react";
-import AnggotaSidebar from "@/components/layout/AnggotaSidebar";
-import AnggotaHeader from "@/components/layout/AnggotaHeader";
+import AnggotaSidebar from "@/components/AnggotaSidebar";
+import AnggotaHeader from "@/components/AnggotaHeader";
 
 export default function AnggotaDashboardLayout({ children }: { children: ReactNode }) {
+  // State untuk mengontrol visibilitas sidebar di mode mobile
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -17,6 +18,7 @@ export default function AnggotaDashboardLayout({ children }: { children: ReactNo
       
       <div className="flex-1 flex flex-col">
         <AnggotaHeader toggleSidebar={toggleSidebar} />
+        {/* Konten halaman (page.tsx) akan dirender di sini */}
         <main className="p-6 md:p-8">
           {children}
         </main>

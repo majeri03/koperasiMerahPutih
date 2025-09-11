@@ -1,4 +1,4 @@
-import { NewsItem } from "@/components/public/NewsTypes";
+import { NewsItem } from "@/components/NewsTypes";
 
 const MOCK: NewsItem[] = [
   {

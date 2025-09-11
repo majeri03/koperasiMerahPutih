@@ -1,7 +1,7 @@
 import { fetchLatest, fetchNewsList } from "@/lib/news";
-import NewsCard from "@/components/public/NewsCard";
-import Pagination from "@/components/ui/Pagination";
-import LatestSidebar from "@/components/public/LatestSidebar";
+import NewsCard from "@/components/NewsCard";
+import Pagination from "@/components/Pagination";
+import LatestSidebar from "@/components/LatestSidebar";
 
 const PAGE_SIZE = 6;
 

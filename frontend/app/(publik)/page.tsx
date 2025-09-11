@@ -1,19 +1,16 @@
-// src/app/(publik)/[tenant]/page.tsx
-import Button from "@/components/ui/Button";
+import Button from "@/components/Button";
 import Image from "next/image";
-import Gallery, { GALLERY_IMAGES } from "@/components/public/Gallery";
+import Gallery, { GALLERY_IMAGES } from "@/components/Gallery";
 import Link from "next/link";
 import { fetchLatest } from "@/lib/news";
-import NewsCard from "@/components/public/NewsCard";
-import QuoteFader from "@/components/public/QuoteFader";
+import NewsCard from "@/components/NewsCard";
+import QuoteFader from "@/components/QuoteFader";
 
-export default async function Home({ params }: { params: { tenant: string } }) {
-  const { tenant } = params;
+export default async function Home() {
   const latest = await fetchLatest(3);
-
   return (
     <>
-      {/* HERO */}
+      {/* HERO SECTION */}
       <section className="relative h-screen flex items-center justify-center text-center text-white">
         <Image
           src="https://cdn.pixabay.com/photo/2023/05/04/02/24/bali-7969001_1280.jpg"
@@ -22,28 +19,27 @@ export default async function Home({ params }: { params: { tenant: string } }) {
           priority
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-white/95" />
+        <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 container px-4">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white drop-shadow-md">
             Koperasi Merah Putih
           </h1>
-          <p className="mt-4 text-lg text-white/90 max-w-2xl mx-auto drop-shadow-2xl">
+          <p className="mt-4 text-lg text-white/90 max-w-2xl mx-auto drop-shadow-md">
             Bersama membangun kesejahteraan anggota melalui simpanan, pinjaman,
             dan layanan koperasi modern.
           </p>
           <div className="mt-8 flex justify-center gap-4">
-            {/* auth global + kirim tenant agar pendaftaran tahu koperasi mana */}
-            <Link href={`/auth/register?tenant=${tenant}`}>
+            <Link href="/auth/login">
               <Button>Daftar Anggota</Button>
             </Link>
-            <Link href={`/${tenant}/berita`}>
+            <Link href="/berita">
               <Button variant="outline">Lihat Berita</Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* 3 SEJARAH */}
+      {/* SEJARAH SECTION */}
       <section className="py-16 md:py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -61,7 +57,7 @@ export default async function Home({ params }: { params: { tenant: string } }) {
                 Membangun Ekonomi Kerakyatan Berbasis Gotong Royong
               </h2>
               <p className="text-gray-700 leading-relaxed">
-                Koperasi Desa/Kelurahan Merah Putih dibentuk berdasarkan semangat Pasal 33 UUD 1945, sebagai fondasi untuk memperkuat ketahanan ekonomi rakyat. Diluncurkan secara resmi pada 3 Maret 2025, kami berkomitmen untuk menjadi motor penggerak kesejahteraan masyarakat.
+                Koperasi Desa/Kelurahan Merah Putih dibentuk berdasarkan semangat Pasal 33 UUD 1945, sebagai fondasi untuk memperkuat ketahanan ekonomi rakyat.
               </p>
               <QuoteFader />
             </div>
@@ -69,41 +65,58 @@ export default async function Home({ params }: { params: { tenant: string } }) {
         </div>
       </section>
 
-      {/* 3 FITUR */}
-      <section className="py-12 md:py-16 bg-white">
+      {/* FITUR SECTION */}
+      <section className="py-12 md:py-16 bg-gray-50 border-y">
         <div className="container mx-auto px-4 grid md:grid-cols-3 gap-6">
-          {/* ...card fitur... */}
+          <div className="rounded-2xl bg-white p-6 shadow-sm border">
+            <h3 className="text-xl font-bold text-brand-red-600">Simpanan</h3>
+            <p className="mt-2 text-gray-600">
+              Pantau saldo dan histori simpanan dengan transparan.
+            </p>
+          </div>
+          <div className="rounded-2xl bg-white p-6 shadow-sm border">
+            <h3 className="text-xl font-bold text-brand-red-600">Pinjaman</h3>
+            <p className="mt-2 text-gray-600">
+              Ajukan pinjaman online, proses cepat dan terukur.
+            </p>
+          </div>
+          <div className="rounded-2xl bg-white p-6 shadow-sm border">
+            <h3 className="text-xl font-bold text-brand-red-600">Katalog</h3>
+            <p className="mt-2 text-gray-600">
+              Jelajahi produk/jasa koperasi untuk anggota dan publik.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* GALERI */}
+      {/* GALERI PREVIEW SECTION */}
       <section className="py-12 md:py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="mb-6 flex items-end justify-between">
+          <div className="mb-8 flex items-center justify-between">
             <div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-brand-red-600">Galeri</h2>
-              <p className="text-gray-600">Cuplikan kegiatan & momen terbaik.</p>
+              <h2 className="text-3xl font-extrabold text-brand-red-600">Galeri Kegiatan</h2>
+              <p className="text-gray-600 mt-1">Cuplikan momen terbaik dari kegiatan kami.</p>
             </div>
-            <Link href={`/${tenant}/galeri`}>
-              <Button variant="outline">Lihat Semua</Button>
+            <Link href="/galeri" className="hidden sm:inline-block">
+                <Button variant="outline">Lihat Semua</Button>
             </Link>
           </div>
           <Gallery images={GALLERY_IMAGES} limit={6} />
         </div>
       </section>
 
-      {/* BERITA TERKINI */}
-      <section className="py-12 md:py-16 bg-red-50">
+      {/* BERITA TERKINI SECTION */}
+      <section className="py-12 md:py-16 bg-red-50/50 border-t">
         <div className="container mx-auto px-4">
-          <div className="mb-6 flex items-end justify-between">
+          <div className="mb-8 flex items-center justify-between">
             <div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-brand-red-600">
+              <h2 className="text-3xl font-extrabold text-brand-red-600">
                 Berita Terkini
               </h2>
-              <p className="text-gray-600">Update terbaru seputar koperasi.</p>
+              <p className="text-gray-600 mt-1">Update terbaru seputar kegiatan dan layanan koperasi.</p>
             </div>
-            <Link href={`/${tenant}/berita`}>
-              <Button variant="outline">Lihat Semua</Button>
+            <Link href="/berita" className="hidden sm:inline-block">
+                <Button variant="outline">Lihat Semua</Button>
             </Link>
           </div>
           <div className="grid gap-6 md:grid-cols-3">

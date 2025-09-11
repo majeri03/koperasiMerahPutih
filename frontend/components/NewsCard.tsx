@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { NewsItem } from "./NewsTypes";
+import { NewsItem } from "./public/NewsTypes";
 
 export default function NewsCard({ item }: { item: NewsItem }) {
   const date = new Date(item.publishedAt).toLocaleDateString("id-ID", {

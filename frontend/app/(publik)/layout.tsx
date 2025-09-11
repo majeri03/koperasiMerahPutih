@@ -1,5 +1,5 @@
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { ReactNode } from "react";
 
 // Layout ini akan membungkus semua halaman publik dan memberikan Navbar & Footer khusus publik.

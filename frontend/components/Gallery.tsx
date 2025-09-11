@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import Lightbox from "./Lightbox";
+import Lightbox from "./Lightbox"; // Atau "@/components/Lightbox"
 
 export const GALLERY_IMAGES: string[] = [
   "https://cdn.pixabay.com/photo/2023/02/14/23/49/woman-7790612_1280.jpg",
