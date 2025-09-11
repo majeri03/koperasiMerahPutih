@@ -16,7 +16,7 @@ export default function HalamanSimpanan() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // --- TODO: Ganti bagian ini dengan pemanggilan API ---
+  
     const fetchSimpanan = () => {
       const mockData: Simpanan[] = [
         { tanggal: '2025-08-05', jenis: 'Wajib', keterangan: 'Simpanan Wajib Agustus', debit: 0, kredit: 100000, saldo: 5750000 },

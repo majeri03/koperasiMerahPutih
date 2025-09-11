@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import Button from '@/components/Button'; // Pastikan path import Button benar
+import Button from '@/components/ui/Button'; // Pastikan path import Button benar
 
 // Tipe data untuk histori pinjaman
 type Pinjaman = {

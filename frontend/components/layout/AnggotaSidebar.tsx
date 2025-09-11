@@ -10,7 +10,7 @@ const navLinks = [
   { href: "/dashboard/anggota", label: "Dashboard", icon: Home },
   { href: "/dashboard/anggota/simpanan", label: "Simpanan", icon: PiggyBank },
   { href: "/dashboard/anggota/pinjaman", label: "Pinjaman", icon: CreditCard },
-  { href: "/dashboard/anggota/profil", label: "Profil Saya", icon: User },
+  { href: "/dashboard/anggota/profile", label: "Profil Saya", icon: User },
 ];
 
 type Props = {

@@ -1,8 +1,8 @@
 "use client"; // Tambahkan ini karena kita akan menggunakan state
 
 import { useState, ReactNode } from "react";
-import AnggotaSidebar from "@/components/AnggotaSidebar";
-import AnggotaHeader from "@/components/AnggotaHeader";
+import AnggotaSidebar from "@/components/layout/AnggotaSidebar";
+import AnggotaHeader from "@/components/layout/AnggotaHeader";
 
 export default function AnggotaDashboardLayout({ children }: { children: ReactNode }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
