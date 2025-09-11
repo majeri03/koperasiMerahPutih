@@ -7,6 +7,9 @@ import { PrismaModule } from './prisma/prisma.module';
 import { TenantsModule } from './tenants/tenants.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { PublicModule } from './public/public.module';
+import { MidtransModule } from './midtrans/midtrans.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -14,6 +17,9 @@ import { ConfigModule } from '@nestjs/config';
     PrismaModule,
     TenantsModule,
     AuthModule,
+    PublicModule,
+    MidtransModule,
+    WebhooksModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -37,7 +37,7 @@ export class PrismaService implements OnModuleDestroy {
         `Koperasi dengan subdomain '${tenantId}' tidak ditemukan.`,
       );
     }
-    if (!tenant.isActive) {
+    if (tenant.status !== 'ACTIVE') {
       throw new NotFoundException(`Koperasi '${tenant.name}' tidak aktif.`);
     }
 
