@@ -31,7 +31,7 @@ model Tenant {
   status      TenantStatus @default(PENDING)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
-
+  registration TenantRegistration?
   @@map("tenants")
 }
 
@@ -59,4 +59,39 @@ model User {
   roleId Int  @map("role_id")
 
   @@map("users")
+}
+
+// ===============================================
+// MODEL TENANT REGISTRATION
+// ===============================================
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+model TenantRegistration {
+  id                 String  @id @default(uuid())
+
+  nik                String  @unique
+  fullName           String  @map("full_name")
+  gender             Gender
+  email              String  @unique
+  phoneNumber        String  @unique @map("phone_number")
+  hashedPassword     String  @map("hashed_password")
+
+  province           String
+  city               String
+  district           String
+  village            String
+  cooperativeName    String  @map("cooperative_name")
+  
+  ktpDocumentUrl     String? @map("ktp_document_url")
+  skDocumentUrl      String? @map("sk_document_url")
+  npwpDocumentUrl    String? @map("npwp_document_url")
+
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+  tenantId String @unique @map("tenant_id")
+
+  @@map("tenant_registrations")
 }

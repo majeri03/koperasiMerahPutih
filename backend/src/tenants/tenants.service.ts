@@ -26,7 +26,6 @@ export class TenantsService {
     });
   }
   async approve(tenantId: string) {
-    // 1. Cari tenant berdasarkan ID dan pastikan statusnya PENDING
     const tenant = await this.prisma.tenant.findFirst({
       where: { id: tenantId, status: 'PENDING' },
     });
@@ -37,13 +36,11 @@ export class TenantsService {
       );
     }
 
-    // 2. TODO: Integrasi dengan Midtrans
     const dummyAdminDetails = {
       firstName: 'Admin Pendaftar',
       email: 'pendaftar@example.com',
     };
     const registrationFee = 100000;
-    // Di sini kita akan memanggil API Midtrans untuk membuat payment link.
     const transaction = await this.midtransService.createTransaction(
       tenant.id,
       registrationFee,
@@ -51,8 +48,6 @@ export class TenantsService {
     );
     console.log(`Memulai proses pembayaran untuk tenant: ${tenant.name}`);
 
-    // 3. Untuk saat ini, kita hanya akan mengembalikan pesan sukses
-    // Status tenant belum diubah, karena akan diubah oleh webhook Midtrans nanti.
     return {
       message: 'Tautan pembayaran berhasil dibuat.',
       paymentUrl: transaction.redirect_url,
@@ -157,10 +152,8 @@ export class TenantsService {
   async activateTenant(tenantId: string) {
     console.log(`Mengaktifkan tenant dengan ID: ${tenantId}`);
 
-    // Gunakan transaksi untuk keamanan
     return this.prisma.$transaction(
       async (tx) => {
-        // 1. Cari tenant dan pastikan statusnya PENDING
         const tenant = await tx.tenant.findFirst({
           where: { id: tenantId, status: 'PENDING' },
         });
@@ -171,8 +164,14 @@ export class TenantsService {
           );
           return;
         }
-
-        // 2. Ubah status menjadi ACTIVE
+        const registrationData = await tx.tenantRegistration.findUnique({
+          where: { tenantId: tenant.id },
+        });
+        if (!registrationData) {
+          throw new InternalServerErrorException(
+            `Data pendaftaran untuk tenant ${tenantId} tidak ditemukan.`,
+          );
+        }
         await tx.tenant.update({
           where: { id: tenantId },
           data: { status: 'ACTIVE' },
@@ -182,32 +181,20 @@ export class TenantsService {
           `CREATE SCHEMA IF NOT EXISTS "${tenant.schemaName}";`,
         );
 
-        // 3. Jalankan logika pembuatan skema dan tabel
         await this.createTenantTables(tx, tenant.schemaName);
 
-        // TODO: Ambil detail admin pendaftar dari database
-        const dummyAdmin = {
-          name: 'Admin Terdaftar',
-          email: 'admin.terdaftar@example.com',
-          password: 'passworddefault123', // Password harusnya disimpan terenkripsi saat register
-        };
-
-        const salt = await bcrypt.genSalt();
-        const hashedPassword = await bcrypt.hash(dummyAdmin.password, salt);
-
-        // 4. Buat akun admin pertama
         await this.createFirstAdmin(
           tx,
           tenant.schemaName,
-          dummyAdmin.name,
-          dummyAdmin.email,
-          hashedPassword,
+          registrationData.fullName,
+          registrationData.email,
+          registrationData.hashedPassword,
         );
 
         console.log(`Tenant ${tenant.name} berhasil diaktifkan!`);
       },
       {
-        timeout: 15000, // <-- Beri waktu 15 detik, lebih dari cukup
+        timeout: 15000,
       },
     );
   }
