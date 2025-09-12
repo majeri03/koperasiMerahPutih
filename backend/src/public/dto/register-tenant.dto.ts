@@ -1,15 +1,73 @@
-// src/public/dto/register-tenant.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
+import { Gender } from '@prisma/client';
 import {
   IsAlphanumeric,
   IsEmail,
+  IsEnum,
   IsNotEmpty,
+  IsNumberString,
   IsString,
+  Length,
   MinLength,
 } from 'class-validator';
 
 export class RegisterTenantDto {
-  @ApiProperty({ example: 'Koperasi Warga Sejahtera' })
+  // === Informasi Pribadi PIC ===
+  @ApiProperty({
+    example: '3501234567890001',
+    description: 'Nomor Induk Kependudukan (16 digit)',
+  })
+  @IsNumberString()
+  @Length(16, 16)
+  nik: string;
+
+  @ApiProperty({ example: 'Rina Pengelola' })
+  @IsString()
+  @IsNotEmpty()
+  fullName: string;
+
+  @ApiProperty({ enum: Gender, example: Gender.FEMALE })
+  @IsEnum(Gender)
+  gender: Gender;
+
+  @ApiProperty({ example: 'rina.p@example.com' })
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({ example: '81234567890' })
+  @IsNumberString()
+  phoneNumber: string;
+
+  @ApiProperty({
+    example: 'passwordyangkuat123',
+    description: 'Minimal 8 karakter',
+  })
+  @IsString()
+  @MinLength(8)
+  password: string;
+
+  // === Informasi Koperasi ===
+  @ApiProperty({ example: 'Jawa Barat' })
+  @IsString()
+  @IsNotEmpty()
+  province: string;
+
+  @ApiProperty({ example: 'Kota Bandung' })
+  @IsString()
+  @IsNotEmpty()
+  city: string;
+
+  @ApiProperty({ example: 'Sukasari' })
+  @IsString()
+  @IsNotEmpty()
+  district: string;
+
+  @ApiProperty({ example: 'Gegerkalong' })
+  @IsString()
+  @IsNotEmpty()
+  village: string;
+
+  @ApiProperty({ example: 'Warga Sejahtera' })
   @IsString()
   @IsNotEmpty()
   cooperativeName: string;
@@ -19,20 +77,4 @@ export class RegisterTenantDto {
   @IsNotEmpty()
   @IsAlphanumeric()
   subdomain: string;
-
-  @ApiProperty({ example: 'Rina Pengelola' })
-  @IsString()
-  @IsNotEmpty()
-  adminName: string;
-
-  @ApiProperty({ example: 'rina.p@example.com' })
-  @IsEmail()
-  @IsNotEmpty()
-  adminEmail: string;
-
-  @ApiProperty({ example: 'password12345' })
-  @IsString()
-  @IsNotEmpty()
-  @MinLength(8)
-  adminPassword: string;
 }
