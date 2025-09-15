@@ -95,3 +95,35 @@ model TenantRegistration {
 
   @@map("tenant_registrations")
 }
+
+
+model Member {
+  id              String    @id @default(uuid())
+  memberNumber    String    @unique @map("member_number")
+
+  // Data Diri
+  fullName        String    @map("full_name")
+  placeOfBirth    String    @map("place_of_birth")
+  dateOfBirth     DateTime  @map("date_of_birth")
+  gender          Gender    // Kita gunakan lagi Enum Gender yang sudah ada
+  occupation      String    // Pekerjaan
+  address         String
+
+  // Keanggotaan
+  joinDate        DateTime  @default(now()) @map("join_date")
+  status          String    @default("ACTIVE") // Misal: ACTIVE, RESIGNED, EXPELLED
+  
+  // Berkas (akan menyimpan URL dari cloud storage)
+  fingerprintUrl  String?   @map("fingerprint_url") // Cap Ibu Jari
+  signatureUrl    String?   @map("signature_url")   // Tanda Tangan
+
+  // Informasi Berhenti (opsional)
+  resignationRequestDate DateTime? @map("resignation_request_date")
+  terminationDate        DateTime? @map("termination_date")
+  terminationReason    String?   @map("termination_reason")
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("members")
+}
