@@ -36,21 +36,49 @@ export class TenantsService {
       );
     }
 
-    const dummyAdminDetails = {
-      firstName: 'Admin Pendaftar',
-      email: 'pendaftar@example.com',
-    };
-    const registrationFee = 100000;
+    /*
+    // =================================================================
+    // BAGIAN PEMBAYARAN MIDTRANS (DINONAKTIFKAN)
+    // =================================================================
+
+    const registrationData = await this.prisma.tenantRegistration.findUnique({
+        where: { tenantId: tenant.id },
+    });
+    
+    if (!registrationData) {
+        throw new InternalServerErrorException(
+            `Data pendaftaran untuk tenant ${tenantId} tidak ditemukan.`
+        );
+    }
+
+    const registrationFee = 100000; // Contoh biaya pendaftaran
     const transaction = await this.midtransService.createTransaction(
       tenant.id,
       registrationFee,
-      dummyAdminDetails,
+      {
+          firstName: registrationData.fullName,
+          email: registrationData.email
+      },
     );
     console.log(`Memulai proses pembayaran untuk tenant: ${tenant.name}`);
 
     return {
       message: 'Tautan pembayaran berhasil dibuat.',
       paymentUrl: transaction.redirect_url,
+    };
+    // =================================================================
+    */
+
+    // =================================================================
+    // ALUR AKTIVASI LANGSUNG (TANPA PEMBAYARAN)
+    // =================================================================
+    // Panggil fungsi aktivasi secara langsung. Fungsi ini sudah menggunakan
+    // data asli dari `tenant_registrations` dan tidak lagi memakai data dummy.
+    await this.activateTenant(tenantId);
+
+    return {
+      message: 'Koperasi telah berhasil diaktifkan secara manual.',
+      tenantId: tenant.id,
     };
   }
   async create(createTenantDto: CreateTenantDto) {
@@ -127,6 +155,32 @@ export class TenantsService {
         role_id INT NOT NULL,
         CONSTRAINT fk_role FOREIGN KEY (role_id) REFERENCES "${schemaName}".roles(id)
       );
+    `);
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".members (
+        "id" TEXT NOT NULL,
+        "member_number" TEXT NOT NULL,
+        "full_name" TEXT NOT NULL,
+        "place_of_birth" TEXT NOT NULL,
+        "date_of_birth" TIMESTAMP(3) NOT NULL,
+        "gender" "public"."Gender" NOT NULL,
+        "occupation" TEXT NOT NULL,
+        "address" TEXT NOT NULL,
+        "join_date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+        "fingerprint_url" TEXT,
+        "signature_url" TEXT,
+        "resignation_request_date" TIMESTAMP(3),
+        "termination_date" TIMESTAMP(3),
+        "termination_reason" TEXT,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "members_pkey" PRIMARY KEY ("id")
+      );
+    `);
+    await tx.$executeRawUnsafe(`
+      CREATE UNIQUE INDEX "members_member_number_key" ON "${schemaName}"."members"("member_number");
     `);
   }
 

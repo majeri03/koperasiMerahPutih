@@ -10,6 +10,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PublicModule } from './public/public.module';
 import { MidtransModule } from './midtrans/midtrans.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { MembersModule } from './members/members.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -20,6 +21,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     PublicModule,
     MidtransModule,
     WebhooksModule,
+    MembersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
