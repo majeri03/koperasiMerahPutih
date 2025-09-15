@@ -3,8 +3,13 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Request } from 'express';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtPayloadDto } from '../dto/jwt-payload.dto';
 import { RefreshTokenPayloadDto } from '../dto/refresh-token-payload.dto';
+
+interface RawJwtPayload {
+  sub: string;
+  email: string;
+  role: string;
+}
 
 @Injectable()
 export class RefreshTokenStrategy extends PassportStrategy(
@@ -23,13 +28,18 @@ export class RefreshTokenStrategy extends PassportStrategy(
     });
   }
 
-  validate(req: Request, payload: JwtPayloadDto): RefreshTokenPayloadDto {
+  validate(req: Request, payload: RawJwtPayload): RefreshTokenPayloadDto {
     const refreshToken = req.get('Authorization')?.replace('Bearer', '').trim();
 
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token tidak ditemukan.');
     }
 
-    return { ...payload, refreshToken };
+    return {
+      userId: payload.sub,
+      email: payload.email,
+      role: payload.role,
+      refreshToken,
+    };
   }
 }
