@@ -126,6 +126,48 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+{/* SEKSI CALL TO ACTION BARU (GABUNGAN) */}
+<section className="bg-slate-100 border-y">
+  <div className="container mx-auto px-4 py-16 md:py-20">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+
+      {/* Kolom Kiri: Teks dan Tombol Aksi */}
+      <div className="text-center md:text-left">
+        <h2 className="text-3xl md:text-4xl font-extrabold text-brand-red-600 leading-tight">
+          Mari Bangun Negeri Dengan Jadi Bagian Dari Koperasi
+        </h2>
+        <p className="mt-4 text-gray-600 max-w-lg mx-auto md:mx-0">
+          Wujudkan Koperasi Modern yang transparan, efisien, dan mensejahterakan Anggota.
+        </p>
+
+        <div className="mt-8 flex flex-col sm:flex-row justify-center md:justify-start gap-4">
+          <Link href="/auth/daftar-koperasi">
+            <Button variant="outline" className="w-full sm:w-auto">Daftarkan Koperasi Anda</Button>
+          </Link>
+          <Link href="/auth/daftar-anggota">
+            <Button className="w-full sm:w-auto">Bergabung Menjadi Anggota Koperasi</Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Kolom Kanan: Gambar dengan Efek Fade */}
+      <div className="relative hidden h-[350px] w-full md:flex justify-center items-end">
+        <Image
+            src="/images/merahputih-rmv.png"
+            alt="Anak-anak Indonesia membawa bendera"
+            fill
+            style={{ objectFit: 'contain' }}
+            className="rounded-lg"
+        />
+        {/* EFEK ASAP/FADE DITAMBAHKAN DI SINI */}
+        <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-slate-100 via-slate-100 to-transparent" />
+      </div>
+
+    </div>
+  </div>
+</section>
+
     </>
   );
 }
