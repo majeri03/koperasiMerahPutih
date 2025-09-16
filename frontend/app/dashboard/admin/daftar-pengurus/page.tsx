@@ -1,11 +1,13 @@
 // Lokasi: frontend/app/dashboard/admin/daftar-pengurus/page.tsx
 "use client";
 
+// 1. Impor useState dan useMemo
+import { useState, useMemo } from "react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
-import { PlusCircle, Search } from "lucide-react";
+import { PlusCircle, Search, Eye, Edit, Trash2 } from "lucide-react";
 
-// Data contoh disesuaikan dengan kolom baru dari buku pengurus
+// Data contoh tidak berubah
 const mockPengurus = [
   {
     no: 1,
@@ -13,7 +15,7 @@ const mockPengurus = [
     nomorKeanggotaan: "AGT-001",
     jabatan: "Ketua",
     tanggalDiangkat: "10 Januari 2024",
-    tanggalBerhenti: null, // null berarti masih aktif
+    tanggalBerhenti: null,
   },
   {
     no: 2,
@@ -37,11 +39,30 @@ const mockPengurus = [
     nomorKeanggotaan: "AGT-004",
     jabatan: "Ketua",
     tanggalDiangkat: "05 Januari 2019",
-    tanggalBerhenti: "09 Januari 2024", // Contoh yang sudah berhenti
+    tanggalBerhenti: "09 Januari 2024",
   },
 ];
 
 export default function DaftarPengurusPage() {
+    // 2. State untuk menyimpan kata kunci pencarian
+    const [searchTerm, setSearchTerm] = useState("");
+
+    // 3. Logika untuk memfilter pengurus berdasarkan searchTerm
+    const filteredPengurus = useMemo(() => {
+        if (!searchTerm) {
+            return mockPengurus; // Tampilkan semua jika tidak ada pencarian
+        }
+        return mockPengurus.filter(pengurus =>
+            pengurus.namaLengkap.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [searchTerm, mockPengurus]);
+
+    const handleHapus = (nama: string, id: number) => {
+        if (window.confirm(`Apakah Anda yakin ingin menghapus data pengurus "${nama}"?`)) {
+            alert(`Pengurus "${nama}" telah dihapus (simulasi).`);
+        }
+    };
+
   return (
     <div>
       <div className="mb-6">
@@ -58,13 +79,11 @@ export default function DaftarPengurusPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-lg border border-gray-100">
-        {/* --- KODE KOP SURAT DITAMBAHKAN DI SINI --- */}
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-lg font-bold text-center uppercase tracking-wider text-gray-700">
             Buku Daftar Pengurus
           </h2>
           <div className="mt-6 max-w-4xl mx-auto grid grid-cols-2 gap-x-12 text-sm">
-            {/* Kolom Kiri */}
             <div className="space-y-2">
               <div className="flex justify-between border-b border-dotted">
                 <span className="font-semibold text-gray-500">KOPERASI</span>
@@ -75,7 +94,6 @@ export default function DaftarPengurusPage() {
                 <span className="text-gray-800 font-medium">KOTA MAKASSAR</span>
               </div>
             </div>
-            {/* Kolom Kanan */}
             <div className="space-y-2">
               <div className="flex justify-between border-b border-dotted">
                 <span className="font-semibold text-gray-500">NO. BADAN HUKUM</span>
@@ -83,20 +101,22 @@ export default function DaftarPengurusPage() {
               </div>
               <div className="flex justify-between border-b border-dotted">
                 <span className="font-semibold text-gray-500">TANGGAL</span>
-                <span className="text-gray-800 font-medium">12 September 2025</span>
+                <span className="text-gray-800 font-medium">16 September 2025</span>
               </div>
             </div>
           </div>
         </div>
-        {/* ------------------------------------------- */}
-
+        
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
             <div className="relative w-full max-w-sm">
+              {/* 4. Hubungkan input dengan state dan event handler */}
               <input
                 type="text"
                 placeholder="Cari pengurus..."
                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red-200"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             </div>
@@ -116,7 +136,8 @@ export default function DaftarPengurusPage() {
                 </tr>
               </thead>
               <tbody>
-                {mockPengurus.map((pengurus) => (
+                {/* 5. Gunakan data yang sudah difilter di sini */}
+                {filteredPengurus.map((pengurus) => (
                   <tr key={pengurus.no} className="border-b hover:bg-gray-50 text-sm">
                     <td className="p-4 font-medium">{pengurus.no}.</td>
                     <td className="p-4">{pengurus.namaLengkap}</td>
@@ -132,21 +153,22 @@ export default function DaftarPengurusPage() {
                         {!pengurus.tanggalBerhenti ? 'Aktif' : 'Tidak Aktif'}
                       </span>
                       </td>
-                    {/* --- PERUBAHAN DI SINI --- */}
-                    <td className="p-4 text-center space-x-4">
-                      <button className="text-blue-600 hover:underline font-medium">Detail</button>
-                      <button className="text-green-600 hover:underline font-medium">Edit</button>
-                      
-                      {/* 2. Tombol hapus ditambahkan dengan logika kondisional */}
-                      {pengurus.tanggalBerhenti && (
-                        <button
-                          onClick={() => handleHapus(pengurus.namaLengkap, pengurus.no)}
-                          className="text-red-600 hover:underline font-medium"
-                        >
-                          Hapus
+                    <td className="p-4 text-center space-x-2">
+                        <button className="p-2 text-blue-600 bg-blue-100 rounded-full hover:bg-blue-200 transition" title="Lihat Detail">
+                            <Eye size={20} />
                         </button>
-                      )}
-                    
+                        <button className="p-2 text-green-600 bg-green-100 rounded-full hover:bg-green-200 transition" title="Edit Pengurus">
+                            <Edit size={20} />
+                        </button>
+                        {pengurus.tanggalBerhenti && (
+                            <button
+                                onClick={() => handleHapus(pengurus.namaLengkap, pengurus.no)}
+                                className="p-2 text-red-600 bg-red-100 rounded-full hover:bg-red-200 transition"
+                                title="Hapus Data"
+                            >
+                                <Trash2 size={20} />
+                            </button>
+                        )}
                     </td>
                   </tr>
                 ))}

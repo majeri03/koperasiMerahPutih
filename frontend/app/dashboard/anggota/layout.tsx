@@ -13,16 +13,17 @@ export default function AnggotaDashboardLayout({ children }: { children: ReactNo
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    // PERUBAHAN 1: Tambahkan `h-screen` dan `overflow-hidden` pada div terluar
+    <div className="flex h-screen bg-slate-50 overflow-hidden">
       <AnggotaSidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       
       <div className="flex-1 flex flex-col">
         <AnggotaHeader toggleSidebar={toggleSidebar} />
-        {/* Konten halaman (page.tsx) akan dirender di sini */}
-        <main className="p-6 md:p-8">
+        {/* PERUBAHAN 2: Buat area <main> bisa di-scroll secara independen */}
+        <main className="p-6 md:p-8 overflow-y-auto">
           {children}
         </main>
       </div>
     </div>
   );
-}
+}  
