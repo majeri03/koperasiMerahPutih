@@ -1,11 +1,13 @@
 // Lokasi: frontend/app/dashboard/admin/daftar-karyawan/page.tsx
 "use client";
 
+// 1. Impor useState dan useMemo
+import { useState, useMemo } from "react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
-import { PlusCircle, Search } from "lucide-react";
+import { PlusCircle, Search, Eye, Edit, Trash2 } from "lucide-react";
 
-// Data contoh disesuaikan dengan kolom dari buku karyawan
+// Data contoh tidak berubah
 const mockKaryawan = [
   {
     no: 1,
@@ -31,6 +33,19 @@ const mockKaryawan = [
 ];
 
 export default function DaftarKaryawanPage() {
+  // 2. State untuk menyimpan kata kunci pencarian
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // 3. Logika untuk memfilter karyawan berdasarkan searchTerm
+  const filteredKaryawan = useMemo(() => {
+    if (!searchTerm) {
+      return mockKaryawan; // Tampilkan semua jika tidak ada pencarian
+    }
+    return mockKaryawan.filter(karyawan =>
+      karyawan.namaLengkap.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm, mockKaryawan]);
+
   const handleHapus = (nama: string, id: number) => {
     if (window.confirm(`Apakah Anda yakin ingin menghapus data karyawan "${nama}"?`)) {
       console.log(`Menghapus karyawan dengan ID: ${id}`);
@@ -54,13 +69,11 @@ export default function DaftarKaryawanPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-lg border border-gray-100">
-        {/* --- KOP SURAT DITAMBAHKAN DI SINI --- */}
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-lg font-bold text-center uppercase tracking-wider text-gray-700">
             Buku Daftar Karyawan
           </h2>
           <div className="mt-6 max-w-4xl mx-auto grid grid-cols-2 gap-x-12 text-sm">
-            {/* Kolom Kiri */}
             <div className="space-y-2">
               <div className="flex justify-between border-b border-dotted">
                 <span className="font-semibold text-gray-500">KOPERASI</span>
@@ -71,7 +84,6 @@ export default function DaftarKaryawanPage() {
                 <span className="text-gray-800 font-medium">KOTA MAKASSAR</span>
               </div>
             </div>
-            {/* Kolom Kanan */}
             <div className="space-y-2">
               <div className="flex justify-between border-b border-dotted">
                 <span className="font-semibold text-gray-500">NO. BADAN HUKUM</span>
@@ -79,7 +91,7 @@ export default function DaftarKaryawanPage() {
               </div>
               <div className="flex justify-between border-b border-dotted">
                 <span className="font-semibold text-gray-500">TANGGAL</span>
-                <span className="text-gray-800 font-medium">12 September 2025</span>
+                <span className="text-gray-800 font-medium">16 September 2025</span>
               </div>
             </div>
           </div>
@@ -88,10 +100,13 @@ export default function DaftarKaryawanPage() {
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
             <div className="relative w-full max-w-sm">
+              {/* 4. Hubungkan input dengan state dan event handler */}
               <input
                 type="text"
                 placeholder="Cari karyawan..."
                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red-200"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             </div>
@@ -111,7 +126,8 @@ export default function DaftarKaryawanPage() {
                 </tr>
               </thead>
               <tbody>
-                {mockKaryawan.map((karyawan) => (
+                {/* 5. Gunakan data yang sudah difilter di sini */}
+                {filteredKaryawan.map((karyawan) => (
                   <tr key={karyawan.no} className="border-b hover:bg-gray-50 text-sm">
                     <td className="p-4 font-medium">{karyawan.no}.</td>
                     <td className="p-4">{karyawan.namaLengkap}</td>
@@ -127,15 +143,20 @@ export default function DaftarKaryawanPage() {
                         {!karyawan.tanggalBerhenti ? 'Aktif' : 'Non-Aktif'}
                       </span>
                     </td>
-                    <td className="p-4 text-center space-x-4">
-                      <button className="text-blue-600 hover:underline font-medium">Detail</button>
-                      <button className="text-green-600 hover:underline font-medium">Edit</button>
+                    <td className="p-4 text-center space-x-2">
+                      <button className="p-2 text-blue-600 bg-blue-100 rounded-full hover:bg-blue-200 transition" title="Lihat Detail">
+                          <Eye size={20} />
+                      </button>
+                      <button className="p-2 text-green-600 bg-green-100 rounded-full hover:bg-green-200 transition" title="Edit Karyawan">
+                          <Edit size={20} />
+                      </button>
                       {karyawan.tanggalBerhenti && (
                         <button
                           onClick={() => handleHapus(karyawan.namaLengkap, karyawan.no)}
-                          className="text-red-600 hover:underline font-medium"
+                          className="p-2 text-red-600 bg-red-100 rounded-full hover:bg-red-200 transition"
+                          title="Hapus Data"
                         >
-                          Hapus
+                          <Trash2 size={20} />
                         </button>
                       )}
                     </td>
