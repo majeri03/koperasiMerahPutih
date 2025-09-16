@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, PiggyBank, CreditCard, User, LogOut, X, Landmark, HandCoins } from "lucide-react";
+import { Home, PiggyBank, CreditCard, User, LogOut, X, Landmark, HandCoins, MessageSquare, FileText } from "lucide-react";
 import clsx from "clsx";
 
 // PERBAIKAN 1: Pastikan link ini sesuai dengan struktur folder Anda
@@ -10,6 +10,8 @@ const navLinks = [
   { href: "/dashboard/anggota", label: "Dashboard", icon: Home },
   { href: "/dashboard/anggota/simpanan", label: "Simpanan", icon: Landmark },
   { href: "/dashboard/anggota/pinjaman", label: "Pinjaman", icon: HandCoins },
+  { href: "/dashboard/anggota/saran", label: "Kirim Saran", icon: MessageSquare }, // <-- BARU
+  { href: "/dashboard/anggota/notulen", label: "Arsip Notulen", icon: FileText },   // <-- BARU
   { href: "/dashboard/anggota/profile", label: "Profil Saya", icon: User },
 ];
 
