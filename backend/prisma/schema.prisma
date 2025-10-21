@@ -96,7 +96,7 @@ model TenantRegistration {
   @@map("tenant_registrations")
 }
 
-
+// Daftar anggota (Modul 1)
 model Member {
   id              String    @id @default(uuid())
   memberNumber    String    @unique @map("member_number")
@@ -125,5 +125,28 @@ model Member {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
+  boardPositions  BoardPosition[]
   @@map("members")
+}
+
+// Daftar Pengurus (Modul 2)
+model BoardPosition {
+  id              String    @id @default(uuid())
+  jabatan         String    // e.g., Ketua, Sekretaris, Bendahara
+  tanggalDiangkat DateTime  @map("tanggal_diangkat")
+  tanggalBerhenti DateTime? @map("tanggal_berhenti") // Opsional, null jika masih aktif
+  alasanBerhenti  String?   @map("alasan_berhenti")  // Opsional
+
+  // Relasi ke Anggota (Member)
+  member   Member @relation(fields: [memberId], references: [id])
+  memberId String @map("member_id")
+
+  // Opsional: Jika ingin menyimpan URL scan/foto seperti di Member
+  fingerprintUrl  String? @map("fingerprint_url")
+  signatureUrl    String? @map("signature_url")
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("board_positions") // Nama tabel di database
 }
