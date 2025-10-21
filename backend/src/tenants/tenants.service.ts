@@ -157,13 +157,16 @@ export class TenantsService {
       );
     `);
     await tx.$executeRawUnsafe(`
+    CREATE TYPE "${schemaName}"."Gender" AS ENUM ('MALE', 'FEMALE');
+  `);
+    await tx.$executeRawUnsafe(`
       CREATE TABLE "${schemaName}".members (
         "id" TEXT NOT NULL,
         "member_number" TEXT NOT NULL,
         "full_name" TEXT NOT NULL,
         "place_of_birth" TEXT NOT NULL,
         "date_of_birth" TIMESTAMP(3) NOT NULL,
-        "gender" "public"."Gender" NOT NULL,
+        "gender" TEXT NOT NULL CHECK ("gender" IN ('MALE', 'FEMALE')),
         "occupation" TEXT NOT NULL,
         "address" TEXT NOT NULL,
         "join_date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
