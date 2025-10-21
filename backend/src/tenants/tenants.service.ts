@@ -204,6 +204,23 @@ export class TenantsService {
  `);
     // Opsional: Tambahkan index jika diperlukan, misal pada member_id
     // await tx.$executeRawUnsafe(`CREATE INDEX "board_positions_member_id_idx" ON "${schemaName}"."board_positions"("member_id");`);
+    await tx.$executeRawUnsafe(`
+    CREATE TABLE "${schemaName}".supervisory_positions (
+     "id" TEXT NOT NULL,
+     "jabatan" TEXT NOT NULL,
+     "tanggal_diangkat" TIMESTAMP(3) NOT NULL,
+     "tanggal_berhenti" TIMESTAMP(3),
+     "alasan_berhenti" TEXT,
+     "member_id" TEXT NOT NULL,
+     "fingerprint_url" TEXT,
+     "signature_url" TEXT,
+     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     "updated_at" TIMESTAMP(3) NOT NULL,
+
+     CONSTRAINT "supervisory_positions_pkey" PRIMARY KEY ("id"),
+     CONSTRAINT "supervisory_positions_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "${schemaName}"."members"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+   );
+ `);
   }
 
   private async createFirstAdmin(

@@ -126,6 +126,7 @@ model Member {
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
   boardPositions  BoardPosition[]
+  supervisoryPositions SupervisoryPosition[]
   @@map("members")
 }
 
@@ -141,12 +142,32 @@ model BoardPosition {
   member   Member @relation(fields: [memberId], references: [id])
   memberId String @map("member_id")
 
-  // Opsional: Jika ingin menyimpan URL scan/foto seperti di Member
   fingerprintUrl  String? @map("fingerprint_url")
   signatureUrl    String? @map("signature_url")
 
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  @@map("board_positions") // Nama tabel di database
+  @@map("board_positions") 
+}
+// Daftar Pengawas (Modul 3)
+model SupervisoryPosition {
+  id              String    @id @default(uuid())
+  jabatan         String    
+  tanggalDiangkat DateTime  @map("tanggal_diangkat")
+  tanggalBerhenti DateTime? @map("tanggal_berhenti") 
+  alasanBerhenti  String?   @map("alasan_berhenti")  
+
+  // Relasi ke Anggota (Member)
+  member   Member @relation(fields: [memberId], references: [id])
+  memberId String @map("member_id")
+
+  // Opsional: Jika ingin menyimpan URL scan/foto
+  fingerprintUrl  String? @map("fingerprint_url")
+  signatureUrl    String? @map("signature_url")
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("supervisory_positions") 
 }
