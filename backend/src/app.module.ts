@@ -11,6 +11,8 @@ import { PublicModule } from './public/public.module';
 import { MidtransModule } from './midtrans/midtrans.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { MembersModule } from './members/members.module';
+import { BoardPositionsModule } from './board-positions/board-positions.module';
+import { SupervisoryPositionsModule } from './supervisory-positions/supervisory-positions.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -22,6 +24,8 @@ import { MembersModule } from './members/members.module';
     MidtransModule,
     WebhooksModule,
     MembersModule,
+    BoardPositionsModule,
+    SupervisoryPositionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
