@@ -13,6 +13,12 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { MembersModule } from './members/members.module';
 import { BoardPositionsModule } from './board-positions/board-positions.module';
 import { SupervisoryPositionsModule } from './supervisory-positions/supervisory-positions.module';
+import { SimpananModule } from './simpanan/simpanan.module';
+import { SimpananController } from './simpanan/simpanan.controller';
+import { SimpananService } from './simpanan/simpanan.service';
+import { LoansModule } from './loans/loans.module';
+import { InventoryModule } from './inventory/inventory.module';
+import { MemberMeetingNotesModule } from './member-meeting-notes/member-meeting-notes.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -26,9 +32,13 @@ import { SupervisoryPositionsModule } from './supervisory-positions/supervisory-
     MembersModule,
     BoardPositionsModule,
     SupervisoryPositionsModule,
+    SimpananModule,
+    LoansModule,
+    InventoryModule,
+    MemberMeetingNotesModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, SimpananController],
+  providers: [AppService, SimpananService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

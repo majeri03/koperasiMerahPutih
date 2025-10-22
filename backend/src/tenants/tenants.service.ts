@@ -221,6 +221,143 @@ export class TenantsService {
      CONSTRAINT "supervisory_positions_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "${schemaName}"."members"("id") ON DELETE RESTRICT ON UPDATE CASCADE
    );
  `);
+    await tx.$executeRawUnsafe(`
+    CREATE TYPE "${schemaName}"."JenisSimpanan" AS ENUM ('POKOK', 'WAJIB', 'SUKARELA');
+  `);
+    await tx.$executeRawUnsafe(`
+    CREATE TYPE "${schemaName}"."TipeTransaksiSimpanan" AS ENUM ('SETORAN', 'PENARIKAN');
+  `);
+
+    await tx.$executeRawUnsafe(`
+    CREATE TABLE "${schemaName}".simpanan_transaksi (
+      "id" TEXT NOT NULL,
+      "tanggal" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "nomor_bukti" TEXT,
+      "uraian" TEXT NOT NULL,
+      "jenis" "${schemaName}"."JenisSimpanan" NOT NULL,
+      "tipe" "${schemaName}"."TipeTransaksiSimpanan" NOT NULL,
+      "jumlah" DOUBLE PRECISION NOT NULL,
+      "member_id" TEXT NOT NULL,
+      "user_id" TEXT, -- ID Pengurus yg mencatat
+      "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updated_at" TIMESTAMP(3) NOT NULL,
+
+      CONSTRAINT "simpanan_transaksi_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "simpanan_transaksi_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "${schemaName}"."members"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+      CONSTRAINT "simpanan_transaksi_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "${schemaName}"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE
+    );
+  `);
+
+    await tx.$executeRawUnsafe(`
+    CREATE TABLE "${schemaName}".simpanan_saldo (
+      "id" TEXT NOT NULL,
+      "saldo_pokok" DOUBLE PRECISION NOT NULL DEFAULT 0,
+      "saldo_wajib" DOUBLE PRECISION NOT NULL DEFAULT 0,
+      "saldo_sukarela" DOUBLE PRECISION NOT NULL DEFAULT 0,
+      "member_id" TEXT NOT NULL,
+      "last_updated_at" TIMESTAMP(3) NOT NULL,
+
+      CONSTRAINT "simpanan_saldo_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "simpanan_saldo_member_id_key" UNIQUE ("member_id"),
+      CONSTRAINT "simpanan_saldo_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "${schemaName}"."members"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    );
+  `);
+    // Tabel Pinjaman (Loans)
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".loans (
+        "id" TEXT NOT NULL,
+        "loan_number" TEXT NOT NULL,
+        "member_id" TEXT NOT NULL,
+        "loan_amount" DOUBLE PRECISION NOT NULL,
+        "interest_rate" DOUBLE PRECISION NOT NULL,
+        "loan_date" TIMESTAMP(3) NOT NULL,
+        "term_months" INTEGER NOT NULL,
+        "due_date" TIMESTAMP(3) NOT NULL,
+        "purpose" TEXT,
+        "agreement_number" TEXT,
+        "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+        "paid_off_date" TIMESTAMP(3),
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "loans_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "loans_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "${schemaName}"."members"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+      );
+    `);
+    await tx.$executeRawUnsafe(`
+      CREATE UNIQUE INDEX "loans_loan_number_key" ON "${schemaName}"."loans"("loan_number");
+    `);
+
+    // Tabel Angsuran Pinjaman (Loan Installments)
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".loan_installments (
+        "id" TEXT NOT NULL,
+        "loan_id" TEXT NOT NULL,
+        "installment_number" INTEGER NOT NULL,
+        "due_date" TIMESTAMP(3) NOT NULL,
+        "payment_date" TIMESTAMP(3),
+        "principal_amount" DOUBLE PRECISION NOT NULL,
+        "interest_amount" DOUBLE PRECISION NOT NULL,
+        "total_amount" DOUBLE PRECISION NOT NULL,
+        "amount_paid" DOUBLE PRECISION,
+        "status" TEXT NOT NULL DEFAULT 'PENDING',
+        "notes" TEXT,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "loan_installments_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "loan_installments_loan_id_fkey" FOREIGN KEY ("loan_id") REFERENCES "${schemaName}"."loans"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+      );
+    `);
+    // Enum Kondisi Inventaris
+    await tx.$executeRawUnsafe(`
+      CREATE TYPE "${schemaName}"."InventoryCondition" AS ENUM ('BAIK', 'PERLU_PERBAIKAN', 'RUSAK');
+    `);
+
+    // Tabel Inventaris (Inventory Items)
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".inventory_items (
+        "id" TEXT NOT NULL,
+        "item_code" TEXT NOT NULL,
+        "item_name" TEXT NOT NULL,
+        "purchase_date" TIMESTAMP(3) NOT NULL,
+        "quantity" INTEGER NOT NULL,
+        "unit_price" DOUBLE PRECISION NOT NULL,
+        "total_value" DOUBLE PRECISION NOT NULL,
+        "technical_life_span" INTEGER,
+        "economic_life_span" INTEGER,
+        "condition" "${schemaName}"."InventoryCondition" NOT NULL DEFAULT 'BAIK',
+        "location" TEXT,
+        "notes" TEXT,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "inventory_items_pkey" PRIMARY KEY ("id")
+      );
+    `);
+    await tx.$executeRawUnsafe(`
+      CREATE UNIQUE INDEX "inventory_items_item_code_key" ON "${schemaName}"."inventory_items"("item_code");
+    `);
+    // Tabel Notulen Rapat Anggota (Member Meeting Notes)
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".member_meeting_notes (
+        "id" TEXT NOT NULL,
+        "meeting_date" TIMESTAMP(3) NOT NULL,
+        "location" TEXT NOT NULL,
+        "meeting_type" TEXT NOT NULL,
+        "total_members" INTEGER NOT NULL,
+        "members_present" INTEGER NOT NULL,
+        "leader" TEXT NOT NULL,
+        "attendees" TEXT,
+        "agenda_and_decision" TEXT NOT NULL,
+        "document_url" TEXT,
+        "notulis" TEXT,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "member_meeting_notes_pkey" PRIMARY KEY ("id")
+      );
+    `);
   }
 
   private async createFirstAdmin(
