@@ -60,7 +60,9 @@ model User {
   role                     Role                @relation(fields: [roleId], references: [id])
   roleId                   Int                 @map("role_id")
   transaksiSimpananDicatat SimpananTransaksi[]
-
+  
+  employeePengurusApprovals Employee[] @relation("EmployeePengurusApprovals")
+  employeeKetuaApprovals    Employee[] @relation("EmployeeKetuaApprovals")
   @@map("users")
 }
 
@@ -312,19 +314,17 @@ model InventoryItem {
 model MemberMeetingNote {
   id                String   @id @default(uuid())
   meetingDate       DateTime @map("meeting_date")
-  location          String 
+  location          String
   meetingType       String   @map("meeting_type")
-  totalMembers      Int      @map("total_members") 
+  totalMembers      Int      @map("total_members")
   membersPresent    Int      @map("members_present")
-  leader            String 
+  leader            String
   attendees         String?
   agendaAndDecision String   @map("agenda_and_decision") @db.Text
 
-  
   // Kita bisa tambahkan URL file jika ada, atau biarkan kosong jika hanya catatan teks
   documentUrl String? @map("document_url")
 
-  
   notulis String?
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -332,20 +332,71 @@ model MemberMeetingNote {
 
   @@map("member_meeting_notes")
 }
+
 // Notulen Rapat Pengurus (Modul 8)
 model BoardMeetingNote {
-  id              String   @id @default(uuid())
-  meetingDate     DateTime @map("meeting_date") 
-  location        String                     
-  meetingType     String   @map("meeting_type")
-  totalBoard      Int      @map("total_board")  
-  boardPresent    Int      @map("board_present")
-  leader          String                   
-  attendees       String?   
-  agendaAndDecision String  @map("agenda_and_decision") @db.Text
-  signatureUrl    String?  @map("signature_url")
+  id                String   @id @default(uuid())
+  meetingDate       DateTime @map("meeting_date")
+  location          String
+  meetingType       String   @map("meeting_type")
+  totalBoard        Int      @map("total_board")
+  boardPresent      Int      @map("board_present")
+  leader            String
+  attendees         String?
+  agendaAndDecision String   @map("agenda_and_decision") @db.Text
+  signatureUrl      String?  @map("signature_url")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("board_meeting_notes")
+}
+
+// Notulen Rapat Pengawas (Modul 9)
+model SupervisoryMeetingNote {
+  id                 String   @id @default(uuid())
+  meetingDate        DateTime @map("meeting_date")
+  location           String
+  meetingType        String   @map("meeting_type")
+  totalSupervisory   Int      @map("total_supervisory")
+  supervisoryPresent Int      @map("supervisory_present")
+  leader             String
+  attendees          String?
+  agendaAndDecision  String   @map("agenda_and_decision") @db.Text
+  signatureUrl       String?  @map("signature_url")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("board_meeting_notes")
+  @@map("supervisory_meeting_notes")
+}
+
+// Daftar Karyawan (Modul 10)
+model Employee {
+  id             String   @id @default(uuid())
+  employeeNumber Int      @default(autoincrement()) @map("employee_number")
+  fullName       String   @map("full_name")
+  placeOfBirth   String   @map("place_of_birth")
+  dateOfBirth    DateTime @map("date_of_birth")
+  gender         Gender
+  address        String
+  hireDate       DateTime @map("hire_date")
+  position       String
+  notes          String?
+
+  signatureUrl String? @map("signature_url")
+
+  approvedByPengurus   User?   @relation("EmployeePengurusApprovals", fields: [approvedByPengurusId], references: [id])
+  approvedByPengurusId String? @map("approved_by_pengurus_id")
+
+  approvedByKetua   User?     @relation("EmployeeKetuaApprovals", fields: [approvedByKetuaId], references: [id])
+  approvedByKetuaId String?   @map("approved_by_ketua_id")
+  ketuaApprovalDate DateTime? @map("ketua_approval_date")
+
+  terminationDate   DateTime? @map("termination_date")
+  terminationReason String?   @map("termination_reason")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("employees")
 }

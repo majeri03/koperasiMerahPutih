@@ -4,6 +4,12 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { JwtPayloadDto } from '../dto/jwt-payload.dto'; // <-- Import the DTO
 
+interface RawJwtPayload {
+  sub: string;
+  email: string;
+  role: string;
+}
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private configService: ConfigService) {
@@ -21,8 +27,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   // Use the DTO to give a strong type to the payload
-  validate(payload: JwtPayloadDto): JwtPayloadDto {
-    // We can directly return the payload now as it matches the DTO shape
-    return { userId: payload.userId, email: payload.email, role: payload.role };
+  validate(payload: RawJwtPayload): JwtPayloadDto {
+    // Transformasi 'sub' dari token menjadi 'userId' untuk aplikasi Anda
+    return { userId: payload.sub, email: payload.email, role: payload.role };
   }
 }
