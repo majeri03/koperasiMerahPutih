@@ -5,9 +5,14 @@ import Link from "next/link";
 import { fetchLatest } from "@/lib/news";
 import NewsCard from "@/components/NewsCard";
 import QuoteFader from "@/components/QuoteFader";
+import ProductCard from "@/components/ProductCard";
+import { fetchFeaturedProducts } from "@/lib/products";
+
 
 export default async function Home() {
   const latest = await fetchLatest(3);
+  const featuredProducts = await fetchFeaturedProducts(4);
+
   return (
     <>
       {/* HERO SECTION */}
@@ -123,6 +128,31 @@ export default async function Home() {
             {latest.map((item) => (
               <NewsCard key={item.id} item={item} />
             ))}
+          </div>
+        </div>
+      </section>
+      <section className="py-12 md:py-16 bg-white border-t">
+        <div className="container mx-auto px-4">
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-extrabold text-brand-red-600">
+                Produk Unggulan
+              </h2>
+              <p className="text-gray-600 mt-1">Jelajahi produk dan layanan terbaik kami.</p>
+            </div>
+            <Link href="/katalog" className="hidden sm:inline-block">
+                <Button variant="outline">Lihat Semua Produk</Button>
+            </Link>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {featuredProducts.map((produk) => (
+              <ProductCard key={produk.id} produk={produk} />
+            ))}
+            {featuredProducts.length === 0 && (
+              <p className="sm:col-span-2 lg:col-span-4 text-center text-gray-500">
+                Belum ada produk unggulan yang tersedia saat ini.
+              </p>
+            )}
           </div>
         </div>
       </section>
