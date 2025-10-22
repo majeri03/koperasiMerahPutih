@@ -332,3 +332,20 @@ model MemberMeetingNote {
 
   @@map("member_meeting_notes")
 }
+// Notulen Rapat Pengurus (Modul 8)
+model BoardMeetingNote {
+  id              String   @id @default(uuid())
+  meetingDate     DateTime @map("meeting_date") 
+  location        String                     
+  meetingType     String   @map("meeting_type")
+  totalBoard      Int      @map("total_board")  
+  boardPresent    Int      @map("board_present")
+  leader          String                   
+  attendees       String?   
+  agendaAndDecision String  @map("agenda_and_decision") @db.Text
+  signatureUrl    String?  @map("signature_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("board_meeting_notes")
+}
