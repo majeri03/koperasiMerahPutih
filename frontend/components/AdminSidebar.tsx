@@ -7,7 +7,7 @@ import {
   Users, BookUser, Shield, Landmark, HandCoins, Archive,
   FileText, Briefcase, BookOpen, MessageSquare, Mail,
   ClipboardList, Award, Building, LogOut, X,
-  UserPlus, Globe, Settings, History, BookMarked
+  UserPlus, Globe, Settings, History, BookMarked,LayoutGrid,ClipboardCheck
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -16,6 +16,8 @@ const bukuKoperasiGroups = [
   {
     title: "Manajemen Utama",
     links: [
+      { href: "/dashboard/admin", label: "Dashboard", icon: LayoutGrid },
+      { href: "/dashboard/admin/persetujuan-koperasi", label: "Persetujuan Koperasi", icon: ClipboardCheck },
       { href: "/dashboard/admin/persetujuan-anggota", label: "Persetujuan Anggota", icon: UserPlus },
       { href: "/dashboard/admin/daftar-anggota", label: "Daftar Anggota", icon: Users },
       { href: "/dashboard/admin/daftar-pengurus", label: "Daftar Pengurus", icon: BookUser },

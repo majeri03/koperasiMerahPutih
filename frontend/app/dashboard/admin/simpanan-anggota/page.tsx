@@ -1,4 +1,3 @@
-// Lokasi: frontend/app/dashboard/admin/simpanan-anggota/page.tsx
 "use client";
 
 import { useState, useMemo, FormEvent, ChangeEvent } from "react";
@@ -6,7 +5,7 @@ import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
 import { PlusCircle, Search, Landmark, Gem, CalendarClock, Download, X } from "lucide-react";
 
-// --- Tipe Data (Nanti dari API) ---
+// --- Tipe Data ---
 type SimpananTransaksi = {
   id: string;
   tanggal: string; // Format YYYY-MM-DD
@@ -35,7 +34,6 @@ const mockTotalSimpanan = {
     sukarela: 210000000
 };
 
-// --- Tipe untuk data formulir ---
 type NewTransaksiData = {
   anggotaId: string;
   jenis: 'Pokok' | 'Wajib' | 'Sukarela';
@@ -44,7 +42,9 @@ type NewTransaksiData = {
   keterangan: string;
 };
 
-// --- KOMPONEN MODAL TRANSAKSI ---
+// ===================================================================
+// KOMPONEN MODAL UNTUK TRANSAKSI
+// ===================================================================
 const TransaksiSimpananModal = ({
     isOpen,
     onClose,
@@ -58,9 +58,9 @@ const TransaksiSimpananModal = ({
 }) => {
     const [formData, setFormData] = useState<NewTransaksiData>({
         anggotaId: '',
-        jenis: 'Wajib',
+        jenis: tipe === 'Penarikan' ? 'Sukarela' : 'Wajib', // Default berbeda untuk penarikan
         jumlah: 0,
-        tanggal: new Date().toISOString().split('T')[0], // Default ke hari ini
+        tanggal: new Date().toISOString().split('T')[0],
         keterangan: '',
     });
 
@@ -73,7 +73,7 @@ const TransaksiSimpananModal = ({
         e.preventDefault();
         if (!tipe) return;
         onSave(formData, tipe);
-        onClose(); // Tutup modal setelah save
+        onClose();
     };
 
     if (!isOpen || !tipe) return null;
@@ -88,25 +88,25 @@ const TransaksiSimpananModal = ({
                     </div>
                     <div className="p-6 space-y-4">
                         <div>
-                            <label htmlFor="anggotaId" className="block text-sm font-medium text-gray-700">Anggota</label>
+                            <label htmlFor="anggotaId" className="block text-sm font-medium text-gray-700">Anggota*</label>
                             <input type="text" id="anggotaId" name="anggotaId" required placeholder="Cari nama atau ID anggota..." value={formData.anggotaId} onChange={handleChange} className="mt-1 w-full p-2 border rounded-lg" />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="jenis" className="block text-sm font-medium text-gray-700">Jenis Simpanan</label>
+                                <label htmlFor="jenis" className="block text-sm font-medium text-gray-700">Jenis Simpanan*</label>
                                 <select id="jenis" name="jenis" required value={formData.jenis} onChange={handleChange} className="mt-1 w-full p-2 border rounded-lg bg-white">
-                                    <option>Pokok</option>
-                                    <option>Wajib</option>
-                                    <option>Sukarela</option>
+                                    {tipe === 'Setoran' && <option value="Pokok">Pokok</option>}
+                                    {tipe === 'Setoran' && <option value="Wajib">Wajib</option>}
+                                    <option value="Sukarela">Sukarela</option>
                                 </select>
                             </div>
                             <div>
-                                <label htmlFor="jumlah" className="block text-sm font-medium text-gray-700">Jumlah (Rp)</label>
-                                <input type="number" id="jumlah" name="jumlah" required value={formData.jumlah} onChange={handleChange} className="mt-1 w-full p-2 border rounded-lg" />
+                                <label htmlFor="jumlah" className="block text-sm font-medium text-gray-700">Jumlah (Rp)*</label>
+                                <input type="number" id="jumlah" name="jumlah" required min="1" value={formData.jumlah} onChange={handleChange} className="mt-1 w-full p-2 border rounded-lg" />
                             </div>
                         </div>
                         <div>
-                            <label htmlFor="tanggal" className="block text-sm font-medium text-gray-700">Tanggal Transaksi</label>
+                            <label htmlFor="tanggal" className="block text-sm font-medium text-gray-700">Tanggal Transaksi*</label>
                             <input type="date" id="tanggal" name="tanggal" required value={formData.tanggal} onChange={handleChange} className="mt-1 w-full p-2 border rounded-lg" />
                         </div>
                         <div>
@@ -124,10 +124,16 @@ const TransaksiSimpananModal = ({
     );
 };
 
+
+// ===================================================================
+// KOMPONEN UTAMA HALAMAN
+// ===================================================================
 export default function SimpananAnggotaPage() {
     const [filters, setFilters] = useState({ search: '', tipe: '', jenis: '', tanggalMulai: '', tanggalSelesai: '' });
+    const [transaksiList, setTransaksiList] = useState<SimpananTransaksi[]>(mockTransaksi);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalType, setModalType] = useState<'Setoran' | 'Penarikan' | null>(null);
+    const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -138,14 +144,12 @@ export default function SimpananAnggotaPage() {
     };
 
     const filteredTransaksi = useMemo(() => {
-        return mockTransaksi.filter(trx => {
+        return transaksiList.filter(trx => {
             const tanggalTrx = new Date(trx.tanggal);
             const tanggalMulai = filters.tanggalMulai ? new Date(filters.tanggalMulai) : null;
             const tanggalSelesai = filters.tanggalSelesai ? new Date(filters.tanggalSelesai) : null;
-
             if (tanggalMulai) tanggalMulai.setHours(0, 0, 0, 0);
             if (tanggalSelesai) tanggalSelesai.setHours(23, 59, 59, 999);
-
             return (
                 trx.anggota.nama.toLowerCase().includes(filters.search.toLowerCase()) &&
                 (filters.tipe === '' || trx.tipe === filters.tipe) &&
@@ -154,7 +158,7 @@ export default function SimpananAnggotaPage() {
                 (!tanggalSelesai || tanggalTrx <= tanggalSelesai)
             );
         });
-    }, [filters]);
+    }, [filters, transaksiList]);
     
     const handleOpenModal = (tipe: 'Setoran' | 'Penarikan') => {
         setModalType(tipe);
@@ -162,10 +166,31 @@ export default function SimpananAnggotaPage() {
     };
     
     const handleSaveTransaksi = (data: NewTransaksiData, tipe: 'Setoran' | 'Penarikan') => {
-        console.log(`Menyimpan ${tipe} Baru:`, data);
-        alert(`Simulasi: ${tipe} untuk anggota ${data.anggotaId} sejumlah Rp ${data.jumlah.toLocaleString('id-ID')} berhasil disimpan.`);
+        const newTransaksi: SimpananTransaksi = {
+            id: `trx${Math.floor(Math.random() * 10000)}`,
+            tanggal: data.tanggal,
+            anggota: { id: data.anggotaId, nama: data.anggotaId }, // Simulasikan nama = id
+            jenis: data.jenis,
+            keterangan: data.keterangan,
+            tipe: tipe,
+            jumlah: Number(data.jumlah)
+        };
+        setTransaksiList(prev => [newTransaksi, ...prev]);
+        alert(`Simulasi: ${tipe} untuk anggota ${data.anggotaId} sejumlah Rp ${Number(data.jumlah).toLocaleString('id-ID')} berhasil disimpan.`);
     };
 
+    const handleExport = async (format: 'pdf' | 'excel') => {
+        if (format === 'pdf') {
+            // Panggil nama fungsi yang benar dari exportUtils
+            const { generateSimpananPdf } = await import('@/lib/exportUtils');
+            generateSimpananPdf(filteredTransaksi);
+        } else if (format === 'excel') {
+            // Panggil nama fungsi yang benar dari exportUtils
+            const { generateSimpananExcel } = await import('@/lib/exportUtils');
+            generateSimpananExcel(filteredTransaksi);
+        }
+    };
+    
     return (
         <div>
             <AdminPageHeader
@@ -183,86 +208,37 @@ export default function SimpananAnggotaPage() {
                 }
             />
 
-            {/* --- KARTU RINGKASAN TOTAL SIMPANAN (KODE DIKEMBALIKAN) --- */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white p-5 rounded-xl shadow-lg border border-gray-100">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-blue-100 rounded-full"><Landmark className="h-6 w-6 text-blue-600" /></div>
-                        <div>
-                            <p className="text-sm text-gray-500">Total Simpanan Pokok</p>
-                            <p className="text-xl font-bold text-gray-800">Rp {mockTotalSimpanan.pokok.toLocaleString('id-ID')}</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-white p-5 rounded-xl shadow-lg border border-gray-100">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-green-100 rounded-full"><CalendarClock className="h-6 w-6 text-green-600" /></div>
-                        <div>
-                            <p className="text-sm text-gray-500">Total Simpanan Wajib</p>
-                            <p className="text-xl font-bold text-gray-800">Rp {mockTotalSimpanan.wajib.toLocaleString('id-ID')}</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-white p-5 rounded-xl shadow-lg border border-gray-100">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-purple-100 rounded-full"><Gem className="h-6 w-6 text-purple-600" /></div>
-                        <div>
-                            <p className="text-sm text-gray-500">Total Simpanan Sukarela</p>
-                            <p className="text-xl font-bold text-gray-800">Rp {mockTotalSimpanan.sukarela.toLocaleString('id-ID')}</p>
-                        </div>
-                    </div>
-                </div>
+                <div className="bg-white p-5 rounded-xl shadow-lg border border-gray-100"><div className="flex items-center gap-3"><div className="p-3 bg-blue-100 rounded-full"><Landmark className="h-6 w-6 text-blue-600" /></div><div><p className="text-sm text-gray-500">Total Simpanan Pokok</p><p className="text-xl font-bold text-gray-800">Rp {mockTotalSimpanan.pokok.toLocaleString('id-ID')}</p></div></div></div>
+                <div className="bg-white p-5 rounded-xl shadow-lg border border-gray-100"><div className="flex items-center gap-3"><div className="p-3 bg-green-100 rounded-full"><CalendarClock className="h-6 w-6 text-green-600" /></div><div><p className="text-sm text-gray-500">Total Simpanan Wajib</p><p className="text-xl font-bold text-gray-800">Rp {mockTotalSimpanan.wajib.toLocaleString('id-ID')}</p></div></div></div>
+                <div className="bg-white p-5 rounded-xl shadow-lg border border-gray-100"><div className="flex items-center gap-3"><div className="p-3 bg-purple-100 rounded-full"><Gem className="h-6 w-6 text-purple-600" /></div><div><p className="text-sm text-gray-500">Total Simpanan Sukarela</p><p className="text-xl font-bold text-gray-800">Rp {mockTotalSimpanan.sukarela.toLocaleString('id-ID')}</p></div></div></div>
             </div>
-      
+            
             <div className="bg-white rounded-xl shadow-lg border border-gray-100">
                 <div className="p-6">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-lg font-bold text-gray-700">Riwayat Transaksi</h2>
-                        <Button variant="outline">
-                            <Download size={18}/> <span>Ekspor</span>
-                        </Button>
+                        <div className="relative">
+                            <Button variant="outline" onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}>
+                                <Download size={18}/> <span>Ekspor</span>
+                            </Button>
+                            {isExportMenuOpen && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-10">
+                                    <button onClick={() => handleExport('pdf')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Unduh Laporan (PDF)</button>
+                                    <button onClick={() => handleExport('excel')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Unduh Laporan (Excel)</button>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    {/* --- AREA FILTER (KODE DIKEMBALIKAN) --- */}
                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-                        <div className="lg:col-span-2">
-                            <label htmlFor="search" className="block text-sm font-medium text-gray-600 mb-1">Cari Anggota</label>
-                            <div className="relative">
-                                <input id="search" name="search" type="text" placeholder="Nama anggota..." value={filters.search} onChange={handleFilterChange} className="w-full pl-10 pr-4 py-2 border rounded-lg" />
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                            </div>
-                        </div>
-                        <div>
-                            <label htmlFor="tipe" className="block text-sm font-medium text-gray-600 mb-1">Tipe Transaksi</label>
-                            <select id="tipe" name="tipe" value={filters.tipe} onChange={handleFilterChange} className="w-full p-2 border rounded-lg">
-                                <option value="">Semua</option>
-                                <option value="Setoran">Setoran</option>
-                                <option value="Penarikan">Penarikan</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label htmlFor="jenis" className="block text-sm font-medium text-gray-600 mb-1">Jenis Simpanan</label>
-                            <select id="jenis" name="jenis" value={filters.jenis} onChange={handleFilterChange} className="w-full p-2 border rounded-lg">
-                                <option value="">Semua</option>
-                                <option value="Pokok">Pokok</option>
-                                <option value="Wajib">Wajib</option>
-                                <option value="Sukarela">Sukarela</option>
-                            </select>
-                        </div>
-                        <div>
-                            <Button onClick={resetFilters} variant="outline" className="w-full"><X size={16} /> Reset Filter</Button>
-                        </div>
-                        <div className="md:col-span-2 lg:col-span-3">
-                            <label className="block text-sm font-medium text-gray-600 mb-1">Rentang Tanggal</label>
-                            <div className="flex items-center gap-2">
-                                <input name="tanggalMulai" type="date" value={filters.tanggalMulai} onChange={handleFilterChange} className="w-full p-2 border rounded-lg" />
-                                <span className="text-gray-500">s/d</span>
-                                <input name="tanggalSelesai" type="date" value={filters.tanggalSelesai} onChange={handleFilterChange} className="w-full p-2 border rounded-lg" />
-                            </div>
-                        </div>
+                        <div className="lg:col-span-2"><label htmlFor="search" className="block text-sm font-medium text-gray-600 mb-1">Cari Anggota</label><div className="relative"><input id="search" name="search" type="text" placeholder="Nama anggota..." value={filters.search} onChange={handleFilterChange} className="w-full pl-10 pr-4 py-2 border rounded-lg" /><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /></div></div>
+                        <div><label htmlFor="tipe" className="block text-sm font-medium text-gray-600 mb-1">Tipe Transaksi</label><select id="tipe" name="tipe" value={filters.tipe} onChange={handleFilterChange} className="w-full p-2 border rounded-lg"><option value="">Semua</option><option value="Setoran">Setoran</option><option value="Penarikan">Penarikan</option></select></div>
+                        <div><label htmlFor="jenis" className="block text-sm font-medium text-gray-600 mb-1">Jenis Simpanan</label><select id="jenis" name="jenis" value={filters.jenis} onChange={handleFilterChange} className="w-full p-2 border rounded-lg"><option value="">Semua</option><option value="Pokok">Pokok</option><option value="Wajib">Wajib</option><option value="Sukarela">Sukarela</option></select></div>
+                        <div><Button onClick={resetFilters} variant="outline" className="w-full"><X size={16} /> Reset Filter</Button></div>
+                        <div className="md:col-span-2 lg:col-span-3"><label className="block text-sm font-medium text-gray-600 mb-1">Rentang Tanggal</label><div className="flex items-center gap-2"><input name="tanggalMulai" type="date" value={filters.tanggalMulai} onChange={handleFilterChange} className="w-full p-2 border rounded-lg" /><span className="text-gray-500">s/d</span><input name="tanggalSelesai" type="date" value={filters.tanggalSelesai} onChange={handleFilterChange} className="w-full p-2 border rounded-lg" /></div></div>
                     </div>
 
-                    {/* --- TABEL (KODE DIKEMBALIKAN) --- */}
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead className="border-b bg-gray-50 text-sm text-gray-600">
@@ -281,27 +257,14 @@ export default function SimpananAnggotaPage() {
                                         <tr key={trx.id} className="border-b hover:bg-gray-50 text-sm">
                                             <td className="p-4">{new Date(trx.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                                             <td className="p-4 font-medium text-gray-800">{trx.anggota.nama}</td>
-                                            <td className="p-4">
-                                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${trx.jenis === 'Pokok' ? 'bg-blue-100 text-blue-700' : trx.jenis === 'Wajib' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>
-                                                    {trx.jenis}
-                                                </span>
-                                            </td>
+                                            <td className="p-4"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${trx.jenis === 'Pokok' ? 'bg-blue-100 text-blue-700' : trx.jenis === 'Wajib' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>{trx.jenis}</span></td>
                                             <td className="p-4 text-gray-600">{trx.keterangan}</td>
-                                            <td className={`p-4 text-right font-semibold ${trx.tipe === 'Setoran' ? 'text-green-600' : 'text-red-600'}`}>
-                                                {trx.tipe === 'Penarikan' ? '-' : ''}
-                                                {trx.jumlah.toLocaleString('id-ID')}
-                                            </td>
-                                            <td className="p-4 text-center">
-                                                <button className="text-blue-600 hover:underline text-xs font-medium">Lihat Detail</button>
-                                            </td>
+                                            <td className={`p-4 text-right font-semibold ${trx.tipe === 'Setoran' ? 'text-green-600' : 'text-red-600'}`}>{trx.tipe === 'Penarikan' ? '-' : ''}{trx.jumlah.toLocaleString('id-ID')}</td>
+                                            <td className="p-4 text-center"><button className="text-blue-600 hover:underline text-xs font-medium">Lihat Detail</button></td>
                                         </tr>
                                     ))
                                 ) : (
-                                    <tr>
-                                        <td colSpan={6} className="text-center p-8 text-gray-500">
-                                            Tidak ada transaksi yang sesuai dengan filter.
-                                        </td>
-                                    </tr>
+                                    <tr><td colSpan={6} className="text-center p-8 text-gray-500">Tidak ada transaksi yang sesuai dengan filter.</td></tr>
                                 )}
                             </tbody>
                         </table>
