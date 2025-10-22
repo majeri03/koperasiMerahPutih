@@ -349,3 +349,21 @@ model BoardMeetingNote {
 
   @@map("board_meeting_notes")
 }
+// Notulen Rapat Pengawas (Modul 9)
+model SupervisoryMeetingNote {
+  id                String   @id @default(uuid())
+  meetingDate       DateTime @map("meeting_date")       
+  location          String                        
+  meetingType       String   @map("meeting_type")  
+  totalSupervisory  Int      @map("total_supervisory") 
+  supervisoryPresent Int     @map("supervisory_present") 
+  leader            String                 
+  attendees         String?                     
+  agendaAndDecision String   @map("agenda_and_decision") @db.Text 
+  signatureUrl      String?  @map("signature_url")    
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("supervisory_meeting_notes") 
+}
