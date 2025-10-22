@@ -24,14 +24,15 @@ enum TenantStatus {
 }
 
 model Tenant {
-  id          String   @id @default(uuid())
-  name        String
-  subdomain   String   @unique
-  schemaName  String   @unique @map("schema_name")
-  status      TenantStatus @default(PENDING)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id           String              @id @default(uuid())
+  name         String
+  subdomain    String              @unique
+  schemaName   String              @unique @map("schema_name")
+  status       TenantStatus        @default(PENDING)
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
   registration TenantRegistration?
+
   @@map("tenants")
 }
 
@@ -42,22 +43,24 @@ model Role {
   id    Int    @id @default(autoincrement())
   name  String @unique
   users User[]
+
   @@map("roles")
 }
 
 model User {
-  id            String   @id @default(uuid())
-  fullName      String   @map("full_name")
-  email         String   @unique
-  passwordHash  String   @map("password_hash")
-  hashedRefreshToken String?   @map("hashed_refresh_token")
-  status        String   @default("active") // 'pending', 'active', 'rejected'
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id                 String   @id @default(uuid())
+  fullName           String   @map("full_name")
+  email              String   @unique
+  passwordHash       String   @map("password_hash")
+  hashedRefreshToken String?  @map("hashed_refresh_token")
+  status             String   @default("active") // 'pending', 'active', 'rejected'
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
-  role   Role @relation(fields: [roleId], references: [id])
-  roleId Int  @map("role_id")
+  role                     Role                @relation(fields: [roleId], references: [id])
+  roleId                   Int                 @map("role_id")
   transaksiSimpananDicatat SimpananTransaksi[]
+
   @@map("users")
 }
 
@@ -71,24 +74,24 @@ enum Gender {
 }
 
 model TenantRegistration {
-  id                 String  @id @default(uuid())
+  id String @id @default(uuid())
 
-  nik                String  @unique
-  fullName           String  @map("full_name")
-  gender             Gender
-  email              String  @unique
-  phoneNumber        String  @unique @map("phone_number")
-  hashedPassword     String  @map("hashed_password")
+  nik            String @unique
+  fullName       String @map("full_name")
+  gender         Gender
+  email          String @unique
+  phoneNumber    String @unique @map("phone_number")
+  hashedPassword String @map("hashed_password")
 
-  province           String
-  city               String
-  district           String
-  village            String
-  cooperativeName    String  @map("cooperative_name")
-  
-  ktpDocumentUrl     String? @map("ktp_document_url")
-  skDocumentUrl      String? @map("sk_document_url")
-  npwpDocumentUrl    String? @map("npwp_document_url")
+  province        String
+  city            String
+  district        String
+  village         String
+  cooperativeName String @map("cooperative_name")
+
+  ktpDocumentUrl  String? @map("ktp_document_url")
+  skDocumentUrl   String? @map("sk_document_url")
+  npwpDocumentUrl String? @map("npwp_document_url")
 
   tenant   Tenant @relation(fields: [tenantId], references: [id])
   tenantId String @unique @map("tenant_id")
@@ -98,80 +101,83 @@ model TenantRegistration {
 
 // Daftar anggota (Modul 1)
 model Member {
-  id              String    @id @default(uuid())
-  memberNumber    String    @unique @map("member_number")
+  id           String @id @default(uuid())
+  memberNumber String @unique @map("member_number")
 
   // Data Diri
-  fullName        String    @map("full_name")
-  placeOfBirth    String    @map("place_of_birth")
-  dateOfBirth     DateTime  @map("date_of_birth")
-  gender          Gender    // Kita gunakan lagi Enum Gender yang sudah ada
-  occupation      String    // Pekerjaan
-  address         String
+  fullName     String   @map("full_name")
+  placeOfBirth String   @map("place_of_birth")
+  dateOfBirth  DateTime @map("date_of_birth")
+  gender       Gender // Kita gunakan lagi Enum Gender yang sudah ada
+  occupation   String // Pekerjaan
+  address      String
 
   // Keanggotaan
-  joinDate        DateTime  @default(now()) @map("join_date")
-  status          String    @default("ACTIVE") // Misal: ACTIVE, RESIGNED, EXPELLED
-  
+  joinDate DateTime @default(now()) @map("join_date")
+  status   String   @default("ACTIVE") // Misal: ACTIVE, RESIGNED, EXPELLED
+
   // Berkas (akan menyimpan URL dari cloud storage)
-  fingerprintUrl  String?   @map("fingerprint_url") // Cap Ibu Jari
-  signatureUrl    String?   @map("signature_url")   // Tanda Tangan
+  fingerprintUrl String? @map("fingerprint_url") // Cap Ibu Jari
+  signatureUrl   String? @map("signature_url") // Tanda Tangan
 
   // Informasi Berhenti (opsional)
   resignationRequestDate DateTime? @map("resignation_request_date")
   terminationDate        DateTime? @map("termination_date")
-  terminationReason    String?   @map("termination_reason")
+  terminationReason      String?   @map("termination_reason")
 
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  boardPositions  BoardPosition[]
+  boardPositions       BoardPosition[]
   supervisoryPositions SupervisoryPosition[]
-  simpananTransaksi SimpananTransaksi[]
-  simpananSaldo     SimpananSaldo?
+  simpananTransaksi    SimpananTransaksi[]
+  simpananSaldo        SimpananSaldo?
+  loans                Loan[]
+
   @@map("members")
 }
 
 // Daftar Pengurus (Modul 2)
 model BoardPosition {
   id              String    @id @default(uuid())
-  jabatan         String    // e.g., Ketua, Sekretaris, Bendahara
+  jabatan         String // e.g., Ketua, Sekretaris, Bendahara
   tanggalDiangkat DateTime  @map("tanggal_diangkat")
   tanggalBerhenti DateTime? @map("tanggal_berhenti") // Opsional, null jika masih aktif
-  alasanBerhenti  String?   @map("alasan_berhenti")  // Opsional
+  alasanBerhenti  String?   @map("alasan_berhenti") // Opsional
 
   // Relasi ke Anggota (Member)
   member   Member @relation(fields: [memberId], references: [id])
   memberId String @map("member_id")
 
-  fingerprintUrl  String? @map("fingerprint_url")
-  signatureUrl    String? @map("signature_url")
+  fingerprintUrl String? @map("fingerprint_url")
+  signatureUrl   String? @map("signature_url")
 
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("board_positions") 
+  @@map("board_positions")
 }
+
 // Daftar Pengawas (Modul 3)
 model SupervisoryPosition {
   id              String    @id @default(uuid())
-  jabatan         String    
+  jabatan         String
   tanggalDiangkat DateTime  @map("tanggal_diangkat")
-  tanggalBerhenti DateTime? @map("tanggal_berhenti") 
-  alasanBerhenti  String?   @map("alasan_berhenti")  
+  tanggalBerhenti DateTime? @map("tanggal_berhenti")
+  alasanBerhenti  String?   @map("alasan_berhenti")
 
   // Relasi ke Anggota (Member)
   member   Member @relation(fields: [memberId], references: [id])
   memberId String @map("member_id")
 
   // Opsional: Jika ingin menyimpan URL scan/foto
-  fingerprintUrl  String? @map("fingerprint_url")
-  signatureUrl    String? @map("signature_url")
+  fingerprintUrl String? @map("fingerprint_url")
+  signatureUrl   String? @map("signature_url")
 
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("supervisory_positions") 
+  @@map("supervisory_positions")
 }
 
 // Tambahkan enum baru untuk Jenis Simpanan dan Tipe Transaksi
@@ -188,37 +194,116 @@ enum TipeTransaksiSimpanan {
 
 // Daftar Simpanan Anggota (Modul 4)
 model SimpananTransaksi {
-  id            String                 @id @default(uuid())
-  tanggal       DateTime               @default(now())
-  nomorBukti    String?                @map("nomor_bukti") 
-  uraian        String                 
-  jenis         JenisSimpanan          
-  tipe          TipeTransaksiSimpanan  
-  jumlah        Float                  
+  id         String                @id @default(uuid())
+  tanggal    DateTime              @default(now())
+  nomorBukti String?               @map("nomor_bukti")
+  uraian     String
+  jenis      JenisSimpanan
+  tipe       TipeTransaksiSimpanan
+  jumlah     Float
 
-  member        Member                 @relation(fields: [memberId], references: [id])
-  memberId      String                 @map("member_id")
+  member   Member @relation(fields: [memberId], references: [id])
+  memberId String @map("member_id")
 
-  dicatatOleh   User?                  @relation(fields: [userId], references: [id]) // Pengurus yg mencatat
-  userId        String?                @map("user_id") // ID Pengurus
+  dicatatOleh User?   @relation(fields: [userId], references: [id]) // Pengurus yg mencatat
+  userId      String? @map("user_id") // ID Pengurus
 
-  createdAt     DateTime               @default(now()) @map("created_at")
-  updatedAt     DateTime               @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("simpanan_transaksi")
 }
 
-
 model SimpananSaldo {
-  id            String        @id @default(uuid())
-  saldoPokok    Float         @default(0) @map("saldo_pokok")
-  saldoWajib    Float         @default(0) @map("saldo_wajib")
-  saldoSukarela Float         @default(0) @map("saldo_sukarela")
+  id            String @id @default(uuid())
+  saldoPokok    Float  @default(0) @map("saldo_pokok")
+  saldoWajib    Float  @default(0) @map("saldo_wajib")
+  saldoSukarela Float  @default(0) @map("saldo_sukarela")
 
-  member        Member        @relation(fields: [memberId], references: [id])
-  memberId      String        @unique @map("member_id") // Setiap anggota hanya punya 1 record saldo
+  member   Member @relation(fields: [memberId], references: [id])
+  memberId String @unique @map("member_id") // Setiap anggota hanya punya 1 record saldo
 
-  lastUpdatedAt DateTime      @updatedAt @map("last_updated_at")
+  lastUpdatedAt DateTime @updatedAt @map("last_updated_at")
 
   @@map("simpanan_saldo")
+}
+
+// Daftar Pinjaman Anggota (Modul 5)
+model Loan {
+  id         String @id @default(uuid())
+  loanNumber String @unique @map("loan_number") // Nomor unik pinjaman
+  memberId   String @map("member_id") // ID Anggota yang meminjam
+  member     Member @relation(fields: [memberId], references: [id])
+
+  loanAmount      Float    @map("loan_amount") // Jumlah uang pinjaman
+  interestRate    Float    @map("interest_rate") // Suku bunga per periode (misal per bulan)
+  loanDate        DateTime @map("loan_date") // Tanggal pinjaman diberikan
+  termMonths      Int      @map("term_months") // Jangka waktu dalam bulan
+  dueDate         DateTime @map("due_date") // Tanggal jatuh tempo keseluruhan
+  purpose         String?  @map("purpose") // Alasan/tujuan meminjam (opsional)
+  agreementNumber String?  @map("agreement_number") // Nomor perjanjian (opsional)
+
+  status      String    @default("ACTIVE") // Misal: ACTIVE, PAID_OFF, OVERDUE
+  paidOffDate DateTime? @map("paid_off_date") // Tanggal lunas (jika sudah)
+
+  installments LoanInstallment[] // Relasi ke detail angsuran
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("loans")
+}
+
+// Detail Angsuran Pinjaman
+model LoanInstallment {
+  id     String @id @default(uuid())
+  loanId String @map("loan_id")
+  loan   Loan   @relation(fields: [loanId], references: [id])
+
+  installmentNumber Int       @map("installment_number") // Angsuran ke-berapa
+  dueDate           DateTime  @map("due_date") // Tanggal jatuh tempo angsuran ini
+  paymentDate       DateTime? @map("payment_date") // Tanggal pembayaran angsuran ini (jika sudah)
+
+  principalAmount Float  @map("principal_amount") // Jumlah pokok angsuran
+  interestAmount  Float  @map("interest_amount") // Jumlah bunga angsuran
+  totalAmount     Float  @map("total_amount") // Total bayar angsuran (pokok + bunga)
+  amountPaid      Float? @map("amount_paid") // Jumlah yang dibayarkan (jika sudah)
+
+  status String @default("PENDING") // Misal: PENDING, PAID, OVERDUE
+
+  notes String? // Catatan tambahan (opsional)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("loan_installments")
+}
+// Daftar Inventaris (Modul 6)
+enum InventoryCondition {
+  BAIK             
+  PERLU_PERBAIKAN  
+  RUSAK            
+}
+
+model InventoryItem {
+  id                String    @id @default(uuid())
+  itemCode          String    @unique @map("item_code") 
+  itemName          String    @map("item_name") 
+  purchaseDate      DateTime  @map("purchase_date") 
+  quantity          Int       
+  unitPrice         Float     @map("unit_price") 
+  totalValue        Float     @map("total_value") 
+  technicalLifeSpan Int?      @map("technical_life_span") 
+  economicLifeSpan  Int?      @map("economic_life_span") 
+
+
+  condition         InventoryCondition @default(BAIK) 
+
+  location          String?   
+  notes             String?  
+
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@map("inventory_items")
 }

@@ -16,6 +16,8 @@ import { SupervisoryPositionsModule } from './supervisory-positions/supervisory-
 import { SimpananModule } from './simpanan/simpanan.module';
 import { SimpananController } from './simpanan/simpanan.controller';
 import { SimpananService } from './simpanan/simpanan.service';
+import { LoansModule } from './loans/loans.module';
+import { InventoryModule } from './inventory/inventory.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -30,6 +32,8 @@ import { SimpananService } from './simpanan/simpanan.service';
     BoardPositionsModule,
     SupervisoryPositionsModule,
     SimpananModule,
+    LoansModule,
+    InventoryModule,
   ],
   controllers: [AppController, SimpananController],
   providers: [AppService, SimpananService],

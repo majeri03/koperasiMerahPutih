@@ -262,6 +262,82 @@ export class TenantsService {
       CONSTRAINT "simpanan_saldo_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "${schemaName}"."members"("id") ON DELETE RESTRICT ON UPDATE CASCADE
     );
   `);
+    // Tabel Pinjaman (Loans)
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".loans (
+        "id" TEXT NOT NULL,
+        "loan_number" TEXT NOT NULL,
+        "member_id" TEXT NOT NULL,
+        "loan_amount" DOUBLE PRECISION NOT NULL,
+        "interest_rate" DOUBLE PRECISION NOT NULL,
+        "loan_date" TIMESTAMP(3) NOT NULL,
+        "term_months" INTEGER NOT NULL,
+        "due_date" TIMESTAMP(3) NOT NULL,
+        "purpose" TEXT,
+        "agreement_number" TEXT,
+        "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+        "paid_off_date" TIMESTAMP(3),
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "loans_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "loans_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "${schemaName}"."members"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+      );
+    `);
+    await tx.$executeRawUnsafe(`
+      CREATE UNIQUE INDEX "loans_loan_number_key" ON "${schemaName}"."loans"("loan_number");
+    `);
+
+    // Tabel Angsuran Pinjaman (Loan Installments)
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".loan_installments (
+        "id" TEXT NOT NULL,
+        "loan_id" TEXT NOT NULL,
+        "installment_number" INTEGER NOT NULL,
+        "due_date" TIMESTAMP(3) NOT NULL,
+        "payment_date" TIMESTAMP(3),
+        "principal_amount" DOUBLE PRECISION NOT NULL,
+        "interest_amount" DOUBLE PRECISION NOT NULL,
+        "total_amount" DOUBLE PRECISION NOT NULL,
+        "amount_paid" DOUBLE PRECISION,
+        "status" TEXT NOT NULL DEFAULT 'PENDING',
+        "notes" TEXT,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "loan_installments_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "loan_installments_loan_id_fkey" FOREIGN KEY ("loan_id") REFERENCES "${schemaName}"."loans"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+      );
+    `);
+    // Enum Kondisi Inventaris
+    await tx.$executeRawUnsafe(`
+      CREATE TYPE "${schemaName}"."InventoryCondition" AS ENUM ('BAIK', 'PERLU_PERBAIKAN', 'RUSAK');
+    `);
+
+    // Tabel Inventaris (Inventory Items)
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".inventory_items (
+        "id" TEXT NOT NULL,
+        "item_code" TEXT NOT NULL,
+        "item_name" TEXT NOT NULL,
+        "purchase_date" TIMESTAMP(3) NOT NULL,
+        "quantity" INTEGER NOT NULL,
+        "unit_price" DOUBLE PRECISION NOT NULL,
+        "total_value" DOUBLE PRECISION NOT NULL,
+        "technical_life_span" INTEGER,
+        "economic_life_span" INTEGER,
+        "condition" "${schemaName}"."InventoryCondition" NOT NULL DEFAULT 'BAIK',
+        "location" TEXT,
+        "notes" TEXT,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "inventory_items_pkey" PRIMARY KEY ("id")
+      );
+    `);
+    await tx.$executeRawUnsafe(`
+      CREATE UNIQUE INDEX "inventory_items_item_code_key" ON "${schemaName}"."inventory_items"("item_code");
+    `);
   }
 
   private async createFirstAdmin(
