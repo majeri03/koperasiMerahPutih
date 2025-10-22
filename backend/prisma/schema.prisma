@@ -57,7 +57,7 @@ model User {
 
   role   Role @relation(fields: [roleId], references: [id])
   roleId Int  @map("role_id")
-
+  transaksiSimpananDicatat SimpananTransaksi[]
   @@map("users")
 }
 
@@ -127,6 +127,8 @@ model Member {
 
   boardPositions  BoardPosition[]
   supervisoryPositions SupervisoryPosition[]
+  simpananTransaksi SimpananTransaksi[]
+  simpananSaldo     SimpananSaldo?
   @@map("members")
 }
 
@@ -170,4 +172,53 @@ model SupervisoryPosition {
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
   @@map("supervisory_positions") 
+}
+
+// Tambahkan enum baru untuk Jenis Simpanan dan Tipe Transaksi
+enum JenisSimpanan {
+  POKOK
+  WAJIB
+  SUKARELA
+}
+
+enum TipeTransaksiSimpanan {
+  SETORAN
+  PENARIKAN
+}
+
+// Daftar Simpanan Anggota (Modul 4)
+model SimpananTransaksi {
+  id            String                 @id @default(uuid())
+  tanggal       DateTime               @default(now())
+  nomorBukti    String?                @map("nomor_bukti") 
+  uraian        String                 
+  jenis         JenisSimpanan          
+  tipe          TipeTransaksiSimpanan  
+  jumlah        Float                  
+
+  member        Member                 @relation(fields: [memberId], references: [id])
+  memberId      String                 @map("member_id")
+
+  dicatatOleh   User?                  @relation(fields: [userId], references: [id]) // Pengurus yg mencatat
+  userId        String?                @map("user_id") // ID Pengurus
+
+  createdAt     DateTime               @default(now()) @map("created_at")
+  updatedAt     DateTime               @updatedAt @map("updated_at")
+
+  @@map("simpanan_transaksi")
+}
+
+
+model SimpananSaldo {
+  id            String        @id @default(uuid())
+  saldoPokok    Float         @default(0) @map("saldo_pokok")
+  saldoWajib    Float         @default(0) @map("saldo_wajib")
+  saldoSukarela Float         @default(0) @map("saldo_sukarela")
+
+  member        Member        @relation(fields: [memberId], references: [id])
+  memberId      String        @unique @map("member_id") // Setiap anggota hanya punya 1 record saldo
+
+  lastUpdatedAt DateTime      @updatedAt @map("last_updated_at")
+
+  @@map("simpanan_saldo")
 }

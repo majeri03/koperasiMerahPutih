@@ -221,6 +221,47 @@ export class TenantsService {
      CONSTRAINT "supervisory_positions_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "${schemaName}"."members"("id") ON DELETE RESTRICT ON UPDATE CASCADE
    );
  `);
+    await tx.$executeRawUnsafe(`
+    CREATE TYPE "${schemaName}"."JenisSimpanan" AS ENUM ('POKOK', 'WAJIB', 'SUKARELA');
+  `);
+    await tx.$executeRawUnsafe(`
+    CREATE TYPE "${schemaName}"."TipeTransaksiSimpanan" AS ENUM ('SETORAN', 'PENARIKAN');
+  `);
+
+    await tx.$executeRawUnsafe(`
+    CREATE TABLE "${schemaName}".simpanan_transaksi (
+      "id" TEXT NOT NULL,
+      "tanggal" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "nomor_bukti" TEXT,
+      "uraian" TEXT NOT NULL,
+      "jenis" "${schemaName}"."JenisSimpanan" NOT NULL,
+      "tipe" "${schemaName}"."TipeTransaksiSimpanan" NOT NULL,
+      "jumlah" DOUBLE PRECISION NOT NULL,
+      "member_id" TEXT NOT NULL,
+      "user_id" TEXT, -- ID Pengurus yg mencatat
+      "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updated_at" TIMESTAMP(3) NOT NULL,
+
+      CONSTRAINT "simpanan_transaksi_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "simpanan_transaksi_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "${schemaName}"."members"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+      CONSTRAINT "simpanan_transaksi_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "${schemaName}"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE
+    );
+  `);
+
+    await tx.$executeRawUnsafe(`
+    CREATE TABLE "${schemaName}".simpanan_saldo (
+      "id" TEXT NOT NULL,
+      "saldo_pokok" DOUBLE PRECISION NOT NULL DEFAULT 0,
+      "saldo_wajib" DOUBLE PRECISION NOT NULL DEFAULT 0,
+      "saldo_sukarela" DOUBLE PRECISION NOT NULL DEFAULT 0,
+      "member_id" TEXT NOT NULL,
+      "last_updated_at" TIMESTAMP(3) NOT NULL,
+
+      CONSTRAINT "simpanan_saldo_pkey" PRIMARY KEY ("id"),
+      CONSTRAINT "simpanan_saldo_member_id_key" UNIQUE ("member_id"),
+      CONSTRAINT "simpanan_saldo_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "${schemaName}"."members"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    );
+  `);
   }
 
   private async createFirstAdmin(

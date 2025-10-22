@@ -14,6 +14,14 @@ async function bootstrap() {
     .setDescription('Dokumentasi API untuk Sistem Koperasi Merah Putih')
     .setVersion('1.0')
     .addBearerAuth()
+    .addTag('Tenants')
+    .addTag('Webhooks')
+    .addTag('Authentication')
+    .addTag('Public')
+    .addTag('Members (Buku 01)')
+    .addTag('Board Positions (Buku 02)')
+    .addTag('Supervisory Positions (Buku 03)')
+    .addTag('Simpanan Anggota (Buku 04)')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   // Path untuk mengakses UI Swagger, e.g., http://localhost:3000/api

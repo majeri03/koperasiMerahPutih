@@ -13,6 +13,9 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { MembersModule } from './members/members.module';
 import { BoardPositionsModule } from './board-positions/board-positions.module';
 import { SupervisoryPositionsModule } from './supervisory-positions/supervisory-positions.module';
+import { SimpananModule } from './simpanan/simpanan.module';
+import { SimpananController } from './simpanan/simpanan.controller';
+import { SimpananService } from './simpanan/simpanan.service';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -26,9 +29,10 @@ import { SupervisoryPositionsModule } from './supervisory-positions/supervisory-
     MembersModule,
     BoardPositionsModule,
     SupervisoryPositionsModule,
+    SimpananModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, SimpananController],
+  providers: [AppService, SimpananService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
