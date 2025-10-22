@@ -278,32 +278,57 @@ model LoanInstallment {
 
   @@map("loan_installments")
 }
+
 // Daftar Inventaris (Modul 6)
 enum InventoryCondition {
-  BAIK             
-  PERLU_PERBAIKAN  
-  RUSAK            
+  BAIK
+  PERLU_PERBAIKAN
+  RUSAK
 }
 
 model InventoryItem {
-  id                String    @id @default(uuid())
-  itemCode          String    @unique @map("item_code") 
-  itemName          String    @map("item_name") 
-  purchaseDate      DateTime  @map("purchase_date") 
-  quantity          Int       
-  unitPrice         Float     @map("unit_price") 
-  totalValue        Float     @map("total_value") 
-  technicalLifeSpan Int?      @map("technical_life_span") 
-  economicLifeSpan  Int?      @map("economic_life_span") 
+  id                String   @id @default(uuid())
+  itemCode          String   @unique @map("item_code")
+  itemName          String   @map("item_name")
+  purchaseDate      DateTime @map("purchase_date")
+  quantity          Int
+  unitPrice         Float    @map("unit_price")
+  totalValue        Float    @map("total_value")
+  technicalLifeSpan Int?     @map("technical_life_span")
+  economicLifeSpan  Int?     @map("economic_life_span")
 
+  condition InventoryCondition @default(BAIK)
 
-  condition         InventoryCondition @default(BAIK) 
+  location String?
+  notes    String?
 
-  location          String?   
-  notes             String?  
-
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("inventory_items")
+}
+
+// Notulen Rapat Anggota (Modul 7)
+model MemberMeetingNote {
+  id                String   @id @default(uuid())
+  meetingDate       DateTime @map("meeting_date")
+  location          String 
+  meetingType       String   @map("meeting_type")
+  totalMembers      Int      @map("total_members") 
+  membersPresent    Int      @map("members_present")
+  leader            String 
+  attendees         String?
+  agendaAndDecision String   @map("agenda_and_decision") @db.Text
+
+  
+  // Kita bisa tambahkan URL file jika ada, atau biarkan kosong jika hanya catatan teks
+  documentUrl String? @map("document_url")
+
+  
+  notulis String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("member_meeting_notes")
 }

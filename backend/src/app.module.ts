@@ -18,6 +18,7 @@ import { SimpananController } from './simpanan/simpanan.controller';
 import { SimpananService } from './simpanan/simpanan.service';
 import { LoansModule } from './loans/loans.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { MemberMeetingNotesModule } from './member-meeting-notes/member-meeting-notes.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -34,6 +35,7 @@ import { InventoryModule } from './inventory/inventory.module';
     SimpananModule,
     LoansModule,
     InventoryModule,
+    MemberMeetingNotesModule,
   ],
   controllers: [AppController, SimpananController],
   providers: [AppService, SimpananService],

@@ -338,6 +338,26 @@ export class TenantsService {
     await tx.$executeRawUnsafe(`
       CREATE UNIQUE INDEX "inventory_items_item_code_key" ON "${schemaName}"."inventory_items"("item_code");
     `);
+    // Tabel Notulen Rapat Anggota (Member Meeting Notes)
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".member_meeting_notes (
+        "id" TEXT NOT NULL,
+        "meeting_date" TIMESTAMP(3) NOT NULL,
+        "location" TEXT NOT NULL,
+        "meeting_type" TEXT NOT NULL,
+        "total_members" INTEGER NOT NULL,
+        "members_present" INTEGER NOT NULL,
+        "leader" TEXT NOT NULL,
+        "attendees" TEXT,
+        "agenda_and_decision" TEXT NOT NULL,
+        "document_url" TEXT,
+        "notulis" TEXT,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "member_meeting_notes_pkey" PRIMARY KEY ("id")
+      );
+    `);
   }
 
   private async createFirstAdmin(
