@@ -21,6 +21,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { MemberMeetingNotesModule } from './member-meeting-notes/member-meeting-notes.module';
 import { BoardMeetingNotesModule } from './board-meeting-notes/board-meeting-notes.module';
 import { SupervisoryMeetingNotesModule } from './supervisory-meeting-notes/supervisory-meeting-notes.module';
+import { EmployeesModule } from './employees/employees.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -40,6 +41,7 @@ import { SupervisoryMeetingNotesModule } from './supervisory-meeting-notes/super
     MemberMeetingNotesModule,
     BoardMeetingNotesModule,
     SupervisoryMeetingNotesModule,
+    EmployeesModule,
   ],
   controllers: [AppController, SimpananController],
   providers: [AppService, SimpananService],
