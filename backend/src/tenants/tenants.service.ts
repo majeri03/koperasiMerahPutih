@@ -358,6 +358,25 @@ export class TenantsService {
         CONSTRAINT "member_meeting_notes_pkey" PRIMARY KEY ("id")
       );
     `);
+    // Tabel Notulen Rapat Pengurus (Board Meeting Notes - Modul 08)
+    await tx.$executeRawUnsafe(`
+    CREATE TABLE "${schemaName}".board_meeting_notes (
+      "id" TEXT NOT NULL,
+      "meeting_date" TIMESTAMP(3) NOT NULL,        -- Kolom 1
+      "location" TEXT NOT NULL,                    -- Kolom 2
+      "meeting_type" TEXT NOT NULL,                -- Kolom 3
+      "total_board" INTEGER NOT NULL,              -- Kolom 4
+      "board_present" INTEGER NOT NULL,            -- Kolom 5
+      "leader" TEXT NOT NULL,                      -- Kolom 6
+      "attendees" TEXT,                            -- Kolom 7 (Opsional)
+      "agenda_and_decision" TEXT NOT NULL,         -- Kolom 8
+      "signature_url" TEXT,                        -- Kolom 9 (Opsional)
+      "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updated_at" TIMESTAMP(3) NOT NULL,
+
+      CONSTRAINT "board_meeting_notes_pkey" PRIMARY KEY ("id")
+    );
+  `);
   }
 
   private async createFirstAdmin(
