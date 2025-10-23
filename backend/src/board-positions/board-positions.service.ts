@@ -1,9 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateBoardPositionDto } from './dto/create-board-position.dto';
 import { UpdateBoardPositionDto } from './dto/update-board-position.dto';
 import { BoardPosition, PrismaClient, Prisma } from '@prisma/client';
-
+import { Role } from 'src/auth/enums/role.enum';
 @Injectable()
 export class BoardPositionsService {
   constructor(private prisma: PrismaService) {}
@@ -12,24 +17,79 @@ export class BoardPositionsService {
     createBoardPositionDto: CreateBoardPositionDto,
   ): Promise<BoardPosition & { member: { fullName: string } }> {
     const prismaTenant: PrismaClient = await this.prisma.getTenantClient();
+    const { memberId, ...positionData } = createBoardPositionDto;
 
-    // Opsional: Cek apakah memberId valid
-    const memberExists = await prismaTenant.member.findUnique({
-      where: { id: createBoardPositionDto.memberId },
-    });
-    if (!memberExists) {
-      throw new NotFoundException(
-        `Anggota dengan ID ${createBoardPositionDto.memberId} tidak ditemukan.`,
+    try {
+      // Kita gunakan transaksi untuk memastikan data konsisten
+      const result = await prismaTenant.$transaction(async (tx) => {
+        // 1. Validasi Member
+        const memberExists = await tx.member.findUnique({
+          where: { id: memberId },
+        });
+        if (!memberExists) {
+          throw new NotFoundException(
+            `Anggota dengan ID ${memberId} tidak ditemukan.`,
+          );
+        }
+
+        // 2. Validasi User (Akun Login)
+        // Kita asumsikan anggota HARUS punya akun User untuk jadi pengurus
+        const userExists = await tx.user.findUnique({
+          where: { id: memberId }, // Ingat, ID User = ID Member
+        });
+        if (!userExists) {
+          throw new ConflictException(
+            `Anggota dengan ID ${memberId} tidak memiliki akun login (User). Harap buatkan akun terlebih dahulu.`,
+          );
+        }
+
+        // 3. Dapatkan ID Role "Pengurus"
+        const pengurusRole = await tx.role.findUnique({
+          where: { name: Role.Pengurus }, // Ambil dari Enum
+        });
+        if (!pengurusRole) {
+          throw new InternalServerErrorException(
+            "Role 'Pengurus' tidak ditemukan di database.",
+          );
+        }
+
+        // 4. Buat Jabatan Pengurus baru
+        const newPosition = await tx.boardPosition.create({
+          data: {
+            ...positionData,
+            memberId: memberId,
+            tanggalDiangkat: new Date(positionData.tanggalDiangkat),
+          },
+          include: { member: { select: { fullName: true } } },
+        });
+
+        // 5. Promosikan Role User menjadi "Pengurus"
+        await tx.user.update({
+          where: { id: memberId },
+          data: {
+            roleId: pengurusRole.id, // Update Role ID
+          },
+        });
+
+        return newPosition;
+      });
+
+      return result;
+    } catch (error) {
+      // Lempar ulang error yang sudah kita definisikan (NotFound, Conflict, etc)
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ConflictException ||
+        error instanceof InternalServerErrorException
+      ) {
+        throw error;
+      }
+      // Tangani error lain jika ada
+      console.error('Gagal mempromosikan pengurus:', error);
+      throw new InternalServerErrorException(
+        'Terjadi kesalahan saat memproses jabatan pengurus.',
       );
     }
-
-    return prismaTenant.boardPosition.create({
-      data: {
-        ...createBoardPositionDto,
-        tanggalDiangkat: new Date(createBoardPositionDto.tanggalDiangkat),
-      },
-      include: { member: { select: { fullName: true } } },
-    });
   }
 
   async findAll() {

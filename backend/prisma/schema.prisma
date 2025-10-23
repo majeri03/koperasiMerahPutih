@@ -67,6 +67,7 @@ model User {
   registrationsProcessed MemberRegistration[]
   memberSuggestionResponses MemberSuggestion[]
   supervisorySuggestionResponses SupervisorySuggestion[] @relation("SupervisorResponses")
+  officialRecommendationResponses OfficialRecommendation[] @relation("OfficialRecommendationResponses")
   @@map("users")
 }
 
@@ -518,4 +519,26 @@ model SupervisorySuggestion {
   updatedAt         DateTime @updatedAt @map("updated_at")
 
   @@map("supervisory_suggestions")
+}
+
+// Buku Anjuran Pejabat (Modul 14)
+model OfficialRecommendation {
+  id                String   @id @default(uuid())
+  entryNumber       Int      @default(autoincrement()) @map("entry_number") // Kolom 1: NO URUT
+  date              DateTime @default(now()) @map("date")                 // Kolom 2: TANGGAL
+  officialName      String   @map("official_name")                        // Kolom 3: NAMA
+  officialPositionAndAddress String @map("official_position_and_address") // Kolom 4: JABATAN DAN ALAMAT
+  recommendation    String   @map("recommendation") @db.Text            // Kolom 5: ISI ANJURAN
+  officialSignatureUrl String? @map("official_signature_url")             // Kolom 6: TANDA TANGAN (Pejabat)
+
+  // Kolom 7 & 8: Tanggapan Pengurus
+  response          String?  @map("response") @db.Text                      // Kolom 7: TANGGAPAN PENGURUS
+  responseByUser    User?    @relation("OfficialRecommendationResponses", fields: [responseByUserId], references: [id]) // Kolom 8: TANDA TANGAN PENGURUS
+  responseByUserId  String?  @map("response_by_user_id")
+  responseAt        DateTime? @map("response_at")
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("official_recommendations")
 }
