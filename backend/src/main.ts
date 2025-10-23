@@ -7,7 +7,12 @@ async function bootstrap() {
 
   // Mengaktifkan validasi DTO secara global
   app.useGlobalPipes(new ValidationPipe());
-
+  app.enableCors({
+    origin: 'http://majujaya.localhost:3000', // Pastikan origin frontend benar
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
+    credentials: true,
+  });
   // Konfigurasi Swagger
   const config = new DocumentBuilder()
     .setTitle('API Koperasi Merah Putih')
@@ -18,15 +23,23 @@ async function bootstrap() {
     .addTag('Webhooks')
     .addTag('Authentication')
     .addTag('Public')
+    .addTag('App')
+    .addTag('Members registrations')
     .addTag('Members (Buku 01)')
     .addTag('Board Positions (Buku 02)')
     .addTag('Supervisory Positions (Buku 03)')
     .addTag('Simpanan Anggota (Buku 04)')
+    .addTag('Loans (Buku 05)')
+    .addTag('Inventory (Buku 06)')
+    .addTag('Member Meeting Notes (Buku 07)')
+    .addTag('Board Meeting Notes (Buku 08)')
+    .addTag('Supervisory Meeting Notes (Buku 09)')
+    .addTag('Employees (Buku 10)')
+    .addTag('Guest Book (Buku 11)')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  // Path untuk mengakses UI Swagger, e.g., http://localhost:3000/api
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(3000);
+  await app.listen(3002);
 }
 void bootstrap();

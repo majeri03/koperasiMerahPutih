@@ -273,9 +273,19 @@ export class TenantsService {
       CREATE UNIQUE INDEX "members_nik_key" ON "${schemaName}"."members"("nik"); -- <--- TAMBAHKAN BARIS INI JIKA BELUM ADA
     `);
     await tx.$executeRawUnsafe(`
+      CREATE TYPE "${schemaName}"."JabatanPengurus" AS ENUM (
+        'Ketua',
+        'Sekretaris',
+        'Bendahara'
+        -- Tambahkan jabatan lain jika diperlukan di masa depan
+        -- 'Wakil_Ketua', 
+        -- 'Lainnya'
+      );
+    `);
+    await tx.$executeRawUnsafe(`
       CREATE TABLE "${schemaName}".board_positions (
      "id" TEXT NOT NULL,
-     "jabatan" TEXT NOT NULL,
+     "jabatan" "${schemaName}"."JabatanPengurus" NOT NULL,
      "tanggal_diangkat" TIMESTAMP(3) NOT NULL,
      "tanggal_berhenti" TIMESTAMP(3),
      "alasan_berhenti" TEXT,
@@ -510,6 +520,23 @@ export class TenantsService {
      CONSTRAINT "employees_approved_by_ketua_id_fkey" FOREIGN KEY ("approved_by_ketua_id") REFERENCES "${schemaName}"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE
    );
  `);
+    // Buku Tamu
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".guest_books (
+        "id" TEXT NOT NULL,
+        "entry_number" SERIAL NOT NULL,                     -- Kolom 1: NO URUT
+        "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Kolom 2: TANGGAL
+        "guest_name" TEXT NOT NULL,                         -- Kolom 3: NAMA TAMU
+        "origin" TEXT NOT NULL,                             -- Kolom 4: INSTANSI / ALAMAT
+        "meet_with" TEXT,                                   -- Kolom 5: BERTEMU DENGAN SIAPA (Opsional)
+        "purpose" TEXT NOT NULL,                            -- Kolom 6: MAKSUD DAN TUJUAN
+        "signature_url" TEXT,                               -- Kolom 7: TANDA TANGAN (Opsional)
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+    
+        CONSTRAINT "guest_books_pkey" PRIMARY KEY ("id")
+      );
+    `);
   }
 
   private async createFirstAdminMemberAndPosition(

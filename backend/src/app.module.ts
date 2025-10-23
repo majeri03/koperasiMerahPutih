@@ -23,6 +23,7 @@ import { BoardMeetingNotesModule } from './board-meeting-notes/board-meeting-not
 import { SupervisoryMeetingNotesModule } from './supervisory-meeting-notes/supervisory-meeting-notes.module';
 import { EmployeesModule } from './employees/employees.module';
 import { MemberRegistrationsModule } from './member-registrations/member-registrations.module';
+import { GuestBookModule } from './guest-book/guest-book.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -44,6 +45,7 @@ import { MemberRegistrationsModule } from './member-registrations/member-registr
     SupervisoryMeetingNotesModule,
     EmployeesModule,
     MemberRegistrationsModule,
+    GuestBookModule,
   ],
   controllers: [AppController, SimpananController],
   providers: [AppService, SimpananService],

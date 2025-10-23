@@ -1,7 +1,7 @@
 // backend/src/auth/decorators/jabatan.decorator.ts
 import { SetMetadata } from '@nestjs/common';
-
-export type JabatanType = string; // Tambahkan string agar bisa custom
+import { JabatanPengurus } from '../enums/jabatan-pengurus.enum';
+export type JabatanType = JabatanPengurus;
 
 export const JABATAN_KEY = 'jabatan'; // Kunci untuk mengambil metadata
 
