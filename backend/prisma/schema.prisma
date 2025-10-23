@@ -64,7 +64,9 @@ model User {
   
   employeePengurusApprovals Employee[] @relation("EmployeePengurusApprovals") 
   employeeKetuaApprovals    Employee[] @relation("EmployeeKetuaApprovals")
-  registrationsProcessed MemberRegistration[] 
+  registrationsProcessed MemberRegistration[]
+  memberSuggestionResponses MemberSuggestion[]
+  supervisorySuggestionResponses SupervisorySuggestion[] @relation("SupervisorResponses")
   @@map("users")
 }
 
@@ -179,8 +181,9 @@ model Member {
   supervisoryPositions SupervisoryPosition[] 
   simpananTransaksi    SimpananTransaksi[] 
   simpananSaldo        SimpananSaldo? 
-  loans                Loan[] 
-
+  loans                Loan[]
+  memberSuggestions MemberSuggestion[]
+  supervisorySuggestions SupervisorySuggestion[] @relation("SupervisorSuggestions")
   @@map("members")
 }
 enum JabatanPengurus {
@@ -466,4 +469,53 @@ model GuestBook {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("guest_books")
+}
+
+// Buku Saran (Modul 12)
+model MemberSuggestion {
+  id                String   @id @default(uuid())
+  suggestionNumber  Int      @default(autoincrement()) @map("suggestion_number") 
+  date              DateTime @default(now()) @map("date")                
+  
+
+  member            Member   @relation(fields: [memberId], references: [id])
+  memberId          String   @map("member_id")
+
+  suggestion        String   @map("suggestion") @db.Text                   
+  signatureUrl      String?  @map("signature_url")                         
+
+  response          String?  @map("response") @db.Text                      
+  responseByUser    User?    @relation(fields: [responseByUserId], references: [id])
+  responseByUserId  String?  @map("response_by_user_id")
+  responseAt        DateTime? @map("response_at")
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("member_suggestions")
+}
+
+// Saran Pengawas (Modul 13)
+model SupervisorySuggestion {
+  id                String   @id @default(uuid())
+  suggestionNumber  Int      @default(autoincrement()) @map("suggestion_number") // Kolom 1: NO URUT
+  date              DateTime @default(now()) @map("date")                 // Kolom 2: TANGGAL
+  
+  // Kolom 3 & 5 (Nama & TTD Pengawas) - Relasi ke Member
+  supervisorMember   Member   @relation("SupervisorSuggestions", fields: [supervisorMemberId], references: [id])
+  supervisorMemberId String   @map("supervisor_member_id")
+
+  suggestion        String   @map("suggestion") @db.Text                   // Kolom 4: ISI SARAN
+  supervisorSignatureUrl String? @map("supervisor_signature_url")            // Kolom 5: TANDA TANGAN PENGAWAS (Opsional)
+
+  // Kolom 6 & 7 (Tanggapan & TTD Pengurus) - Relasi ke User
+  response          String?  @map("response") @db.Text                      // Kolom 7: TANGGAPAN PENGURUS
+  responseByUser    User?    @relation("SupervisorResponses", fields: [responseByUserId], references: [id]) // Kolom 6
+  responseByUserId  String?  @map("response_by_user_id")
+  responseAt        DateTime? @map("response_at")
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("supervisory_suggestions")
 }

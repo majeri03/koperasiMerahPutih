@@ -24,6 +24,8 @@ import { SupervisoryMeetingNotesModule } from './supervisory-meeting-notes/super
 import { EmployeesModule } from './employees/employees.module';
 import { MemberRegistrationsModule } from './member-registrations/member-registrations.module';
 import { GuestBookModule } from './guest-book/guest-book.module';
+import { MemberSuggestionModule } from './member-suggestion/member-suggestion.module';
+import { SupervisorySuggestionModule } from './supervisory-suggestion/supervisory-suggestion.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -46,6 +48,8 @@ import { GuestBookModule } from './guest-book/guest-book.module';
     EmployeesModule,
     MemberRegistrationsModule,
     GuestBookModule,
+    MemberSuggestionModule,
+    SupervisorySuggestionModule,
   ],
   controllers: [AppController, SimpananController],
   providers: [AppService, SimpananService],
