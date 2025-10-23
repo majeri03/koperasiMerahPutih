@@ -99,6 +99,8 @@ export default function BukuTamuPage() {
         </div>
         {/* ------------------------------------------- */}
 
+        
+
         <div className="p-6">
           <h2 className="text-lg font-bold text-gray-700">Daftar Pesan Masuk</h2>
 
@@ -126,7 +128,7 @@ export default function BukuTamuPage() {
 
           <div className="space-y-4">
             {filteredEntries.map((entry) => (
-              <div key={entry.id} className="border border-gray-200 rounded-lg p-4 bg-white hover:bg-gray-50 transition">
+              <div key={entry.id} className="border border-gray-200 rounded-lg p-4 bg-white hover:bg-red-300 transition">
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center gap-3">

@@ -1,32 +1,32 @@
+// backend/src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Mengaktifkan validasi DTO secara global
+  // --- TAMBAHKAN KEMBALI KONFIGURASI CORS DI SINI ---
+  app.enableCors({
+    origin: 'http://majujaya.localhost:3000', // Pastikan origin frontend benar
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
+    credentials: true,
+  });
+  // ---------------------------------------------
+
   app.useGlobalPipes(new ValidationPipe());
 
-  // Konfigurasi Swagger
   const config = new DocumentBuilder()
     .setTitle('API Koperasi Merah Putih')
-    .setDescription('Dokumentasi API untuk Sistem Koperasi Merah Putih')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .addTag('Tenants')
-    .addTag('Webhooks')
-    .addTag('Authentication')
-    .addTag('Public')
-    .addTag('Members (Buku 01)')
-    .addTag('Board Positions (Buku 02)')
-    .addTag('Supervisory Positions (Buku 03)')
-    .addTag('Simpanan Anggota (Buku 04)')
+    // ... (konfigurasi Swagger lainnya) ...
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  // Path untuk mengakses UI Swagger, e.g., http://localhost:3000/api
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(3000);
+  // Pastikan port sudah diubah ke 3002
+  await app.listen(3002);
+  console.log(`Backend application is running on: ${await app.getUrl()}`); // Tambahkan log ini jika belum ada
 }
 void bootstrap();

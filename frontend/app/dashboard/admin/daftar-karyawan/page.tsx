@@ -234,7 +234,7 @@ export default function DaftarPengawasPage() {
               </thead>
               <tbody>
                 {filteredPengawas.map((pengawas) => (
-                  <tr key={pengawas.no} className="border-b hover:bg-gray-50 text-sm">
+                  <tr key={pengawas.no} className="border-b hover:bg-red-300 text-sm transition-colors duration-150">
                     <td className="p-4 font-medium">{pengawas.no}.</td>
                     <td className="p-4">{pengawas.namaLengkap}</td>
                     <td className="p-4">{pengawas.nomorKeanggotaan}</td>

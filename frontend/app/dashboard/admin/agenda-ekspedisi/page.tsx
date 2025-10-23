@@ -122,7 +122,7 @@ export default function AgendaEkspedisiPage() {
               </thead>
               <tbody>
                 {filteredSurat.map((surat) => (
-                  <tr key={surat.id} className="border-b hover:bg-gray-50 text-sm">
+                  <tr key={surat.id} className="border-b hover:bg-red-300 text-sm transition-colors duration-150">
                     <td className="p-4">
                         <div className="flex items-center gap-2">
                             <span className={`p-1.5 rounded-full ${surat.jenis === 'Masuk' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}`}>

@@ -324,7 +324,7 @@ export default function DaftarAnggotaPage() {
               </thead>
               <tbody>
                 {filteredAnggota.map((anggota) => (
-                  <tr key={anggota.no} className="border-b hover:bg-gray-50 text-sm">
+                  <tr key={anggota.no} className="border-b hover:bg-red-300 text-sm transition-colors duration-150">
                     <td className="p-4 font-medium">{anggota.no}.</td>
                     <td className="p-4">{anggota.namaLengkap}</td>
                     <td className="p-4">{anggota.jenisKelamin}</td>

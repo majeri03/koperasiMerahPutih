@@ -592,7 +592,7 @@ export default function PinjamanAnggotaPage() {
                             </thead>
                             <tbody>
                                 {filteredPinjaman.map((pinjaman) => (
-                                    <tr key={pinjaman.id} className="border-b hover:bg-gray-50 text-sm">
+                                    <tr key={pinjaman.id} className="border-b hover:bg-red-300 text-sm transition-colors duration-150">
                                         <td className="p-4">
                                             <div className="font-medium text-gray-800">{pinjaman.anggota.nama}</div>
                                             <div className="text-xs text-gray-500">Tgl Pinjam: {new Date(pinjaman.tanggalPinjam).toLocaleDateString('id-ID')}</div>

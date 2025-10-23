@@ -311,7 +311,7 @@ export default function DaftarInventarisPage() {
                             </thead>
                             <tbody>
                                 {filteredInventaris.map((item) => (
-                                    <tr key={item.id} className="border-b hover:bg-gray-50 text-sm">
+                                    <tr key={item.id} className="border-b hover:bg-red-300 text-sm transition-colors duration-150">
                                         <td className="p-4">
                                             <div className="font-medium text-gray-800">{item.namaBarang}</div>
                                             <div className="text-xs text-gray-500">Kode: {item.kodeBarang}</div>

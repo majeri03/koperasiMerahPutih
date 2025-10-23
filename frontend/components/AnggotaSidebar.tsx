@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, PiggyBank, CreditCard, User, LogOut, X, Landmark, HandCoins, MessageSquare, FileText } from "lucide-react";
 import clsx from "clsx";
+import { apiLogout } from "@/lib/api"; // <-- Import apiLogout
 
 // PERBAIKAN 1: Pastikan link ini sesuai dengan struktur folder Anda
 const navLinks = [
@@ -15,17 +16,24 @@ const navLinks = [
   { href: "/dashboard/anggota/profile", label: "Profil Saya", icon: User },
 ];
 
+interface UserData {
+  email: string;
+  fullName?: string; // Nama mungkin belum ada di payload JWT
+}
+
 type Props = {
   isSidebarOpen: boolean;
   toggleSidebar: () => void;
+  userData?: UserData | null; // <-- Tambahkan props userData (opsional)
 };
 
-export default function AnggotaSidebar({ isSidebarOpen, toggleSidebar }: Props) {
+export default function AnggotaSidebar({ isSidebarOpen, toggleSidebar, userData }: Props) {
   const pathname = usePathname();
   const router = useRouter();
 
   const handleLogout = () => {
-    console.log("Proses logout dijalankan...");
+    console.log("Logging out...");
+    apiLogout(); // <-- Panggil fungsi logout dari api.ts
     router.push("/auth/login"); // Arahkan ke halaman login publik
   };
 

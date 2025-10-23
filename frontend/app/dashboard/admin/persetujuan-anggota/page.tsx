@@ -175,7 +175,7 @@ export default function PersetujuanAnggotaPage() {
               </thead>
               <tbody>
                 {mockCalonAnggota.map((calon) => (
-                  <tr key={calon.id} className="border-b hover:bg-gray-50 text-sm">
+                  <tr key={calon.id} className="border-b hover:bg-red-300 text-sm transition-colors duration-150">
                     <td className="p-4 font-medium text-gray-800">{calon.fullName}</td>
                     <td className="p-4">{calon.email}</td>
                     <td className="p-4">{calon.occupation}</td>

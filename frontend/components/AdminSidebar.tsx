@@ -17,7 +17,7 @@ const bukuKoperasiGroups = [
     title: "Manajemen Utama",
     links: [
       { href: "/dashboard/admin", label: "Dashboard", icon: LayoutGrid },
-      { href: "/dashboard/admin/persetujuan-koperasi", label: "Persetujuan Koperasi", icon: ClipboardCheck },
+      //{ href: "/dashboard/admin/persetujuan-koperasi", label: "Persetujuan Koperasi", icon: ClipboardCheck },
       { href: "/dashboard/admin/persetujuan-anggota", label: "Persetujuan Anggota", icon: UserPlus },
       { href: "/dashboard/admin/daftar-anggota", label: "Daftar Anggota", icon: Users },
       { href: "/dashboard/admin/daftar-pengurus", label: "Daftar Pengurus", icon: BookUser },
