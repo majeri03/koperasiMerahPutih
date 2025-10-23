@@ -45,6 +45,7 @@ model Role {
   users User[]
 
   @@map("roles")
+  
 }
 
 model User {
@@ -57,10 +58,15 @@ model User {
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
-  role                     Role                @relation(fields: [roleId], references: [id])
+  role                     Role                @relation(fields: [roleId], references: [id]) 
   roleId                   Int                 @map("role_id")
-  transaksiSimpananDicatat SimpananTransaksi[]
-
+  transaksiSimpananDicatat SimpananTransaksi[] 
+  
+  employeePengurusApprovals Employee[] @relation("EmployeePengurusApprovals") 
+  employeeKetuaApprovals    Employee[] @relation("EmployeeKetuaApprovals")
+  registrationsProcessed MemberRegistration[]
+  memberSuggestionResponses MemberSuggestion[]
+  supervisorySuggestionResponses SupervisorySuggestion[] @relation("SupervisorResponses")
   @@map("users")
 }
 
@@ -99,6 +105,48 @@ model TenantRegistration {
   @@map("tenant_registrations")
 }
 
+// =================================
+//    REGISTRATION MEMBER
+// =================================
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model MemberRegistration {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Data dari form pendaftaran
+  nik            String             @unique // Unik per tenant
+  fullName       String             @map("full_name")
+  gender         Gender             // Gunakan enum Gender yang sudah ada
+  email          String             @unique // Unik per tenant
+  phoneNumber    String             @map("phone_number")
+  hashedPassword String             @map("hashed_password") 
+  placeOfBirth   String             @map("place_of_birth") 
+  dateOfBirth    DateTime           @map("date_of_birth")  
+  occupation     String                                 
+  address        String
+
+  // (Opsional) Dokumen pendukung
+  // ktpScanUrl     String?            @map("ktp_scan_url")
+  // photoUrl       String?            @map("photo_url")
+
+  // Status Pendaftaran
+  status RegistrationStatus @default(PENDING)
+
+  // (Opsional) Siapa yang approve/reject dan kapan
+  processedBy   User?   @relation(fields: [processedById], references: [id])
+  processedById String? @map("processed_by_id")
+  processedAt   DateTime? @map("processed_at")
+  rejectionReason String? @map("rejection_reason") // Alasan jika ditolak
+
+  @@map("member_registrations")
+}
+
 // Daftar anggota (Modul 1)
 model Member {
   id           String @id @default(uuid())
@@ -106,6 +154,7 @@ model Member {
 
   // Data Diri
   fullName     String   @map("full_name")
+  nik          String   @unique
   placeOfBirth String   @map("place_of_birth")
   dateOfBirth  DateTime @map("date_of_birth")
   gender       Gender // Kita gunakan lagi Enum Gender yang sudah ada
@@ -128,25 +177,30 @@ model Member {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  boardPositions       BoardPosition[]
-  supervisoryPositions SupervisoryPosition[]
-  simpananTransaksi    SimpananTransaksi[]
-  simpananSaldo        SimpananSaldo?
+  boardPositions       BoardPosition[] 
+  supervisoryPositions SupervisoryPosition[] 
+  simpananTransaksi    SimpananTransaksi[] 
+  simpananSaldo        SimpananSaldo? 
   loans                Loan[]
-
+  memberSuggestions MemberSuggestion[]
+  supervisorySuggestions SupervisorySuggestion[] @relation("SupervisorSuggestions")
   @@map("members")
 }
-
+enum JabatanPengurus {
+  Ketua
+  Sekretaris
+  Bendahara
+}
 // Daftar Pengurus (Modul 2)
 model BoardPosition {
   id              String    @id @default(uuid())
-  jabatan         String // e.g., Ketua, Sekretaris, Bendahara
+  jabatan         JabatanPengurus
   tanggalDiangkat DateTime  @map("tanggal_diangkat")
   tanggalBerhenti DateTime? @map("tanggal_berhenti") // Opsional, null jika masih aktif
   alasanBerhenti  String?   @map("alasan_berhenti") // Opsional
 
   // Relasi ke Anggota (Member)
-  member   Member @relation(fields: [memberId], references: [id])
+  member   Member @relation(fields: [memberId], references: [id]) 
   memberId String @map("member_id")
 
   fingerprintUrl String? @map("fingerprint_url")
@@ -167,7 +221,7 @@ model SupervisoryPosition {
   alasanBerhenti  String?   @map("alasan_berhenti")
 
   // Relasi ke Anggota (Member)
-  member   Member @relation(fields: [memberId], references: [id])
+  member   Member @relation(fields: [memberId], references: [id]) 
   memberId String @map("member_id")
 
   // Opsional: Jika ingin menyimpan URL scan/foto
@@ -202,10 +256,10 @@ model SimpananTransaksi {
   tipe       TipeTransaksiSimpanan
   jumlah     Float
 
-  member   Member @relation(fields: [memberId], references: [id])
+  member   Member @relation(fields: [memberId], references: [id]) 
   memberId String @map("member_id")
 
-  dicatatOleh User?   @relation(fields: [userId], references: [id]) // Pengurus yg mencatat
+  dicatatOleh User?   @relation(fields: [userId], references: [id]) 
   userId      String? @map("user_id") // ID Pengurus
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -220,7 +274,7 @@ model SimpananSaldo {
   saldoWajib    Float  @default(0) @map("saldo_wajib")
   saldoSukarela Float  @default(0) @map("saldo_sukarela")
 
-  member   Member @relation(fields: [memberId], references: [id])
+  member   Member @relation(fields: [memberId], references: [id]) 
   memberId String @unique @map("member_id") // Setiap anggota hanya punya 1 record saldo
 
   lastUpdatedAt DateTime @updatedAt @map("last_updated_at")
@@ -258,7 +312,7 @@ model Loan {
 model LoanInstallment {
   id     String @id @default(uuid())
   loanId String @map("loan_id")
-  loan   Loan   @relation(fields: [loanId], references: [id])
+  loan   Loan   @relation(fields: [loanId], references: [id]) 
 
   installmentNumber Int       @map("installment_number") // Angsuran ke-berapa
   dueDate           DateTime  @map("due_date") // Tanggal jatuh tempo angsuran ini
@@ -312,19 +366,17 @@ model InventoryItem {
 model MemberMeetingNote {
   id                String   @id @default(uuid())
   meetingDate       DateTime @map("meeting_date")
-  location          String 
+  location          String
   meetingType       String   @map("meeting_type")
-  totalMembers      Int      @map("total_members") 
+  totalMembers      Int      @map("total_members")
   membersPresent    Int      @map("members_present")
-  leader            String 
+  leader            String
   attendees         String?
   agendaAndDecision String   @map("agenda_and_decision") @db.Text
 
-  
   // Kita bisa tambahkan URL file jika ada, atau biarkan kosong jika hanya catatan teks
   documentUrl String? @map("document_url")
 
-  
   notulis String?
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -332,20 +384,138 @@ model MemberMeetingNote {
 
   @@map("member_meeting_notes")
 }
+
 // Notulen Rapat Pengurus (Modul 8)
 model BoardMeetingNote {
-  id              String   @id @default(uuid())
-  meetingDate     DateTime @map("meeting_date") 
-  location        String                     
-  meetingType     String   @map("meeting_type")
-  totalBoard      Int      @map("total_board")  
-  boardPresent    Int      @map("board_present")
-  leader          String                   
-  attendees       String?   
-  agendaAndDecision String  @map("agenda_and_decision") @db.Text
-  signatureUrl    String?  @map("signature_url")
+  id                String   @id @default(uuid())
+  meetingDate       DateTime @map("meeting_date")
+  location          String
+  meetingType       String   @map("meeting_type")
+  totalBoard        Int      @map("total_board")
+  boardPresent      Int      @map("board_present")
+  leader            String
+  attendees         String?
+  agendaAndDecision String   @map("agenda_and_decision") @db.Text
+  signatureUrl      String?  @map("signature_url")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("board_meeting_notes")
+ 
+}
+
+// Notulen Rapat Pengawas (Modul 9)
+model SupervisoryMeetingNote {
+  id                 String   @id @default(uuid())
+  meetingDate        DateTime @map("meeting_date")
+  location           String
+  meetingType        String   @map("meeting_type")
+  totalSupervisory   Int      @map("total_supervisory")
+  supervisoryPresent Int      @map("supervisory_present")
+  leader             String
+  attendees          String?
+  agendaAndDecision  String   @map("agenda_and_decision") @db.Text
+  signatureUrl       String?  @map("signature_url")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("board_meeting_notes")
+  @@map("supervisory_meeting_notes")
+}
+
+// Daftar Karyawan (Modul 10)
+model Employee {
+  id             String   @id @default(uuid())
+  employeeNumber Int      @default(autoincrement()) @map("employee_number")
+  fullName       String   @map("full_name")
+  placeOfBirth   String   @map("place_of_birth")
+  dateOfBirth    DateTime @map("date_of_birth")
+  gender         Gender
+  address        String
+  hireDate       DateTime @map("hire_date")
+  position       String
+  notes          String?
+
+  signatureUrl String? @map("signature_url")
+
+  approvedByPengurus   User?   @relation("EmployeePengurusApprovals", fields: [approvedByPengurusId], references: [id])
+  approvedByPengurusId String? @map("approved_by_pengurus_id")
+
+  approvedByKetua   User?     @relation("EmployeeKetuaApprovals", fields: [approvedByKetuaId], references: [id])
+  approvedByKetuaId String?   @map("approved_by_ketua_id")
+  ketuaApprovalDate DateTime? @map("ketua_approval_date")
+
+  terminationDate   DateTime? @map("termination_date")
+  terminationReason String?   @map("termination_reason")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("employees")
+}
+
+// Buku Tamu (Modul 11)
+model GuestBook {
+  id          String   @id @default(uuid())
+  entryNumber Int      @default(autoincrement()) @map("entry_number")
+  date        DateTime @default(now()) @map("date")              
+  guestName   String   @map("guest_name")                           
+  origin      String   @map("origin")                              
+  meetWith    String?  @map("meet_with")                             
+  purpose     String   @map("purpose")                               
+  signatureUrl String? @map("signature_url")                       
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("guest_books")
+}
+
+// Buku Saran (Modul 12)
+model MemberSuggestion {
+  id                String   @id @default(uuid())
+  suggestionNumber  Int      @default(autoincrement()) @map("suggestion_number") 
+  date              DateTime @default(now()) @map("date")                
+  
+
+  member            Member   @relation(fields: [memberId], references: [id])
+  memberId          String   @map("member_id")
+
+  suggestion        String   @map("suggestion") @db.Text                   
+  signatureUrl      String?  @map("signature_url")                         
+
+  response          String?  @map("response") @db.Text                      
+  responseByUser    User?    @relation(fields: [responseByUserId], references: [id])
+  responseByUserId  String?  @map("response_by_user_id")
+  responseAt        DateTime? @map("response_at")
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("member_suggestions")
+}
+
+// Saran Pengawas (Modul 13)
+model SupervisorySuggestion {
+  id                String   @id @default(uuid())
+  suggestionNumber  Int      @default(autoincrement()) @map("suggestion_number") // Kolom 1: NO URUT
+  date              DateTime @default(now()) @map("date")                 // Kolom 2: TANGGAL
+  
+  // Kolom 3 & 5 (Nama & TTD Pengawas) - Relasi ke Member
+  supervisorMember   Member   @relation("SupervisorSuggestions", fields: [supervisorMemberId], references: [id])
+  supervisorMemberId String   @map("supervisor_member_id")
+
+  suggestion        String   @map("suggestion") @db.Text                   // Kolom 4: ISI SARAN
+  supervisorSignatureUrl String? @map("supervisor_signature_url")            // Kolom 5: TANDA TANGAN PENGAWAS (Opsional)
+
+  // Kolom 6 & 7 (Tanggapan & TTD Pengurus) - Relasi ke User
+  response          String?  @map("response") @db.Text                      // Kolom 7: TANGGAPAN PENGURUS
+  responseByUser    User?    @relation("SupervisorResponses", fields: [responseByUserId], references: [id]) // Kolom 6
+  responseByUserId  String?  @map("response_by_user_id")
+  responseAt        DateTime? @map("response_at")
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("supervisory_suggestions")
 }

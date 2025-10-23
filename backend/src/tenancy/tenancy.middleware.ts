@@ -23,35 +23,47 @@ export class TenancyMiddleware implements NestMiddleware {
         const originHostParts = originHost.split('.');
 
         // Cek jika originHost BUKAN root domain backend DAN memiliki bagian subdomain
-        if (!backendRootDomains.includes(originHost) && originHostParts.length > 1) {
+        if (
+          !backendRootDomains.includes(originHost) &&
+          originHostParts.length > 1
+        ) {
           // Cek lagi apakah bagian pertama BUKAN root domain (untuk kasus localhost.localhost, dll.)
           if (!backendRootDomains.includes(originHostParts[0])) {
-              tenantId = originHostParts[0];
-              console.log(`[TenancyMiddleware] Tenant identified from Origin: ${tenantId}`);
+            tenantId = originHostParts[0];
+            console.log(
+              `[TenancyMiddleware] Tenant identified from Origin: ${tenantId}`,
+            );
           }
         }
       } catch (e) {
-        console.warn('[TenancyMiddleware] Failed to parse Origin header:', origin);
+        console.warn(
+          '[TenancyMiddleware] Failed to parse Origin header:',
+          origin,
+        );
       }
     }
 
     // Jika tidak terdeteksi dari Origin, coba dari Host (seperti versi lama)
     // Ini berguna jika akses API langsung (misal via Postman) dengan Host header di-set
     if (!tenantId) {
-        const hostParts = host.split('.');
-        if (!backendRootDomains.includes(host) && hostParts.length > 1) {
-             if (!backendRootDomains.includes(hostParts[0])) {
-                tenantId = hostParts[0];
-                console.log(`[TenancyMiddleware] Tenant identified from Host: ${tenantId}`);
-             }
+      const hostParts = host.split('.');
+      if (!backendRootDomains.includes(host) && hostParts.length > 1) {
+        if (!backendRootDomains.includes(hostParts[0])) {
+          tenantId = hostParts[0];
+          console.log(
+            `[TenancyMiddleware] Tenant identified from Host: ${tenantId}`,
+          );
         }
+      }
     }
 
     // Set req.tenantId
     req.tenantId = tenantId;
 
     if (!req.tenantId) {
-      console.log(`[TenancyMiddleware] No tenantId identified. Assuming Super Admin or public access.`);
+      console.log(
+        `[TenancyMiddleware] No tenantId identified. Assuming Super Admin or public access.`,
+      );
     }
 
     next();

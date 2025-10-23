@@ -22,16 +22,19 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-
+import { JabatanGuard } from 'src/auth/guards/jabatan.guard';
+import { Jabatan } from 'src/auth/decorators/jabatan.decorator';
+import { JabatanPengurus } from 'src/auth/enums/jabatan-pengurus.enum';
 @ApiTags('Simpanan Anggota (Buku 04)')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, JabatanGuard)
 @Controller('simpanan')
 export class SimpananController {
   constructor(private readonly simpananService: SimpananService) {}
 
   @Post('transaksi')
   @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Bendahara)
   @ApiOperation({
     summary: 'Mencatat transaksi simpanan baru (Setoran/Penarikan)',
   })
@@ -44,6 +47,7 @@ export class SimpananController {
 
   @Get('transaksi')
   @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Bendahara)
   @ApiOperation({ summary: 'Mendapatkan semua riwayat transaksi simpanan' })
   @ApiQuery({
     name: 'memberId',
@@ -76,6 +80,7 @@ export class SimpananController {
 
   @Get('saldo/total')
   @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Bendahara)
   @ApiOperation({
     summary: 'Mendapatkan total akumulasi simpanan per jenis di koperasi',
   })
@@ -84,6 +89,7 @@ export class SimpananController {
   }
   @Get('saldo/:memberId')
   @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Bendahara)
   @ApiOperation({
     summary: 'Mendapatkan saldo simpanan anggota berdasarkan ID',
   })

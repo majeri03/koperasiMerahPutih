@@ -48,10 +48,9 @@ export class AuthService {
     rt: string,
   ): Promise<{ accessToken: string }> {
     const prismaTenant = await this.prisma.getTenantClient();
-    // PERBAIKAN: Tambahkan 'include: { role: true }' agar konsisten
     const user = await prismaTenant.user.findUnique({
       where: { id: userId },
-      include: { role: true }, // <-- Tambahkan ini
+      include: { role: true },
     });
 
     if (!user || !user.hashedRefreshToken) {

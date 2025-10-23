@@ -17,16 +17,41 @@ async function bootstrap() {
   // ---------------------------------------------
 
   app.useGlobalPipes(new ValidationPipe());
-
+  app.enableCors({
+    origin: 'http://majujaya.localhost:3000', // Pastikan origin frontend benar
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
+    credentials: true,
+  });
+  // Konfigurasi Swagger
   const config = new DocumentBuilder()
     .setTitle('API Koperasi Merah Putih')
-    // ... (konfigurasi Swagger lainnya) ...
+    .setDescription('Dokumentasi API untuk Sistem Koperasi Merah Putih')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .addTag('Tenants')
+    .addTag('Webhooks')
+    .addTag('Authentication')
+    .addTag('Public')
+    .addTag('App')
+    .addTag('Members Registrations')
+    .addTag('Members (Buku 01)')
+    .addTag('Board Positions (Buku 02)')
+    .addTag('Supervisory Positions (Buku 03)')
+    .addTag('Simpanan Anggota (Buku 04)')
+    .addTag('Loans (Buku 05)')
+    .addTag('Inventory (Buku 06)')
+    .addTag('Member Meeting Notes (Buku 07)')
+    .addTag('Board Meeting Notes (Buku 08)')
+    .addTag('Supervisory Meeting Notes (Buku 09)')
+    .addTag('Employees (Buku 10)')
+    .addTag('Guest Book (Buku 11)')
+    .addTag('Member Suggestions (Buku 12)')
+    .addTag('Supervisory Suggestions (Buku 13)')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // Pastikan port sudah diubah ke 3002
   await app.listen(3002);
-  console.log(`Backend application is running on: ${await app.getUrl()}`); // Tambahkan log ini jika belum ada
 }
 void bootstrap();
