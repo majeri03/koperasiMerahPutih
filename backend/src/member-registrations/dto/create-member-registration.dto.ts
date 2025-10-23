@@ -11,8 +11,7 @@ import {
   Length,
   MinLength,
   IsAlphanumeric,
-  // Jika butuh validasi tanggal, uncomment:
-  // IsDateString,
+  IsDateString,
 } from 'class-validator';
 
 export class CreateMemberRegistrationDto {
@@ -44,7 +43,7 @@ export class CreateMemberRegistrationDto {
   password: string;
 
   // --- Data Pribadi (mirip CreateMemberDto) ---
-  @ApiProperty({ example: '3301234567890001', description: 'NIK 16 digit' })
+  @ApiProperty({ example: '3301234567891111', description: 'NIK 16 digit' })
   @IsNumberString({}, { message: 'NIK harus berupa angka.' })
   @Length(16, 16, { message: 'NIK harus terdiri dari 16 digit.' })
   nik: string;
@@ -64,27 +63,28 @@ export class CreateMemberRegistrationDto {
   @IsNotEmpty({ message: 'Nomor HP tidak boleh kosong.' })
   phoneNumber: string;
 
-  // --- Tambahkan field lain sesuai kebutuhan form & model ---
-  // Contoh (sesuaikan dengan form frontend Anda):
-  // @ApiProperty({ example: 'Cilacap' })
-  // @IsString()
-  // @IsNotEmpty({ message: 'Tempat lahir tidak boleh kosong.' })
-  // placeOfBirth: string;
+  @ApiProperty({ example: 'Cilacap' })
+  @IsString()
+  @IsNotEmpty({ message: 'Tempat lahir tidak boleh kosong.' })
+  placeOfBirth: string;
 
-  // @ApiProperty({ example: '1990-05-15', description: 'Format YYYY-MM-DD' })
-  // @IsDateString()
-  // @IsNotEmpty({ message: 'Tanggal lahir tidak boleh kosong.' })
-  // dateOfBirth: string;
+  @ApiProperty({ example: '1990-05-15', description: 'Format YYYY-MM-DD' })
+  @IsDateString(
+    {},
+    { message: 'Format tanggal lahir tidak valid (YYYY-MM-DD).' },
+  ) // Tambahkan validasi tanggal
+  @IsNotEmpty({ message: 'Tanggal lahir tidak boleh kosong.' })
+  dateOfBirth: string; // Terima sebagai string, konversi di service
 
-  // @ApiProperty({ example: 'Ibu Rumah Tangga' })
-  // @IsString()
-  // @IsNotEmpty({ message: 'Pekerjaan tidak boleh kosong.' })
-  // occupation: string;
+  @ApiProperty({ example: 'Ibu Rumah Tangga' })
+  @IsString()
+  @IsNotEmpty({ message: 'Pekerjaan tidak boleh kosong.' })
+  occupation: string;
 
-  // @ApiProperty({ example: 'Jl. Merdeka No. 12...' })
-  // @IsString()
-  // @IsNotEmpty({ message: 'Alamat tidak boleh kosong.' })
-  // address: string;
+  @ApiProperty({ example: 'Jl. Merdeka No. 12...' })
+  @IsString()
+  @IsNotEmpty({ message: 'Alamat tidak boleh kosong.' })
+  address: string;
 
   // Jika ada file upload (opsional)
   // @ApiProperty({ example: 'https://storage.com/ktp.jpg', required: false })

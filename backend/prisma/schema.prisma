@@ -122,12 +122,11 @@ model MemberRegistration {
   gender         Gender             // Gunakan enum Gender yang sudah ada
   email          String             @unique // Unik per tenant
   phoneNumber    String             @map("phone_number")
-  hashedPassword String             @map("hashed_password") // Password yang sudah di-hash
-  // Tambahkan field data diri lain jika ada di form (tempat/tanggal lahir, pekerjaan, alamat, dll.)
-  // placeOfBirth   String?            @map("place_of_birth")
-  // dateOfBirth    DateTime?          @map("date_of_birth")
-  // occupation     String?
-  // address        String?
+  hashedPassword String             @map("hashed_password") 
+  placeOfBirth   String             @map("place_of_birth") 
+  dateOfBirth    DateTime           @map("date_of_birth")  
+  occupation     String                                 
+  address        String
 
   // (Opsional) Dokumen pendukung
   // ktpScanUrl     String?            @map("ktp_scan_url")

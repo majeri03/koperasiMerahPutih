@@ -13,7 +13,12 @@ import type { Request } from 'express'; // <-- Import Request express
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateMemberRegistrationDto } from './dto/create-member-registration.dto';
 import * as bcrypt from 'bcrypt';
-import { PrismaClient, MemberRegistration, Prisma } from '@prisma/client'; // Import Tenant
+import {
+  PrismaClient,
+  MemberRegistration,
+  Prisma,
+  RegistrationStatus,
+} from '@prisma/client';
 
 // --- BUAT SERVICE MENJADI REQUEST SCOPED ---
 @Injectable({ scope: Scope.REQUEST })
@@ -120,27 +125,47 @@ export class MemberRegistrationsService {
     }
     // --- Akhir Logika Mendapatkan Prisma Client Target ---
 
-    // 1. Cek duplikasi email atau NIK di dalam tenant target
+    // 1. Cek duplikasi email atau NIK di tabel registrasi (yang pending)
     const existingRegistration =
       await prismaTenant.memberRegistration.findFirst({
         where: { OR: [{ email }, { nik }] },
-        select: { id: true, email: true, nik: true },
+        select: { id: true },
       });
 
     if (existingRegistration) {
-      const field = existingRegistration.email === email ? 'Email' : 'NIK';
-      await this.disconnectManualClient(prismaTenant); // Disconnect jika manual
+      await this.disconnectManualClient(prismaTenant);
       throw new ConflictException(
-        `${field} sudah digunakan untuk mendaftar di koperasi ini.`,
+        `Email atau NIK sudah digunakan untuk mendaftar (status pending).`,
       );
     }
 
-    // Cek juga member aktif (jika model Member sudah punya email/nik)
-    // const existingMember = await prismaTenant.member.findFirst({ where: { OR: [{ email }, { nik }] } });
-    // if (existingMember) {
-    //   await this.disconnectManualClient(prismaTenant); // Disconnect jika manual
-    //   throw new ConflictException(`Email atau NIK sudah terdaftar sebagai anggota aktif.`);
-    // }
+    // --- PERBAIKAN DI SINI: Pisahkan pengecekan ---
+
+    // 2. Cek duplikasi NIK di tabel member (HANYA NIK)
+    const existingMember = await prismaTenant.member.findFirst({
+      where: { nik: nik }, // Cek NIK di tabel member
+      select: { id: true },
+    });
+
+    if (existingMember) {
+      await this.disconnectManualClient(prismaTenant);
+      throw new ConflictException(
+        `NIK sudah terdaftar sebagai anggota aktif di koperasi ini.`,
+      );
+    }
+
+    // 3. Cek duplikasi Email di tabel user (HANYA EMAIL)
+    const existingUser = await prismaTenant.user.findFirst({
+      where: { email: email }, // Cek Email di tabel user
+      select: { id: true },
+    });
+
+    if (existingUser) {
+      await this.disconnectManualClient(prismaTenant);
+      throw new ConflictException(
+        `Email sudah terdaftar sebagai pengguna (anggota/pengurus) aktif di koperasi ini.`,
+      );
+    }
 
     // 2. Hash password
     const salt = await bcrypt.genSalt();
@@ -148,13 +173,15 @@ export class MemberRegistrationsService {
 
     // 3. Simpan data pendaftaran
     try {
+      const dateOfBirthString = registrationData.dateOfBirth;
       const newRegistration = await prismaTenant.memberRegistration.create({
         data: {
           ...registrationData, // Pastikan field tambahan (placeOfBirth, dll) ada di sini jika di DTO
+          dateOfBirth: new Date(dateOfBirthString),
           email,
           nik,
           hashedPassword,
-          status: 'PENDING',
+          status: RegistrationStatus.PENDING,
           // dateOfBirth: registrationData.dateOfBirth ? new Date(registrationData.dateOfBirth) : undefined, // Contoh konversi tanggal
         },
       });
@@ -207,7 +234,13 @@ export class MemberRegistrationsService {
           gender: true,
           email: true,
           phoneNumber: true,
-          // Tambahkan field lain jika perlu ditampilkan di list approval
+          // Tambahkan field yang hilang:
+          placeOfBirth: true,
+          dateOfBirth: true,
+          occupation: true,
+          address: true,
+          // ktpScanUrl: true, // Uncomment jika ada
+          // photoUrl: true,   // Uncomment jika ada
           status: true,
           processedById: true,
           processedAt: true,
@@ -274,41 +307,40 @@ export class MemberRegistrationsService {
         //    Gunakan data dari 'registration'. Pastikan field cocok!
         const newMember = await tx.member.create({
           data: {
-            // id: newId, // Jika generate manual
-            memberNumber: `AGT-${Date.now()}`, // Contoh generate nomor anggota
+            memberNumber: `AGT-${Date.now()}`,
             fullName: registration.fullName,
-            nik: registration.nik, // Pastikan model Member punya NIK
-            gender: registration.gender,
-            // Tambahkan field lain dari 'registration' sesuai model 'Member'
-            // placeOfBirth: registration.placeOfBirth,
-            // dateOfBirth: registration.dateOfBirth ? new Date(registration.dateOfBirth) : undefined,
-            // occupation: registration.occupation,
-            // address: registration.address,
-            // Sesuaikan field lain jika perlu default value
-            status: 'ACTIVE', // Status awal anggota
+            nik: registration.nik,
+            gender: registration.gender, // Langsung gunakan dari registrasi
+            placeOfBirth: registration.placeOfBirth, // Ambil dari registrasi
+            dateOfBirth: new Date(registration.dateOfBirth), // Konversi ke Date
+            occupation: registration.occupation, // Ambil dari registrasi
+            address: registration.address, // Ambil dari registrasi
+            status: 'ACTIVE',
+            // joinDate: default now()
+            // fingerprintUrl: registration.fingerprintUrl, // Jika ada
+            // signatureUrl: registration.signatureUrl,     // Jika ada
           },
-          select: { id: true }, // Hanya ambil ID member baru
+          select: { id: true },
         });
 
         // 3.2 Buat record User
         const newUser = await tx.user.create({
           data: {
-            id: newMember.id, // Gunakan ID yang sama dengan Member
+            id: newMember.id,
             fullName: registration.fullName,
             email: registration.email,
-            passwordHash: registration.hashedPassword, // Password sudah di-hash saat registrasi
-            roleId: anggotaRole.id, // Link ke Role 'Anggota'
-            status: 'active', // Status awal user
+            passwordHash: registration.hashedPassword,
+            roleId: anggotaRole.id,
+            status: 'active',
           },
-          select: { id: true }, // Hanya ambil ID user baru
+          select: { id: true },
         });
 
-        // 3.3 Update status registrasi menjadi APPROVED
         await tx.memberRegistration.update({
           where: { id: registrationId },
           data: {
             status: 'APPROVED',
-            processedById: processedById, // ID Pengurus yg approve
+            processedById: processedById,
             processedAt: new Date(),
           },
         });
@@ -369,10 +401,10 @@ export class MemberRegistrationsService {
       await prismaTenant.memberRegistration.update({
         where: { id: registrationId },
         data: {
-          status: 'REJECTED',
-          processedById: processedById,
+          status: RegistrationStatus.REJECTED, // Gunakan Enum
+          processedById: processedById, // Gunakan parameter
           processedAt: new Date(),
-          rejectionReason: reason, // Simpan alasan penolakan
+          rejectionReason: reason, // Gunakan parameter
         },
       });
       // Tidak perlu return apa-apa (void)
