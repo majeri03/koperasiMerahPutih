@@ -95,7 +95,7 @@ export default function SimpananAnggotaPage() {
 
               {/* Tabel Histori Transaksi */}
               <div className="mt-8">
-                <h4 className="font-semibold text-gray-700 mb-4">Histori Transaksi Simpanan</h4>
+                <h4 className="font-semibold text-gray-900 mb-4">Histori Transaksi Simpanan</h4>
                 <div className="overflow-x-auto border rounded-lg">
                    <table className="w-full text-left">
                       <thead className="border-b bg-gray-50 text-sm text-gray-600">
@@ -109,7 +109,7 @@ export default function SimpananAnggotaPage() {
                       </thead>
                       <tbody>
                         {selectedAnggota.histori.map((trx, index) => (
-                          <tr key={index} className="border-b hover:bg-gray-50 text-sm">
+                          <tr key={index} className="border-b hover:bg-red-300 text-sm transition-colors duration-150">
                             <td className="p-4">{trx.tanggal}</td>
                             <td className="p-4">
                               <div className="font-medium text-gray-800">{trx.keterangan}</div>

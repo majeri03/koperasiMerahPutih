@@ -210,7 +210,7 @@ export default function ManajemenBeritaPage() {
                             </thead>
                             <tbody>
                                 {filteredArtikel.map((artikel) => (
-                                    <tr key={artikel.id} className="border-b hover:bg-gray-50 text-sm">
+                                    <tr key={artikel.id} className="border-b hover:bg-red-300 text-sm transition-colors duration-150">
                                         <td className="p-4">
                                             <p className="font-bold text-gray-800">{artikel.judul}</p>
                                             <p className="text-xs text-gray-500">Penulis: {artikel.penulis}</p>

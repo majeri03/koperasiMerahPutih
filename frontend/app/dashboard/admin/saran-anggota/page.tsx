@@ -110,7 +110,7 @@ export default function SaranAnggotaPage() {
 
           <div className="space-y-4">
             {filteredSaran.map((saran) => (
-              <div key={saran.id} className="border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition">
+              <div key={saran.id} className="border border-gray-200 rounded-lg bg-white hover:bg-red-200 transition">
                 <div className="p-4">
                     <div className="flex justify-between items-start">
                         <div>

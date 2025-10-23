@@ -254,7 +254,7 @@ export default function SimpananAnggotaPage() {
                             <tbody>
                                 {filteredTransaksi.length > 0 ? (
                                     filteredTransaksi.map((trx) => (
-                                        <tr key={trx.id} className="border-b hover:bg-gray-50 text-sm">
+                                        <tr key={trx.id} className="border-b hover:bg-red-300 text-sm transition-colors duration-150">
                                             <td className="p-4">{new Date(trx.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                                             <td className="p-4 font-medium text-gray-800">{trx.anggota.nama}</td>
                                             <td className="p-4"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${trx.jenis === 'Pokok' ? 'bg-blue-100 text-blue-700' : trx.jenis === 'Wajib' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>{trx.jenis}</span></td>

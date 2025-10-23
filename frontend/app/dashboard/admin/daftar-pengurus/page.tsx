@@ -202,7 +202,7 @@ export default function DaftarPengurusPage() {
                             </thead>
                             <tbody>
                                 {filteredPengurus.map((pengurus) => (
-                                    <tr key={pengurus.no} className="border-b hover:bg-gray-50 text-sm">
+                                    <tr key={pengurus.no} className="border-b hover:bg-red-300 text-sm transition-colors duration-150">
                                         <td className="p-4 font-medium">{pengurus.no}.</td>
                                         <td className="p-4">{pengurus.namaLengkap}</td>
                                         <td className="p-4">{pengurus.nomorKeanggotaan}</td>

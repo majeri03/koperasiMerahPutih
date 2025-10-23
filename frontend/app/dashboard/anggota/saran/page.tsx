@@ -79,7 +79,7 @@ export default function HalamanSaranAnggota() {
             </thead>
             <tbody>
               {mockSaran.map((saran, index) => (
-                <tr key={index} className="border-b hover:bg-gray-50 text-sm">
+                <tr key={index} className="border-b hover:bg-red-300 text-sm transition-colors duration-150">
                   <td className="p-4">{saran.tanggal}</td>
                   <td className="p-4 font-medium text-gray-800">{saran.subjek}</td>
                   <td className="p-4 text-center">
