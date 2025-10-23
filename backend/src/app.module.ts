@@ -22,6 +22,7 @@ import { MemberMeetingNotesModule } from './member-meeting-notes/member-meeting-
 import { BoardMeetingNotesModule } from './board-meeting-notes/board-meeting-notes.module';
 import { SupervisoryMeetingNotesModule } from './supervisory-meeting-notes/supervisory-meeting-notes.module';
 import { EmployeesModule } from './employees/employees.module';
+import { MemberRegistrationsModule } from './member-registrations/member-registrations.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -42,6 +43,7 @@ import { EmployeesModule } from './employees/employees.module';
     BoardMeetingNotesModule,
     SupervisoryMeetingNotesModule,
     EmployeesModule,
+    MemberRegistrationsModule,
   ],
   controllers: [AppController, SimpananController],
   providers: [AppService, SimpananService],

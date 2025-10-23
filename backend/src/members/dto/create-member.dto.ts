@@ -7,6 +7,8 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  IsNumberString,
+  Length,
 } from 'class-validator';
 
 export class CreateMemberDto {
@@ -14,6 +16,12 @@ export class CreateMemberDto {
   @IsString()
   @IsNotEmpty()
   fullName: string;
+
+  @ApiProperty({ example: '3301234567890001', description: 'NIK 16 digit' })
+  @IsNumberString({}, { message: 'NIK harus berupa angka.' })
+  @Length(16, 16, { message: 'NIK harus terdiri dari 16 digit.' })
+  @IsNotEmpty({ message: 'NIK tidak boleh kosong.' }) // Pastikan NIK wajib diisi
+  nik: string;
 
   @ApiProperty({ example: 'Makassar' })
   @IsString()

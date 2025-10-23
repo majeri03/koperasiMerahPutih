@@ -63,6 +63,7 @@ model User {
   
   employeePengurusApprovals Employee[] @relation("EmployeePengurusApprovals")
   employeeKetuaApprovals    Employee[] @relation("EmployeeKetuaApprovals")
+  registrationsProcessed MemberRegistration[]
   @@map("users")
 }
 
@@ -101,6 +102,48 @@ model TenantRegistration {
   @@map("tenant_registrations")
 }
 
+// =================================
+//    REGISTRATION MEMBER
+// =================================
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model MemberRegistration {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Data dari form pendaftaran
+  nik            String             @unique // Unik per tenant
+  fullName       String             @map("full_name")
+  gender         Gender             // Gunakan enum Gender yang sudah ada
+  email          String             @unique // Unik per tenant
+  phoneNumber    String             @map("phone_number")
+  hashedPassword String             @map("hashed_password") 
+  placeOfBirth   String             @map("place_of_birth") 
+  dateOfBirth    DateTime           @map("date_of_birth")  
+  occupation     String                                 
+  address        String
+
+  // (Opsional) Dokumen pendukung
+  // ktpScanUrl     String?            @map("ktp_scan_url")
+  // photoUrl       String?            @map("photo_url")
+
+  // Status Pendaftaran
+  status RegistrationStatus @default(PENDING)
+
+  // (Opsional) Siapa yang approve/reject dan kapan
+  processedBy   User?   @relation(fields: [processedById], references: [id])
+  processedById String? @map("processed_by_id")
+  processedAt   DateTime? @map("processed_at")
+  rejectionReason String? @map("rejection_reason") // Alasan jika ditolak
+
+  @@map("member_registrations")
+}
+
 // Daftar anggota (Modul 1)
 model Member {
   id           String @id @default(uuid())
@@ -108,6 +151,7 @@ model Member {
 
   // Data Diri
   fullName     String   @map("full_name")
+  nik          String   @unique
   placeOfBirth String   @map("place_of_birth")
   dateOfBirth  DateTime @map("date_of_birth")
   gender       Gender // Kita gunakan lagi Enum Gender yang sudah ada
