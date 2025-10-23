@@ -45,6 +45,7 @@ model Role {
   users User[]
 
   @@map("roles")
+  
 }
 
 model User {
@@ -57,13 +58,13 @@ model User {
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
-  role                     Role                @relation(fields: [roleId], references: [id])
+  role                     Role                @relation(fields: [roleId], references: [id]) 
   roleId                   Int                 @map("role_id")
-  transaksiSimpananDicatat SimpananTransaksi[]
+  transaksiSimpananDicatat SimpananTransaksi[] 
   
-  employeePengurusApprovals Employee[] @relation("EmployeePengurusApprovals")
+  employeePengurusApprovals Employee[] @relation("EmployeePengurusApprovals") 
   employeeKetuaApprovals    Employee[] @relation("EmployeeKetuaApprovals")
-  registrationsProcessed MemberRegistration[]
+  registrationsProcessed MemberRegistration[] 
   @@map("users")
 }
 
@@ -174,25 +175,29 @@ model Member {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  boardPositions       BoardPosition[]
-  supervisoryPositions SupervisoryPosition[]
-  simpananTransaksi    SimpananTransaksi[]
-  simpananSaldo        SimpananSaldo?
-  loans                Loan[]
+  boardPositions       BoardPosition[] 
+  supervisoryPositions SupervisoryPosition[] 
+  simpananTransaksi    SimpananTransaksi[] 
+  simpananSaldo        SimpananSaldo? 
+  loans                Loan[] 
 
   @@map("members")
 }
-
+enum JabatanPengurus {
+  Ketua
+  Sekretaris
+  Bendahara
+}
 // Daftar Pengurus (Modul 2)
 model BoardPosition {
   id              String    @id @default(uuid())
-  jabatan         String // e.g., Ketua, Sekretaris, Bendahara
+  jabatan         JabatanPengurus
   tanggalDiangkat DateTime  @map("tanggal_diangkat")
   tanggalBerhenti DateTime? @map("tanggal_berhenti") // Opsional, null jika masih aktif
   alasanBerhenti  String?   @map("alasan_berhenti") // Opsional
 
   // Relasi ke Anggota (Member)
-  member   Member @relation(fields: [memberId], references: [id])
+  member   Member @relation(fields: [memberId], references: [id]) 
   memberId String @map("member_id")
 
   fingerprintUrl String? @map("fingerprint_url")
@@ -213,7 +218,7 @@ model SupervisoryPosition {
   alasanBerhenti  String?   @map("alasan_berhenti")
 
   // Relasi ke Anggota (Member)
-  member   Member @relation(fields: [memberId], references: [id])
+  member   Member @relation(fields: [memberId], references: [id]) 
   memberId String @map("member_id")
 
   // Opsional: Jika ingin menyimpan URL scan/foto
@@ -248,10 +253,10 @@ model SimpananTransaksi {
   tipe       TipeTransaksiSimpanan
   jumlah     Float
 
-  member   Member @relation(fields: [memberId], references: [id])
+  member   Member @relation(fields: [memberId], references: [id]) 
   memberId String @map("member_id")
 
-  dicatatOleh User?   @relation(fields: [userId], references: [id]) // Pengurus yg mencatat
+  dicatatOleh User?   @relation(fields: [userId], references: [id]) 
   userId      String? @map("user_id") // ID Pengurus
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -266,7 +271,7 @@ model SimpananSaldo {
   saldoWajib    Float  @default(0) @map("saldo_wajib")
   saldoSukarela Float  @default(0) @map("saldo_sukarela")
 
-  member   Member @relation(fields: [memberId], references: [id])
+  member   Member @relation(fields: [memberId], references: [id]) 
   memberId String @unique @map("member_id") // Setiap anggota hanya punya 1 record saldo
 
   lastUpdatedAt DateTime @updatedAt @map("last_updated_at")
@@ -304,7 +309,7 @@ model Loan {
 model LoanInstallment {
   id     String @id @default(uuid())
   loanId String @map("loan_id")
-  loan   Loan   @relation(fields: [loanId], references: [id])
+  loan   Loan   @relation(fields: [loanId], references: [id]) 
 
   installmentNumber Int       @map("installment_number") // Angsuran ke-berapa
   dueDate           DateTime  @map("due_date") // Tanggal jatuh tempo angsuran ini
@@ -393,6 +398,7 @@ model BoardMeetingNote {
   updatedAt         DateTime @updatedAt @map("updated_at")
 
   @@map("board_meeting_notes")
+ 
 }
 
 // Notulen Rapat Pengawas (Modul 9)
@@ -443,4 +449,21 @@ model Employee {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("employees")
+}
+
+// Buku Tamu (Modul 11)
+model GuestBook {
+  id          String   @id @default(uuid())
+  entryNumber Int      @default(autoincrement()) @map("entry_number")
+  date        DateTime @default(now()) @map("date")              
+  guestName   String   @map("guest_name")                           
+  origin      String   @map("origin")                              
+  meetWith    String?  @map("meet_with")                             
+  purpose     String   @map("purpose")                               
+  signatureUrl String? @map("signature_url")                       
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("guest_books")
 }
