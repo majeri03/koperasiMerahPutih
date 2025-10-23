@@ -185,7 +185,7 @@ export class TenantsService {
       );
     `);
     await tx.$executeRawUnsafe(`
-      INSERT INTO "${schemaName}".roles (name) VALUES ('Pengurus'), ('Anggota');
+      INSERT INTO "${schemaName}".roles (name) VALUES ('Pengurus'), ('Anggota'), ('Pengawas');
     `);
     await tx.$executeRawUnsafe(`
       CREATE TABLE "${schemaName}".users (
@@ -575,6 +575,26 @@ export class TenantsService {
         CONSTRAINT "supervisory_suggestions_pkey" PRIMARY KEY ("id"),
         CONSTRAINT "supervisory_suggestions_supervisor_member_id_fkey" FOREIGN KEY ("supervisor_member_id") REFERENCES "${schemaName}"."members"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
         CONSTRAINT "supervisory_suggestions_response_by_user_id_fkey" FOREIGN KEY ("response_by_user_id") REFERENCES "${schemaName}"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE
+      );
+    `);
+    // Anjuran Pejabat (Modul 14)
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".official_recommendations (
+        "id" TEXT NOT NULL,
+        "entry_number" SERIAL NOT NULL,                     -- Kolom 1
+        "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Kolom 2
+        "official_name" TEXT NOT NULL,                        -- Kolom 3
+        "official_position_and_address" TEXT NOT NULL,      -- Kolom 4
+        "recommendation" TEXT NOT NULL,                       -- Kolom 5
+        "official_signature_url" TEXT,                        -- Kolom 6
+        "response" TEXT,                                    -- Kolom 7
+        "response_by_user_id" TEXT,                         -- Kolom 8
+        "response_at" TIMESTAMP(3),
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+    
+        CONSTRAINT "official_recommendations_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "official_recommendations_response_by_user_id_fkey" FOREIGN KEY ("response_by_user_id") REFERENCES "${schemaName}"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE
       );
     `);
   }
