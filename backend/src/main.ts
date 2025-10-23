@@ -24,7 +24,7 @@ async function bootstrap() {
     .addTag('Authentication')
     .addTag('Public')
     .addTag('App')
-    .addTag('Members registrations')
+    .addTag('Members Registrations')
     .addTag('Members (Buku 01)')
     .addTag('Board Positions (Buku 02)')
     .addTag('Supervisory Positions (Buku 03)')
@@ -36,6 +36,8 @@ async function bootstrap() {
     .addTag('Supervisory Meeting Notes (Buku 09)')
     .addTag('Employees (Buku 10)')
     .addTag('Guest Book (Buku 11)')
+    .addTag('Member Suggestions (Buku 12)')
+    .addTag('Supervisory Suggestions (Buku 13)')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);

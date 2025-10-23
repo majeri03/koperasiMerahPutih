@@ -537,6 +537,46 @@ export class TenantsService {
         CONSTRAINT "guest_books_pkey" PRIMARY KEY ("id")
       );
     `);
+    // Saran Anggota (Modul 12)
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".member_suggestions (
+        "id" TEXT NOT NULL,
+        "suggestion_number" SERIAL NOT NULL,                      -- Kolom 1: NO URUT
+        "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,   -- Kolom 2: TANGGAL
+        "member_id" TEXT NOT NULL,                                -- Kolom 3 & 4 (Relasi)
+        "suggestion" TEXT NOT NULL,                               -- Kolom 5: ISI SARAN
+        "signature_url" TEXT,                                     -- Kolom 6: TANDA TANGAN (Opsional)
+        "response" TEXT,                                          -- Kolom 7: TANGGAPAN PENGURUS (Opsional)
+        "response_by_user_id" TEXT,                               -- Kolom 8 (Relasi ke User Pengurus)
+        "response_at" TIMESTAMP(3),                               -- Tanggal ditanggapi
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+    
+        CONSTRAINT "member_suggestions_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "member_suggestions_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "${schemaName}"."members"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+        CONSTRAINT "member_suggestions_response_by_user_id_fkey" FOREIGN KEY ("response_by_user_id") REFERENCES "${schemaName}"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE
+      );
+    `);
+    // Buku Saran Pengawas (Modul 13)
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".supervisory_suggestions (
+        "id" TEXT NOT NULL,
+        "suggestion_number" SERIAL NOT NULL,                      -- Kolom 1: NO URUT
+        "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,   -- Kolom 2: TANGGAL
+        "supervisor_member_id" TEXT NOT NULL,                     -- Kolom 3 (Relasi ke Member)
+        "suggestion" TEXT NOT NULL,                               -- Kolom 4: ISI SARAN
+        "supervisor_signature_url" TEXT,                          -- Kolom 5: TANDA TANGAN (Opsional)
+        "response" TEXT,                                          -- Kolom 7: TANGGAPAN PENGURUS (Opsional)
+        "response_by_user_id" TEXT,                               -- Kolom 6 (Relasi ke User Pengurus)
+        "response_at" TIMESTAMP(3),                               -- Tanggal ditanggapi
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+    
+        CONSTRAINT "supervisory_suggestions_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "supervisory_suggestions_supervisor_member_id_fkey" FOREIGN KEY ("supervisor_member_id") REFERENCES "${schemaName}"."members"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+        CONSTRAINT "supervisory_suggestions_response_by_user_id_fkey" FOREIGN KEY ("response_by_user_id") REFERENCES "${schemaName}"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE
+      );
+    `);
   }
 
   private async createFirstAdminMemberAndPosition(
