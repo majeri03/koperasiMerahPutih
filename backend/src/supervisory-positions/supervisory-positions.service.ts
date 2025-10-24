@@ -180,25 +180,71 @@ export class SupervisoryPositionsService {
     id: string,
     reason: string = 'Diberhentikan',
   ): Promise<SupervisoryPosition> {
+    // Tipe return tetap sama
     const prismaTenant: PrismaClient = await this.prisma.getTenantClient();
     try {
-      return await prismaTenant.supervisoryPosition.update({
-        where: { id },
-        data: {
-          tanggalBerhenti: new Date(), // Set tanggal berhenti ke sekarang
-          alasanBerhenti: reason,
-        },
+      // Gunakan transaksi
+      const updatedPosition = await prismaTenant.$transaction(async (tx) => {
+        // 1. Dapatkan posisi saat ini untuk mendapatkan memberId
+        const position = await tx.supervisoryPosition.findUnique({
+          where: { id },
+          select: { memberId: true },
+        });
+
+        if (!position) {
+          throw new NotFoundException(
+            `Posisi Pengawas dengan ID ${id} tidak ditemukan.`,
+          );
+        }
+        const memberId = position.memberId;
+
+        const anggotaRole = await tx.role.findUnique({
+          where: { name: Role.Anggota },
+        });
+        if (!anggotaRole) {
+          throw new InternalServerErrorException(
+            "KRITIS: Role 'Anggota' tidak ditemukan.",
+          );
+        }
+
+        const updatedSupervisoryPos = await tx.supervisoryPosition.update({
+          where: { id },
+          data: {
+            tanggalBerhenti: new Date(),
+            alasanBerhenti: reason,
+          },
+        });
+
+        await tx.user.update({
+          where: { id: memberId },
+          data: {
+            roleId: anggotaRole.id,
+          },
+        });
+
+        return updatedSupervisoryPos;
       });
+
+      return updatedPosition;
     } catch (err: unknown) {
+      if (
+        err instanceof NotFoundException ||
+        err instanceof InternalServerErrorException
+      ) {
+        throw err;
+      }
       if (
         err instanceof Prisma.PrismaClientKnownRequestError &&
         err.code === 'P2025'
       ) {
         throw new NotFoundException(
-          `Posisi Pengawas dengan ID ${id} tidak ditemukan.`,
+          `Posisi Pengawas dengan ID ${id} tidak ditemukan saat mencoba menghapus.`,
         );
       }
-      throw err;
+      console.error(`Gagal menghapus Posisi Pengawas ${id}:`, err);
+      throw new InternalServerErrorException(
+        'Gagal memproses pemberhentian pengawas.',
+      );
     }
   }
 }
