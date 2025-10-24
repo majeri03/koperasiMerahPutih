@@ -562,3 +562,18 @@ model ImportantEvent {
 
   @@map("important_events")
 }
+
+// Agenda (Modul 16)
+model AgendaExpedition {
+  id           String   @id @default(uuid())
+  entryNumber  Int      @default(autoincrement()) @map("entry_number") 
+  letterNumber String   @map("letter_number")                       
+  letterDate   DateTime @map("letter_date")                           
+  addressedTo  String   @map("addressed_to")                        
+  subject      String   @map("subject")                               
+  notes        String?  @map("notes")                             
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("agenda_expeditions")
+}

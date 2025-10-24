@@ -614,6 +614,23 @@ export class TenantsService {
         CONSTRAINT "important_events_recorded_by_user_id_fkey" FOREIGN KEY ("recorded_by_user_id") REFERENCES "${schemaName}"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE
       );
     `);
+    //Agenda (Modul 16)
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".agenda_expeditions (
+        "id" TEXT NOT NULL,
+        "entry_number" SERIAL NOT NULL,                     -- Kolom 1
+        "letter_number" TEXT NOT NULL,                      -- Kolom 2 (Nomor)
+        "letter_date" TIMESTAMP(3) NOT NULL,                -- Kolom 2 (Tanggal)
+        "addressed_to" TEXT NOT NULL,                       -- Kolom 3
+        "subject" TEXT NOT NULL,                            -- Kolom 4
+        "notes" TEXT,                                       -- Kolom 5
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "agenda_expeditions_pkey" PRIMARY KEY ("id")
+        -- Tidak ada foreign key di sini
+      );
+    `);
   }
 
   private async createFirstAdminMemberAndPosition(

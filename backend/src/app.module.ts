@@ -29,6 +29,7 @@ import { SupervisorySuggestionModule } from './supervisory-suggestion/supervisor
 import { UsersModule } from './users/users.module';
 import { OfficialRecommendationModule } from './official-recommendation/official-recommendation.module';
 import { ImportantEventModule } from './important-event/important-event.module';
+import { AgendaExpeditionModule } from './agenda-expedition/agenda-expedition.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -56,6 +57,7 @@ import { ImportantEventModule } from './important-event/important-event.module';
     UsersModule,
     OfficialRecommendationModule,
     ImportantEventModule,
+    AgendaExpeditionModule,
   ],
   controllers: [AppController, SimpananController],
   providers: [AppService, SimpananService],
