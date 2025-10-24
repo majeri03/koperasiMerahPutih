@@ -3,12 +3,13 @@
 import { useState, FormEvent, ChangeEvent } from "react"; // Import ChangeEvent
 import Link from 'next/link';
 import Image from "next/image";
-import { FiSearch, FiLock, FiEye, FiEyeOff, FiUpload } from 'react-icons/fi'; // Import FiUpload
+// FiSearch dihapus karena field pencarian dihilangkan
+import { FiLock, FiEye, FiEyeOff, FiUpload } from 'react-icons/fi'; // Import FiUpload
 
 export default function DaftarKoperasiPage() {
   // State untuk semua field di form
   const [formData, setFormData] = useState({
-    nomorInduk: '',
+    // nomorInduk: '', // Dihapus sesuai permintaan
     skAhu: '',
     namaKoperasi: '',
     provinsi: '',
@@ -90,54 +91,41 @@ export default function DaftarKoperasiPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Pencarian Koperasi */}
+            
+            {/* --- FIELDSET PENCARIAN KOPERASI DIHAPUS --- */}
+            
+            {/* Kedudukan Koperasi (Input Manual) */}
             <fieldset className="space-y-4">
-              <legend className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4 w-full">Pencarian Koperasi</legend>
-              <div>
-                <label htmlFor="nomorInduk" className="block text-sm font-medium text-gray-700">Nomor Induk Koperasi/SK AHU Koperasi <span className="text-red-500">*</span></label>
-                <div className="mt-1 relative">
-                  <input id="nomorInduk" name="nomorInduk" type="text" required value={formData.nomorInduk} onChange={handleChange}
-                    className="w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md" />
-                  <button type="button" className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500">
-                    <FiSearch />
-                  </button>
-                </div>
-              </div>
-            </fieldset>
-
-            {/* Kedudukan Koperasi */}
-            <fieldset className="space-y-4">
-               {/* ... (konten fieldset Kedudukan Koperasi tidak berubah) ... */}
                 <legend className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4 w-full">Kedudukan Koperasi</legend>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                    <label htmlFor="namaKoperasi" className="block text-sm font-medium text-gray-700">Nama Koperasi</label>
-                    <input id="namaKoperasi" name="namaKoperasi" type="text" value={formData.namaKoperasi} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-100" readOnly />
+                    <label htmlFor="namaKoperasi" className="block text-sm font-medium text-gray-700">Nama Koperasi <span className="text-red-500">*</span></label>
+                    <input id="namaKoperasi" name="namaKoperasi" type="text" required value={formData.namaKoperasi} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md" />
                     </div>
                     <div>
-                    <label htmlFor="skAhu" className="block text-sm font-medium text-gray-700">SK AHU Koperasi</label>
-                    <input id="skAhu" name="skAhu" type="text" value={formData.skAhu} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-100" readOnly />
+                    <label htmlFor="skAhu" className="block text-sm font-medium text-gray-700">SK AHU Koperasi <span className="text-red-500">*</span></label>
+                    <input id="skAhu" name="skAhu" type="text" required value={formData.skAhu} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md" />
                     </div>
                     <div>
-                    <label htmlFor="provinsi" className="block text-sm font-medium text-gray-700">Provinsi</label>
-                    <input id="provinsi" name="provinsi" type="text" value={formData.provinsi} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-100" readOnly />
+                    <label htmlFor="provinsi" className="block text-sm font-medium text-gray-700">Provinsi <span className="text-red-500">*</span></label>
+                    <input id="provinsi" name="provinsi" type="text" required value={formData.provinsi} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md" />
                     </div>
                     <div>
-                    <label htmlFor="kabupaten" className="block text-sm font-medium text-gray-700">Kabupaten/Kota</label>
-                    <input id="kabupaten" name="kabupaten" type="text" value={formData.kabupaten} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-100" readOnly />
+                    <label htmlFor="kabupaten" className="block text-sm font-medium text-gray-700">Kabupaten/Kota <span className="text-red-500">*</span></label>
+                    <input id="kabupaten" name="kabupaten" type="text" required value={formData.kabupaten} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md" />
                     </div>
                     <div>
-                    <label htmlFor="kecamatan" className="block text-sm font-medium text-gray-700">Kecamatan</label>
-                    <input id="kecamatan" name="kecamatan" type="text" value={formData.kecamatan} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-100" readOnly />
+                    <label htmlFor="kecamatan" className="block text-sm font-medium text-gray-700">Kecamatan <span className="text-red-500">*</span></label>
+                    <input id="kecamatan" name="kecamatan" type="text" required value={formData.kecamatan} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md" />
                     </div>
                     <div>
-                    <label htmlFor="kelurahan" className="block text-sm font-medium text-gray-700">Desa/Kelurahan</label>
-                    <input id="kelurahan" name="kelurahan" type="text" value={formData.kelurahan} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-100" readOnly />
+                    <label htmlFor="kelurahan" className="block text-sm font-medium text-gray-700">Desa/Kelurahan <span className="text-red-500">*</span></label>
+                    <input id="kelurahan" name="kelurahan" type="text" required value={formData.kelurahan} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md" />
                     </div>
                 </div>
                 <div>
-                    <label htmlFor="alamatLengkap" className="block text-sm font-medium text-gray-700">Alamat Lengkap</label>
-                    <textarea id="alamatLengkap" name="alamatLengkap" rows={3} value={formData.alamatLengkap} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md bg-gray-100" readOnly />
+                    <label htmlFor="alamatLengkap" className="block text-sm font-medium text-gray-700">Alamat Lengkap <span className="text-red-500">*</span></label>
+                    <textarea id="alamatLengkap" name="alamatLengkap" rows={3} required value={formData.alamatLengkap} onChange={handleChange} className="mt-1 w-full p-2 border border-gray-300 rounded-md" />
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700">Peta Lokasi</label>
