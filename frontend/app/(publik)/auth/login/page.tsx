@@ -3,57 +3,50 @@
 
 import { useState, FormEvent } from "react";
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // <-- Import useRouter
+import { useRouter } from 'next/navigation';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
-import { apiLogin } from '@/lib/api'; // <-- Import fungsi API login
+import { apiLogin } from '@/lib/api';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null); // State untuk pesan error
-  const [loading, setLoading] = useState(false); // State untuk loading
-  const router = useRouter(); // <-- Gunakan hook router
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleSubmit = async (event: FormEvent) => { // <-- Jadikan async
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    setError(null); // Reset error
-    setLoading(true); // Mulai loading
+    setError(null);
+    setLoading(true);
 
     try {
-      // Panggil API login dari lib/api.ts
-      const { accessToken, refreshToken } = await apiLogin(email, password);
+      // Panggil apiLogin
+      const { accessToken, refreshToken } = await apiLogin(email, password); //
 
-      // **Simpan Token (Contoh: localStorage)**
-      // PERHATIAN: localStorage mudah diakses XSS. Pertimbangkan HttpOnly cookies jika keamanan lebih tinggi diperlukan.
-      if (typeof window !== 'undefined') { // Pastikan hanya berjalan di client
+      if (typeof window !== 'undefined') {
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
         console.log('Login berhasil, token disimpan di localStorage.');
       }
 
-      // **Redirect ke Dashboard**
-      // Tambahkan logika di sini jika perlu redirect ke admin vs anggota
-      router.push('/dashboard/anggota'); // Asumsi redirect ke anggota dulu
+      router.push('/dashboard/anggota');
 
     } catch (err: any) {
-      console.error('Login failed:', err);
-      // Tampilkan pesan error dari API atau pesan generik
-      setError(err.message || 'Terjadi kesalahan saat login. Periksa kembali email dan password Anda.');
+      console.error('Login failed in handleSubmit:', err);
+      // Tangkap error "Failed to fetch" atau error dari backend
+      setError(err.message === 'Failed to fetch' ? 'Gagal terhubung ke server. Pastikan server backend berjalan.' : err.message || 'Terjadi kesalahan saat login.');
     } finally {
-      setLoading(false); // Selesai loading, apa pun hasilnya
+      setLoading(false);
     }
   };
 
-  // Fungsi untuk mengubah visibilitas password
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
   return (
-    // Grid utama untuk layout
     <div className="grid grid-cols-1 md:grid-cols-2 min-h-[90vh]">
-
       {/* Kolom Kiri (Branding) */}
       <div className="hidden md:flex flex-col justify-center items-center bg-brand-red-600 text-white p-12">
         <h1 className="text-4xl font-bold">Koperasi Digital</h1>
@@ -92,7 +85,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-brand-red-600 focus:border-brand-red-600 disabled:bg-gray-100"
                   placeholder="anda@email.com"
-                  disabled={loading} // Nonaktifkan saat loading
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -114,11 +107,11 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-brand-red-600 focus:border-brand-red-600 disabled:bg-gray-100"
                   placeholder="********"
-                  disabled={loading} // Nonaktifkan saat loading
+                  disabled={loading}
                 />
                 <div
                   className={`absolute inset-y-0 right-0 pr-3 flex items-center ${loading ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                  onClick={!loading ? togglePasswordVisibility : undefined} // Cegah klik saat loading
+                  onClick={!loading ? togglePasswordVisibility : undefined}
                 >
                   {showPassword ? (
                     <FiEyeOff className="h-5 w-5 text-gray-400" />
@@ -148,7 +141,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-red-600 hover:bg-brand-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading} // Nonaktifkan saat loading
+                disabled={loading}
               >
                 {loading ? 'Memproses...' : 'Masuk'}
               </button>
