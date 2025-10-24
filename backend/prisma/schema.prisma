@@ -68,6 +68,7 @@ model User {
   memberSuggestionResponses MemberSuggestion[]
   supervisorySuggestionResponses SupervisorySuggestion[] @relation("SupervisorResponses")
   officialRecommendationResponses OfficialRecommendation[] @relation("OfficialRecommendationResponses")
+  importantEventsRecorded         ImportantEvent[] @relation("ImportantEventsRecorded")
   @@map("users")
 }
 
@@ -541,4 +542,23 @@ model OfficialRecommendation {
   updatedAt         DateTime @updatedAt @map("updated_at")
 
   @@map("official_recommendations")
+}
+
+// Buku Catatan Kejadia Penting (Modul 15)
+model ImportantEvent {
+  id                String   @id @default(uuid())
+  entryNumber       Int      @default(autoincrement()) @map("entry_number") // Kolom 1: NO URUT
+  date              DateTime @default(now()) @map("date")                 // Kolom 2: TANGGAL
+  description       String   @map("description") @db.Text                  // Kolom 3: URAIAN KEJADIAN
+  resolution        String?  @map("resolution") @db.Text                   // Kolom 4: PENYELESAIAN (Opsional)
+  causeAndNotes     String?  @map("cause_and_notes") @db.Text            // Kolom 5: SEBAB & KETERANGAN (Opsional)
+
+  // Kolom 6: TANDA TANGAN (Pengurus yang mencatat/update)
+  recordedByUser    User?    @relation("ImportantEventsRecorded", fields: [recordedByUserId], references: [id])
+  recordedByUserId  String?  @map("recorded_by_user_id")
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("important_events")
 }

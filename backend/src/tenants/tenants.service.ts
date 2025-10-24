@@ -597,6 +597,23 @@ export class TenantsService {
         CONSTRAINT "official_recommendations_response_by_user_id_fkey" FOREIGN KEY ("response_by_user_id") REFERENCES "${schemaName}"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE
       );
     `);
+    // Catatn kejadian Penting (Modul 15)
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".important_events (
+        "id" TEXT NOT NULL,
+        "entry_number" SERIAL NOT NULL,                     -- Kolom 1
+        "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Kolom 2
+        "description" TEXT NOT NULL,                        -- Kolom 3
+        "resolution" TEXT,                                  -- Kolom 4
+        "cause_and_notes" TEXT,                             -- Kolom 5
+        "recorded_by_user_id" TEXT,                         -- Kolom 6
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "important_events_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "important_events_recorded_by_user_id_fkey" FOREIGN KEY ("recorded_by_user_id") REFERENCES "${schemaName}"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE
+      );
+    `);
   }
 
   private async createFirstAdminMemberAndPosition(
