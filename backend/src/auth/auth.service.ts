@@ -8,8 +8,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
-// Kita tidak lagi menggunakan JwtPayloadDto di sini, jadi importnya dihapus
-
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { JwtPayloadDto } from './dto/jwt-payload.dto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -101,5 +101,48 @@ export class AuthService {
     ]);
 
     return { accessToken, refreshToken };
+  }
+  async changePassword(
+    userPayload: JwtPayloadDto,
+    changeDto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    const { oldPassword, newPassword } = changeDto;
+    const { userId } = userPayload;
+
+    const prismaTenant = await this.prisma.getTenantClient();
+
+    // 1. Ambil data user saat ini
+    const user = await prismaTenant.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      // Ini seharusnya tidak terjadi jika token valid, tapi sebagai pengaman
+      throw new UnauthorizedException('User tidak ditemukan.');
+    }
+
+    // 2. Verifikasi password lama
+    const isOldPasswordValid = await bcrypt.compare(
+      oldPassword,
+      user.passwordHash,
+    );
+    if (!isOldPasswordValid) {
+      throw new UnauthorizedException('Password lama Anda salah.');
+    }
+
+    // 3. Hash password baru
+    const salt = await bcrypt.genSalt();
+    const newPasswordHash = await bcrypt.hash(newPassword, salt);
+
+    // 4. Update password di database
+    await prismaTenant.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: newPasswordHash,
+        // (Opsional) Nonaktifkan refresh token lama untuk keamanan
+        hashedRefreshToken: null,
+      },
+    });
+
+    return { message: 'Password berhasil diperbarui.' };
   }
 }

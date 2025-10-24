@@ -1,10 +1,15 @@
 // backend/src/supervisory-positions/supervisory-positions.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service'; // Sesuaikan path jika perlu
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+  ConflictException,
+} from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateSupervisoryPositionDto } from './dto/create-supervisory-position.dto';
 import { UpdateSupervisoryPositionDto } from './dto/update-supervisory-position.dto';
-import { PrismaClient, SupervisoryPosition, Prisma } from '@prisma/client'; // Impor tipe
-
+import { PrismaClient, SupervisoryPosition, Prisma } from '@prisma/client';
+import { Role } from 'src/auth/enums/role.enum';
 @Injectable()
 export class SupervisoryPositionsService {
   constructor(private prisma: PrismaService) {}
@@ -14,25 +19,77 @@ export class SupervisoryPositionsService {
     createDto: CreateSupervisoryPositionDto,
   ): Promise<SupervisoryPosition> {
     const prismaTenant: PrismaClient = await this.prisma.getTenantClient();
+    const { memberId, ...positionData } = createDto;
 
-    // Validasi Member ID (Sama seperti Pengurus)
-    const memberExists = await prismaTenant.member.findUnique({
-      where: { id: createDto.memberId },
-    });
-    if (!memberExists) {
-      throw new NotFoundException(
-        `Anggota dengan ID ${createDto.memberId} tidak ditemukan.`,
+    try {
+      // Kita gunakan transaksi untuk memastikan data konsisten
+      const result = await prismaTenant.$transaction(async (tx) => {
+        // 1. Validasi Member
+        const memberExists = await tx.member.findUnique({
+          where: { id: memberId },
+        });
+        if (!memberExists) {
+          throw new NotFoundException(
+            `Anggota dengan ID ${memberId} tidak ditemukan.`,
+          );
+        }
+
+        // 2. Validasi User (Akun Login)
+        const userExists = await tx.user.findUnique({
+          where: { id: memberId }, // ID User = ID Member
+        });
+        if (!userExists) {
+          throw new ConflictException(
+            `Anggota dengan ID ${memberId} tidak memiliki akun login (User). Harap buatkan akun terlebih dahulu.`,
+          );
+        }
+
+        // 3. Dapatkan ID Role "Pengawas"
+        const pengawasRole = await tx.role.findUnique({
+          where: { name: Role.Pengawas }, // Ambil dari Enum
+        });
+        if (!pengawasRole) {
+          throw new InternalServerErrorException(
+            "Role 'Pengawas' tidak ditemukan di database.",
+          );
+        }
+
+        // 4. Buat Jabatan Pengawas baru
+        const newPosition = await tx.supervisoryPosition.create({
+          data: {
+            ...positionData,
+            memberId: memberId,
+            tanggalDiangkat: new Date(positionData.tanggalDiangkat),
+          },
+        });
+
+        // 5. Promosikan Role User menjadi "Pengawas"
+        await tx.user.update({
+          where: { id: memberId },
+          data: {
+            roleId: pengawasRole.id, // Update Role ID
+          },
+        });
+
+        return newPosition;
+      });
+
+      return result;
+    } catch (error) {
+      // Lempar ulang error yang sudah kita definisikan
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ConflictException ||
+        error instanceof InternalServerErrorException
+      ) {
+        throw error;
+      }
+      // Tangani error lain jika ada
+      console.error('Gagal mempromosikan pengawas:', error);
+      throw new InternalServerErrorException(
+        'Terjadi kesalahan saat memproses jabatan pengawas.',
       );
     }
-
-    return prismaTenant.supervisoryPosition.create({
-      data: {
-        ...createDto,
-        tanggalDiangkat: new Date(createDto.tanggalDiangkat),
-      },
-      // Anda bisa menambahkan include member jika ingin responsnya menyertakan nama
-      // include: { member: { select: { fullName: true } } },
-    });
   }
 
   async findAll() {

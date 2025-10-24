@@ -26,6 +26,8 @@ import { MemberRegistrationsModule } from './member-registrations/member-registr
 import { GuestBookModule } from './guest-book/guest-book.module';
 import { MemberSuggestionModule } from './member-suggestion/member-suggestion.module';
 import { SupervisorySuggestionModule } from './supervisory-suggestion/supervisory-suggestion.module';
+import { UsersModule } from './users/users.module';
+import { OfficialRecommendationModule } from './official-recommendation/official-recommendation.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -50,6 +52,8 @@ import { SupervisorySuggestionModule } from './supervisory-suggestion/supervisor
     GuestBookModule,
     MemberSuggestionModule,
     SupervisorySuggestionModule,
+    UsersModule,
+    OfficialRecommendationModule,
   ],
   controllers: [AppController, SimpananController],
   providers: [AppService, SimpananService],
