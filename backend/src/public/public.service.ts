@@ -1,3 +1,4 @@
+// src/public/public.service.ts
 import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
@@ -11,13 +12,33 @@ export class PublicService {
     const {
       subdomain,
       email,
-      nik,
-      phoneNumber,
       password,
       cooperativeName,
-      ...registrationDetails
+      // Detail Koperasi
+      skAhuKoperasi,
+      province,
+      city,
+      district,
+      village,
+      alamatLengkap,
+      petaLokasi,
+      // Detail PIC (Calon Admin)
+      picFullName,
+      picNik,
+      picGender,
+      picPlaceOfBirth,
+      picDateOfBirth, // Ini masih string
+      picOccupation,
+      picAddress,
+      picPhoneNumber,
+      // Detail Dokumen
+      dokPengesahanPendirianUrl,
+      dokDaftarUmumUrl,
+      dokAkteNotarisUrl,
+      dokNpwpKoperasiUrl,
     } = registerTenantDto;
 
+    // Cek duplikasi subdomain
     const existingTenant = await this.prisma.tenant.findUnique({
       where: { subdomain },
     });
@@ -25,13 +46,22 @@ export class PublicService {
       throw new ConflictException('Nama subdomain sudah digunakan.');
     }
 
+    // 2. Pengecekan Konflik (PERBAIKAN DI SINI)
     const existingRegistration = await this.prisma.tenantRegistration.findFirst(
       {
-        where: { OR: [{ email }, { nik }, { phoneNumber }] },
+        where: {
+          OR: [
+            { email },
+            { picNik: picNik }, // <-- Diubah dari pic_nik
+            { picPhoneNumber: picPhoneNumber }, // <-- Diubah dari pic_phone_number
+          ],
+        },
       },
     );
     if (existingRegistration) {
-      throw new ConflictException('Email, NIK, atau Nomor HP sudah terdaftar.');
+      throw new ConflictException(
+        'Email, NIK PIC, atau Nomor HP PIC sudah terdaftar.',
+      );
     }
 
     const salt = await bcrypt.genSalt();
@@ -48,14 +78,36 @@ export class PublicService {
           },
         });
 
+        // 3. Simpan data ke TenantRegistration (PERBAIKAN DI SINI)
         await tx.tenantRegistration.create({
           data: {
-            ...registrationDetails,
+            // Data Koperasi
             cooperativeName,
+            skAhuKoperasi,
+            province,
+            city,
+            district,
+            village,
+            alamatLengkap,
+            petaLokasi,
+            // Data PIC (dipetakan ke nama camelCase)
+            picFullName: picFullName,
+            picNik: picNik,
+            picGender: picGender,
+            picPlaceOfBirth: picPlaceOfBirth,
+            picDateOfBirth: new Date(picDateOfBirth),
+            picOccupation: picOccupation,
+            picAddress: picAddress,
+            picPhoneNumber: picPhoneNumber,
+            // Data Akun
             email,
-            nik,
-            phoneNumber,
             hashedPassword,
+            // Data Dokumen
+            dokPengesahanPendirian: dokPengesahanPendirianUrl,
+            dokDaftarUmum: dokDaftarUmumUrl,
+            dokAkteNotaris: dokAkteNotarisUrl,
+            dokNpwpKoperasi: dokNpwpKoperasiUrl,
+            // Relasi
             tenantId: tenant.id,
           },
         });

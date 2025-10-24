@@ -84,23 +84,35 @@ enum Gender {
 model TenantRegistration {
   id String @id @default(uuid())
 
-  nik            String @unique
-  fullName       String @map("full_name")
-  gender         Gender
-  email          String @unique
-  phoneNumber    String @unique @map("phone_number")
-  hashedPassword String @map("hashed_password")
-
+  // === Informasi Koperasi ===
+  cooperativeName String    @map("cooperative_name")
+  skAhuKoperasi   String?   @map("sk_ahu_koperasi") // BARU
   province        String
   city            String
   district        String
   village         String
-  cooperativeName String @map("cooperative_name")
+  alamatLengkap   String    @map("alamat_lengkap") @db.Text // BARU
+  petaLokasi      String?   @map("peta_lokasi") // BARU
 
-  ktpDocumentUrl  String? @map("ktp_document_url")
-  skDocumentUrl   String? @map("sk_document_url")
-  npwpDocumentUrl String? @map("npwp_document_url")
-
+  // === Informasi PIC (Person in Charge) ===
+  // Ini adalah data yang akan dipakai untuk membuat Member pertama
+  picFullName     String    @map("pic_full_name") // Ganti dari fullName
+  picNik          String    @unique @map("pic_nik") // Ganti dari nik
+  picGender       Gender    @map("pic_gender") // Ganti dari gender
+  picPlaceOfBirth String    @map("pic_place_of_birth") // BARU
+  picDateOfBirth  DateTime  @map("pic_date_of_birth") // BARU
+  picOccupation   String    @map("pic_occupation") // BARU
+  picAddress      String    @map("pic_address") @db.Text // BARU
+  picPhoneNumber  String    @unique @map("pic_phone_number") // Ganti dari phoneNumber
+  email           String    @unique // Email Koperasi (untuk login)
+  hashedPassword  String    @map("hashed_password")
+  
+  // === Dokumen Koperasi (URL) ===
+  dokPengesahanPendirian String? @map("dok_pengesahan_pendirian") // BARU
+  dokDaftarUmum          String? @map("dok_daftar_umum") // BARU
+  dokAkteNotaris         String? @map("dok_akte_notaris") // BARU
+  dokNpwpKoperasi        String? @map("dok_npwp_koperasi") // Ganti dari npwpDocumentUrl
+  
   tenant   Tenant @relation(fields: [tenantId], references: [id])
   tenantId String @unique @map("tenant_id")
 

@@ -869,23 +869,21 @@ export class TenantsService {
           // --- PERBAIKAN PEMANGGILAN FUNGSI ---
           // Siapkan data detail admin dari registrationData
           const adminDetailsForHelper = {
-            fullName: registrationData.fullName,
+            fullName: registrationData.picFullName, // <-- Diubah dari pic_full_name
             email: registrationData.email,
-            hashedPassword: registrationData.hashedPassword, // Ambil HASHED password
-            nik: registrationData.nik,
-            gender: registrationData.gender,
-            placeOfBirth: registrationData.city || 'Data Belum Lengkap', // Fallback
-            dateOfBirth: new Date(), // Fallback -> Idealnya ada di registrasi tenant
-            occupation: 'Pengurus Koperasi', // Default
-            address:
-              `${registrationData.village || ''}, ${registrationData.district || ''}, ${registrationData.city || ''}`.trim() ||
-              'Data Belum Lengkap',
+            hashedPassword: registrationData.hashedPassword,
+            nik: registrationData.picNik, // <-- Diubah dari pic_nik
+            gender: registrationData.picGender, // <-- Diubah dari pic_gender
+            placeOfBirth: registrationData.picPlaceOfBirth, // <-- Diubah dari pic_place_of_birth
+            dateOfBirth: registrationData.picDateOfBirth, // <-- Diubah dari pic_date_of_birth
+            occupation: registrationData.picOccupation, // <-- Diubah dari pic_occupation
+            address: registrationData.picAddress, // <-- Diubah dari pic_address
           };
+          // Panggil fungsi helper dengan data LENGKAP
           await this.createFirstAdminMemberAndPosition(
-            // <-- Nama fungsi baru
             tx,
             tenant.schemaName,
-            adminDetailsForHelper, // <-- Kirim data yang sudah disiapkan
+            adminDetailsForHelper,
           );
           // --- AKHIR PERBAIKAN ---
 

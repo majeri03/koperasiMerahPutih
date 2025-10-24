@@ -1,3 +1,4 @@
+// src/public/dto/register-tenant.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
 import { Gender } from '@prisma/client';
 import {
@@ -9,44 +10,29 @@ import {
   IsString,
   Length,
   MinLength,
+  IsOptional,
+  IsDateString,
+  IsUrl,
 } from 'class-validator';
 
 export class RegisterTenantDto {
-  // === Informasi Pribadi PIC ===
-  @ApiProperty({
-    example: '3501234567890001',
-    description: 'Nomor Induk Kependudukan (16 digit)',
-  })
-  @IsNumberString()
-  @Length(16, 16)
-  nik: string;
-
-  @ApiProperty({ example: 'Rina Pengelola' })
+  // === Informasi Koperasi ===
+  @ApiProperty({ example: 'Koperasi Maju Jaya' })
   @IsString()
   @IsNotEmpty()
-  fullName: string;
+  cooperativeName: string;
 
-  @ApiProperty({ enum: Gender, example: Gender.FEMALE })
-  @IsEnum(Gender)
-  gender: Gender;
-
-  @ApiProperty({ example: 'rina.p@example.com' })
-  @IsEmail()
-  email: string;
-
-  @ApiProperty({ example: '81234567890' })
-  @IsNumberString()
-  phoneNumber: string;
-
-  @ApiProperty({
-    example: 'passwordyangkuat123',
-    description: 'Minimal 8 karakter',
-  })
+  @ApiProperty({ example: 'majujaya' })
   @IsString()
-  @MinLength(8)
-  password: string;
+  @IsNotEmpty()
+  @IsAlphanumeric()
+  subdomain: string;
 
-  // === Informasi Koperasi ===
+  @ApiProperty({ example: 'SK-AHU-12345', required: false })
+  @IsString()
+  @IsOptional()
+  skAhuKoperasi?: string;
+
   @ApiProperty({ example: 'Jawa Barat' })
   @IsString()
   @IsNotEmpty()
@@ -67,14 +53,82 @@ export class RegisterTenantDto {
   @IsNotEmpty()
   village: string;
 
-  @ApiProperty({ example: 'Warga Sejahtera' })
+  @ApiProperty({ example: 'Jl. Koperasi No. 1, Bandung' })
   @IsString()
   @IsNotEmpty()
-  cooperativeName: string;
+  alamatLengkap: string;
 
-  @ApiProperty({ example: 'wargasejahtera' })
+  @ApiProperty({ example: 'https://maps.app.goo.gl/abcdef', required: false })
+  @IsUrl()
+  @IsOptional()
+  petaLokasi?: string;
+
+  // === Informasi PIC (Calon Admin/Member Pertama) ===
+  @ApiProperty({ example: 'Budi Santoso' })
   @IsString()
   @IsNotEmpty()
-  @IsAlphanumeric()
-  subdomain: string;
+  picFullName: string;
+
+  @ApiProperty({ example: '3201234567890001', description: 'NIK 16 digit' })
+  @IsNumberString()
+  @Length(16, 16)
+  picNik: string;
+
+  @ApiProperty({ enum: Gender, example: Gender.MALE })
+  @IsEnum(Gender)
+  picGender: Gender;
+
+  @ApiProperty({ example: 'Bandung' })
+  @IsString()
+  @IsNotEmpty()
+  picPlaceOfBirth: string;
+
+  @ApiProperty({ example: '1985-05-10', description: 'YYYY-MM-DD' })
+  @IsDateString()
+  picDateOfBirth: string;
+
+  @ApiProperty({ example: 'Ketua Pengurus' })
+  @IsString()
+  @IsNotEmpty()
+  picOccupation: string;
+
+  @ApiProperty({ example: 'Jl. Pribadi No. 10, Bandung' })
+  @IsString()
+  @IsNotEmpty()
+  picAddress: string;
+
+  @ApiProperty({ example: '081234567890' })
+  @IsNumberString()
+  picPhoneNumber: string;
+
+  // === Informasi Akun ===
+  @ApiProperty({ example: 'info@majujaya.koperasi.id' })
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({ example: 'passwordyangkuat123', minLength: 8 })
+  @IsString()
+  @MinLength(8)
+  password: string;
+
+  // === Dokumen (URL) ===
+  @ApiProperty({ example: 'https://storage.com/pengesahan.pdf' })
+  @IsUrl()
+  @IsOptional() // Ubah ke IsNotEmpty() jika wajib
+  dokPengesahanPendirianUrl?: string;
+
+  @ApiProperty({ example: 'https://storage.com/daftar-umum.pdf' })
+  @IsUrl()
+  @IsOptional()
+  dokDaftarUmumUrl?: string;
+
+  @ApiProperty({ example: 'https://storage.com/akte.pdf' })
+  @IsUrl()
+  @IsOptional()
+  dokAkteNotarisUrl?: string;
+
+  @ApiProperty({ example: 'https://storage.com/npwp.pdf' })
+  @IsUrl()
+  @IsOptional()
+  dokNpwpKoperasiUrl?: string;
 }
