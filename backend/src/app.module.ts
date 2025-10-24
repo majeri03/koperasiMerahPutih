@@ -28,6 +28,9 @@ import { MemberSuggestionModule } from './member-suggestion/member-suggestion.mo
 import { SupervisorySuggestionModule } from './supervisory-suggestion/supervisory-suggestion.module';
 import { UsersModule } from './users/users.module';
 import { OfficialRecommendationModule } from './official-recommendation/official-recommendation.module';
+import { ImportantEventModule } from './important-event/important-event.module';
+import { AgendaExpeditionModule } from './agenda-expedition/agenda-expedition.module';
+import { UploadsModule } from './uploads/uploads.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -54,6 +57,9 @@ import { OfficialRecommendationModule } from './official-recommendation/official
     SupervisorySuggestionModule,
     UsersModule,
     OfficialRecommendationModule,
+    ImportantEventModule,
+    AgendaExpeditionModule,
+    UploadsModule,
   ],
   controllers: [AppController, SimpananController],
   providers: [AppService, SimpananService],

@@ -68,6 +68,7 @@ model User {
   memberSuggestionResponses MemberSuggestion[]
   supervisorySuggestionResponses SupervisorySuggestion[] @relation("SupervisorResponses")
   officialRecommendationResponses OfficialRecommendation[] @relation("OfficialRecommendationResponses")
+  importantEventsRecorded         ImportantEvent[] @relation("ImportantEventsRecorded")
   @@map("users")
 }
 
@@ -83,23 +84,35 @@ enum Gender {
 model TenantRegistration {
   id String @id @default(uuid())
 
-  nik            String @unique
-  fullName       String @map("full_name")
-  gender         Gender
-  email          String @unique
-  phoneNumber    String @unique @map("phone_number")
-  hashedPassword String @map("hashed_password")
-
+  // === Informasi Koperasi ===
+  cooperativeName String    @map("cooperative_name")
+  skAhuKoperasi   String?   @map("sk_ahu_koperasi") // BARU
   province        String
   city            String
   district        String
   village         String
-  cooperativeName String @map("cooperative_name")
+  alamatLengkap   String    @map("alamat_lengkap") @db.Text // BARU
+  petaLokasi      String?   @map("peta_lokasi") // BARU
 
-  ktpDocumentUrl  String? @map("ktp_document_url")
-  skDocumentUrl   String? @map("sk_document_url")
-  npwpDocumentUrl String? @map("npwp_document_url")
-
+  // === Informasi PIC (Person in Charge) ===
+  // Ini adalah data yang akan dipakai untuk membuat Member pertama
+  picFullName     String    @map("pic_full_name") // Ganti dari fullName
+  picNik          String    @unique @map("pic_nik") // Ganti dari nik
+  picGender       Gender    @map("pic_gender") // Ganti dari gender
+  picPlaceOfBirth String    @map("pic_place_of_birth") // BARU
+  picDateOfBirth  DateTime  @map("pic_date_of_birth") // BARU
+  picOccupation   String    @map("pic_occupation") // BARU
+  picAddress      String    @map("pic_address") @db.Text // BARU
+  picPhoneNumber  String    @unique @map("pic_phone_number") // Ganti dari phoneNumber
+  email           String    @unique // Email Koperasi (untuk login)
+  hashedPassword  String    @map("hashed_password")
+  
+  // === Dokumen Koperasi (URL) ===
+  dokPengesahanPendirian String? @map("dok_pengesahan_pendirian") // BARU
+  dokDaftarUmum          String? @map("dok_daftar_umum") // BARU
+  dokAkteNotaris         String? @map("dok_akte_notaris") // BARU
+  dokNpwpKoperasi        String? @map("dok_npwp_koperasi") // Ganti dari npwpDocumentUrl
+  
   tenant   Tenant @relation(fields: [tenantId], references: [id])
   tenantId String @unique @map("tenant_id")
 
@@ -541,4 +554,38 @@ model OfficialRecommendation {
   updatedAt         DateTime @updatedAt @map("updated_at")
 
   @@map("official_recommendations")
+}
+
+// Buku Catatan Kejadia Penting (Modul 15)
+model ImportantEvent {
+  id                String   @id @default(uuid())
+  entryNumber       Int      @default(autoincrement()) @map("entry_number") // Kolom 1: NO URUT
+  date              DateTime @default(now()) @map("date")                 // Kolom 2: TANGGAL
+  description       String   @map("description") @db.Text                  // Kolom 3: URAIAN KEJADIAN
+  resolution        String?  @map("resolution") @db.Text                   // Kolom 4: PENYELESAIAN (Opsional)
+  causeAndNotes     String?  @map("cause_and_notes") @db.Text            // Kolom 5: SEBAB & KETERANGAN (Opsional)
+
+  // Kolom 6: TANDA TANGAN (Pengurus yang mencatat/update)
+  recordedByUser    User?    @relation("ImportantEventsRecorded", fields: [recordedByUserId], references: [id])
+  recordedByUserId  String?  @map("recorded_by_user_id")
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("important_events")
+}
+
+// Agenda (Modul 16)
+model AgendaExpedition {
+  id           String   @id @default(uuid())
+  entryNumber  Int      @default(autoincrement()) @map("entry_number") 
+  letterNumber String   @map("letter_number")                       
+  letterDate   DateTime @map("letter_date")                           
+  addressedTo  String   @map("addressed_to")                        
+  subject      String   @map("subject")                               
+  notes        String?  @map("notes")                             
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("agenda_expeditions")
 }

@@ -49,6 +49,7 @@ async function bootstrap() {
     .addTag('Member Suggestions (Buku 12)')
     .addTag('Supervisory Suggestions (Buku 13)')
     .addTag('Official Recommendations (Buku 14)')
+    .addTag('Important Events (Buku 15)')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);

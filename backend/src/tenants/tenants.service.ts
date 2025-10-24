@@ -597,6 +597,40 @@ export class TenantsService {
         CONSTRAINT "official_recommendations_response_by_user_id_fkey" FOREIGN KEY ("response_by_user_id") REFERENCES "${schemaName}"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE
       );
     `);
+    // Catatn kejadian Penting (Modul 15)
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".important_events (
+        "id" TEXT NOT NULL,
+        "entry_number" SERIAL NOT NULL,                     -- Kolom 1
+        "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Kolom 2
+        "description" TEXT NOT NULL,                        -- Kolom 3
+        "resolution" TEXT,                                  -- Kolom 4
+        "cause_and_notes" TEXT,                             -- Kolom 5
+        "recorded_by_user_id" TEXT,                         -- Kolom 6
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "important_events_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "important_events_recorded_by_user_id_fkey" FOREIGN KEY ("recorded_by_user_id") REFERENCES "${schemaName}"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE
+      );
+    `);
+    //Agenda (Modul 16)
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".agenda_expeditions (
+        "id" TEXT NOT NULL,
+        "entry_number" SERIAL NOT NULL,                     -- Kolom 1
+        "letter_number" TEXT NOT NULL,                      -- Kolom 2 (Nomor)
+        "letter_date" TIMESTAMP(3) NOT NULL,                -- Kolom 2 (Tanggal)
+        "addressed_to" TEXT NOT NULL,                       -- Kolom 3
+        "subject" TEXT NOT NULL,                            -- Kolom 4
+        "notes" TEXT,                                       -- Kolom 5
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "agenda_expeditions_pkey" PRIMARY KEY ("id")
+        -- Tidak ada foreign key di sini
+      );
+    `);
   }
 
   private async createFirstAdminMemberAndPosition(
@@ -835,23 +869,21 @@ export class TenantsService {
           // --- PERBAIKAN PEMANGGILAN FUNGSI ---
           // Siapkan data detail admin dari registrationData
           const adminDetailsForHelper = {
-            fullName: registrationData.fullName,
+            fullName: registrationData.picFullName, // <-- Diubah dari pic_full_name
             email: registrationData.email,
-            hashedPassword: registrationData.hashedPassword, // Ambil HASHED password
-            nik: registrationData.nik,
-            gender: registrationData.gender,
-            placeOfBirth: registrationData.city || 'Data Belum Lengkap', // Fallback
-            dateOfBirth: new Date(), // Fallback -> Idealnya ada di registrasi tenant
-            occupation: 'Pengurus Koperasi', // Default
-            address:
-              `${registrationData.village || ''}, ${registrationData.district || ''}, ${registrationData.city || ''}`.trim() ||
-              'Data Belum Lengkap',
+            hashedPassword: registrationData.hashedPassword,
+            nik: registrationData.picNik, // <-- Diubah dari pic_nik
+            gender: registrationData.picGender, // <-- Diubah dari pic_gender
+            placeOfBirth: registrationData.picPlaceOfBirth, // <-- Diubah dari pic_place_of_birth
+            dateOfBirth: registrationData.picDateOfBirth, // <-- Diubah dari pic_date_of_birth
+            occupation: registrationData.picOccupation, // <-- Diubah dari pic_occupation
+            address: registrationData.picAddress, // <-- Diubah dari pic_address
           };
+          // Panggil fungsi helper dengan data LENGKAP
           await this.createFirstAdminMemberAndPosition(
-            // <-- Nama fungsi baru
             tx,
             tenant.schemaName,
-            adminDetailsForHelper, // <-- Kirim data yang sudah disiapkan
+            adminDetailsForHelper,
           );
           // --- AKHIR PERBAIKAN ---
 
