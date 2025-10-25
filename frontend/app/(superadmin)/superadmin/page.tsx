@@ -66,6 +66,7 @@ const StatCardLink = memo(({ icon, title, value, color, href }: {
     </Link>
   );
 });
+StatCardLink.displayName = "StatCardLink";
 
 // --- Komponen Utama Dashboard ---
 export default function SuperAdminDashboardPage() {

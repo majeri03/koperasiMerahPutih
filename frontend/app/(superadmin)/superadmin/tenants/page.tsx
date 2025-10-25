@@ -151,6 +151,7 @@ const DetailKoperasiModal = memo(({ koperasi, onClose }: { koperasi: Tenant | nu
     </div>
   );
 });
+DetailKoperasiModal.displayName = "DetailKoperasiModal";
 
 
 // --- Komponen Utama Halaman ---
