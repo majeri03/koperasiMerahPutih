@@ -1,7 +1,7 @@
 // Lokasi: frontend/app/(superadmin)/superadmin/tenants/page.tsx
 "use client";
 
-import { useState, useMemo, useEffect } from "react"; // Tambahkan useEffect
+import { useState, useMemo, useEffect, useDeferredValue, useCallback, memo } from "react"; // Tambahkan useEffect
 import {
   Building, Search, X, CheckCircle, Clock, Slash, MoreVertical,
   Eye, // Ikon untuk lihat detail
@@ -65,7 +65,7 @@ const mockAllTenants: Tenant[] = [
 ];
 
 // --- Komponen Modal Detail Koperasi (Diadaptasi) ---
-const DetailKoperasiModal = ({ koperasi, onClose }: { koperasi: Tenant | null; onClose: () => void; }) => {
+const DetailKoperasiModal = memo(({ koperasi, onClose }: { koperasi: Tenant | null; onClose: () => void; }) => {
   if (!koperasi) return null;
 
   const infoKoperasi = [
@@ -150,44 +150,53 @@ const DetailKoperasiModal = ({ koperasi, onClose }: { koperasi: Tenant | null; o
       </div>
     </div>
   );
-};
+});
 
 
 // --- Komponen Utama Halaman ---
 export default function ManajemenKoperasiPage() {
-  const [tenants, setTenants] = useState<Tenant[]>(mockAllTenants);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
   const [filters, setFilters] = useState({ search: '', status: '' });
   const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
   const [selectedKoperasiDetail, setSelectedKoperasiDetail] = useState<Tenant | null>(null); // State untuk modal detail
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false); // State buka/tutup modal detail
+  // Hapus flag terpisah; gunakan selectedKoperasiDetail sebagai penentu buka/tutup modal
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setTenants(mockAllTenants);
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(t);
+  }, []);
 
   // Fungsi untuk membuka modal detail
-  const handleViewDetails = (tenant: Tenant) => {
+  const handleViewDetails = useCallback((tenant: Tenant) => {
     setSelectedKoperasiDetail(tenant);
-    setIsDetailModalOpen(true);
     setDropdownOpen(null);
-  };
+  }, []);
 
   // Fungsi untuk menutup modal detail
-  const handleCloseDetailModal = () => {
-    setIsDetailModalOpen(false);
+  const handleCloseDetailModal = useCallback(() => {
     setSelectedKoperasiDetail(null);
-  };
+  }, []);
 
 
-   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+   const handleFilterChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  }, []);
 
   const resetFilters = () => setFilters({ search: '', status: '' });
 
+  const deferredSearch = useDeferredValue(filters.search);
   const filteredTenants = useMemo(() => {
+    const q = deferredSearch.toLowerCase();
+    const status = filters.status;
     return tenants.filter(t =>
-      (t.namaKoperasi.toLowerCase().includes(filters.search.toLowerCase()) ||
-       t.namaPic.toLowerCase().includes(filters.search.toLowerCase())) &&
-      (filters.status === '' || t.status === filters.status)
+      (t.namaKoperasi.toLowerCase().includes(q) || t.namaPic.toLowerCase().includes(q)) &&
+      (status === '' || t.status === status)
     );
-  }, [tenants, filters]);
+  }, [tenants, deferredSearch, filters.status]);
 
   const handleApprove = (tenantId: string, namaKoperasi: string) => {
     setDropdownOpen(null);
@@ -221,6 +230,13 @@ export default function ManajemenKoperasiPage() {
       default: return 'bg-gray-100 text-gray-600';
     }
   };
+
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  // Note: hooks must be called before any early return.
+  // Skeleton render after hooks declared is safe.
    const getStatusIcon = (status: Tenant['status']) => {
      switch (status) {
         case 'ACTIVE': return <CheckCircle size={14} className="mr-1"/>;
@@ -230,7 +246,7 @@ export default function ManajemenKoperasiPage() {
      }
    }
    // Efek untuk menutup dropdown jika diklik di luar area dropdown
-   useEffect(() => {
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       // Cek apakah target klik BUKAN bagian dari tombol dropdown atau menu dropdown
       if (dropdownOpen && !(event.target as HTMLElement).closest(`[data-dropdown-id="${dropdownOpen}"]`)) {
@@ -242,6 +258,33 @@ export default function ManajemenKoperasiPage() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [dropdownOpen]);
+
+  if (loading) {
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <Skeleton className="h-9 w-60" />
+            <Skeleton className="h-5 w-96 mt-2" />
+          </div>
+          <Skeleton className="h-10 w-44" />
+        </div>
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <Skeleton className="h-6 w-56 mb-4" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Skeleton className="h-10" />
+            <Skeleton className="h-10" />
+            <Skeleton className="h-10" />
+          </div>
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
 
   return (

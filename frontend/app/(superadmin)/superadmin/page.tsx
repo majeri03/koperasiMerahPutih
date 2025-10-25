@@ -1,9 +1,9 @@
 // Lokasi: frontend/app/(superadmin)/superadmin/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, memo } from "react";
 import {
-  CheckCircle, Clock, Slash, Building, Users, ListChecks,
+  CheckCircle, Clock, Slash, Building, ListChecks,
   ArrowRight // Untuk link
 } from "lucide-react";
 import Button from "@/components/Button";
@@ -39,7 +39,7 @@ const mockAllTenants: Tenant[] = [
 ];
 
 // --- Komponen Kartu Statistik yang Bisa Diklik ---
-const StatCardLink = ({ icon, title, value, color, href }: {
+const StatCardLink = memo(({ icon, title, value, color, href }: {
     icon: React.ElementType,
     title: string,
     value: number | string,
@@ -65,7 +65,7 @@ const StatCardLink = ({ icon, title, value, color, href }: {
       </div>
     </Link>
   );
-};
+});
 
 // --- Komponen Utama Dashboard ---
 export default function SuperAdminDashboardPage() {
@@ -73,8 +73,11 @@ export default function SuperAdminDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setTenantsData(mockAllTenants);
-    setLoading(false);
+    const t = setTimeout(() => {
+      setTenantsData(mockAllTenants);
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(t);
   }, []);
 
   const stats = useMemo(() => {
@@ -90,8 +93,78 @@ export default function SuperAdminDashboardPage() {
     return { total, active, pending, suspended, recentPending };
   }, [tenantsData]);
 
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  const SuperAdminDashboardSkeleton = () => (
+    <div className="space-y-8">
+      <div>
+        <Skeleton className="h-9 w-1/3" />
+        <Skeleton className="h-5 w-1/2 mt-2" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="bg-white p-6 rounded-xl shadow-lg">
+            <div className="flex items-center gap-4">
+              <Skeleton className="w-12 h-12 rounded-full" />
+              <div className="flex-1">
+                <Skeleton className="h-4 w-28 mb-2" />
+                <Skeleton className="h-7 w-20" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white p-6 rounded-xl shadow-lg">
+            <Skeleton className="h-6 w-48 mb-4" />
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="min-w-0">
+                      <Skeleton className="h-4 w-64 mb-1" />
+                      <Skeleton className="h-3 w-40" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-9 w-28" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-lg">
+            <Skeleton className="h-6 w-40 mb-4" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-10" />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-lg">
+          <Skeleton className="h-6 w-56 mb-4" />
+          <div className="space-y-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i}>
+                <Skeleton className="h-4 w-64 mb-1" />
+                <Skeleton className="h-3 w-40" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   if (loading) {
-    return <div className="text-center p-10 text-gray-600">Memuat dashboard Super Admin...</div>;
+    return <SuperAdminDashboardSkeleton />;
   }
 
   return (

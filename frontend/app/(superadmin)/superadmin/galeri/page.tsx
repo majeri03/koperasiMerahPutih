@@ -1,11 +1,12 @@
 // Lokasi: frontend/app/(superadmin)/superadmin/galeri/page.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useDeferredValue, useCallback } from "react";
+import clsx from "clsx";
 // Import komponen yang mungkin perlu dibuat/disesuaikan
 // import SuperAdminPageHeader from "@/components/SuperAdminPageHeader"; // Contoh
 import Button from "@/components/Button";
-import { UploadCloud, Image as ImageIcon, Trash2, X } from "lucide-react";
+import { UploadCloud, Image as ImageIcon, Trash2 } from "lucide-react";
 import Image from "next/image"; // Import Image dari next/image
 
 // --- Tipe Data Foto (Sama) ---
@@ -25,22 +26,63 @@ const mockFotoGlobal: Foto[] = [
 
 export default function ManajemenGaleriGlobalPage() {
   const [filterAlbum, setFilterAlbum] = useState('');
-  const [fotoList, setFotoList] = useState<Foto[]>(mockFotoGlobal); // State untuk data foto
+  const [fotoList, setFotoList] = useState<Foto[]>([]); // State untuk data foto
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setFotoList(mockFotoGlobal);
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(t);
+  }, []);
+
+  const deferredAlbum = useDeferredValue(filterAlbum);
   const filteredFoto = useMemo(() => {
-    if (!filterAlbum) return fotoList;
-    return fotoList.filter(foto => foto.album === filterAlbum);
-  }, [filterAlbum, fotoList]); // <-- Tambahkan fotoList sebagai dependency
+    if (!deferredAlbum) return fotoList;
+    return fotoList.filter(foto => foto.album === deferredAlbum);
+  }, [deferredAlbum, fotoList]);
 
-  const handleHapus = (id: string, keterangan: string) => {
+  const handleHapus = useCallback((id: string, keterangan: string) => {
       if(window.confirm(`Hapus foto global "${keterangan}"?`)){
           // TODO: Panggil API DELETE /global-gallery/{id}
           alert(`Simulasi: Foto "${keterangan}" dihapus.`);
           setFotoList(prev => prev.filter(f => f.id !== id)); // Update state
       }
-  }
+  }, []);
 
   // TODO: Implementasi fungsi handleUpload jika diperlukan
+
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  if (loading) {
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <Skeleton className="h-9 w-80" />
+            <Skeleton className="h-5 w-96 mt-2" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <Skeleton className="h-6 w-56 mb-4" />
+          <Skeleton className="h-40 w-full" />
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <Skeleton className="h-6 w-64 mb-4" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <Skeleton key={i} className="h-48 w-full rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

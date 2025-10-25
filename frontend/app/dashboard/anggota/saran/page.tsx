@@ -2,6 +2,8 @@
 "use client";
 
 import Button from "@/components/Button";
+import { useEffect, useState } from "react";
+import clsx from "clsx";
 
 // Data contoh untuk riwayat saran
 const mockSaran = [
@@ -18,11 +20,57 @@ const mockSaran = [
 ];
 
 export default function HalamanSaranAnggota() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 700);
+    return () => clearTimeout(t);
+  }, []);
+
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  const SaranSkeleton = () => (
+    <div>
+      <Skeleton className="h-9 w-1/3" />
+      <Skeleton className="h-5 w-1/2 mt-2" />
+
+      <div className="mt-8 bg-white p-6 rounded-xl shadow-lg">
+        <Skeleton className="h-6 w-48 mb-4" />
+        <div className="space-y-4">
+          <div>
+            <Skeleton className="h-4 w-24 mb-2" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div>
+            <Skeleton className="h-4 w-24 mb-2" />
+            <Skeleton className="h-28 w-full" />
+          </div>
+          <div className="text-right">
+            <Skeleton className="h-10 w-36 ml-auto" />
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 bg-white p-6 rounded-xl shadow-lg">
+        <Skeleton className="h-6 w-56 mb-4" />
+        <Skeleton className="h-10 w-full mb-2" />
+        <Skeleton className="h-10 w-full mb-2" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    </div>
+  );
+
   const handleSubmitSaran = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     alert("Saran Anda telah berhasil dikirim (simulasi).");
     event.currentTarget.reset();
   };
+
+  if (loading) {
+    return <SaranSkeleton />;
+  }
 
   return (
     <div>

@@ -3,6 +3,8 @@
 
 import Button from '@/components/Button';
 import { User, Mail, Phone, MapPin, Calendar, Briefcase, ShieldCheck } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import clsx from 'clsx';
 
 // Data contoh untuk profil anggota
 const dataProfil = {
@@ -19,6 +21,58 @@ const dataProfil = {
 };
 
 export default function HalamanProfil() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 700);
+    return () => clearTimeout(t);
+  }, []);
+
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  const ProfileSkeleton = () => (
+    <div>
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <Skeleton className="h-9 w-40" />
+          <Skeleton className="h-5 w-72 mt-2" />
+        </div>
+        <Skeleton className="h-10 w-48" />
+      </div>
+
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-3">
+          <div className="md:col-span-1 bg-gray-50 p-8 flex flex-col items-center justify-center border-r">
+            <Skeleton className="w-32 h-32 rounded-full mb-4" />
+            <Skeleton className="h-6 w-48 mb-2" />
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-6 w-24 mt-4 rounded-full" />
+          </div>
+          <div className="md:col-span-2 p-8">
+            <Skeleton className="h-6 w-64 mb-6" />
+            <div className="space-y-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex items-center">
+                  <Skeleton className="w-5 h-5 rounded-full mr-4" />
+                  <div className="flex-1">
+                    <Skeleton className="h-3 w-28 mb-1" />
+                    <Skeleton className="h-4 w-56" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <ProfileSkeleton />;
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-8">

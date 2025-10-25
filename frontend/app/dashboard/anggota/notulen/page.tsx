@@ -2,6 +2,8 @@
 "use client";
 
 import { Download } from "lucide-react";
+import { useEffect, useState } from "react";
+import clsx from "clsx";
 
 // Data contoh untuk notulen rapat
 const mockNotulen = [
@@ -18,12 +20,40 @@ const mockNotulen = [
 ];
 
 export default function HalamanNotulen() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 700);
+    return () => clearTimeout(t);
+  }, []);
+
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  const NotulenSkeleton = () => (
+    <div>
+      <Skeleton className="h-9 w-1/3" />
+      <Skeleton className="h-5 w-1/2 mt-2" />
+
+      <div className="mt-8 bg-white p-6 rounded-xl shadow-lg">
+        <Skeleton className="h-10 w-full mb-2" />
+        <Skeleton className="h-10 w-full mb-2" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <NotulenSkeleton />;
+  }
+
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-800">Arsip Notulen Rapat</h1>
       <p className="mt-2 text-gray-600">Lihat dan unduh hasil rapat anggota yang telah dilaksanakan.</p>
 
-      <div className="mt-8 bg-white p-6 rounded-xl shadow-lg border">
+      <div className="mt-8 bg-white p-6 rounded-xl shadow-lg">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="border-b bg-gray-50 text-sm text-gray-600">
