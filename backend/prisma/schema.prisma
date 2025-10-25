@@ -69,7 +69,20 @@ model User {
   supervisorySuggestionResponses SupervisorySuggestion[] @relation("SupervisorResponses")
   officialRecommendationResponses OfficialRecommendation[] @relation("OfficialRecommendationResponses")
   importantEventsRecorded         ImportantEvent[] @relation("ImportantEventsRecorded")
+  passwordResetTokens PasswordResetToken[]
   @@map("users")
+}
+
+// Reset Password
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique // Token unik yang dikirim ke email
+  userId    String   @map("user_id") // ID User pemilik token
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade) // Relasi ke User
+  expiresAt DateTime @map("expires_at") // Waktu token kedaluwarsa
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("password_reset_tokens")
 }
 
 // ===============================================
@@ -588,4 +601,20 @@ model AgendaExpedition {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("agenda_expeditions")
+}
+
+//profile koperasi
+model CooperativeProfile {
+  id           String    @id @default(uuid()) // Kita gunakan uuid() agar konsisten
+  displayName  String    @map("display_name")
+  logoUrl      String?   @map("logo_url")
+  phone        String?
+  email        String?
+  website      String?
+  address      String?
+  description  String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at") // Otomatis update timestamp
+
+  @@map("cooperative_profile")
 }
