@@ -164,24 +164,74 @@ export class BoardPositionsService {
   // Menggunakan soft delete (update tanggalBerhenti)
   async remove(id: string, reason: string = 'Diberhentikan') {
     const prismaTenant = await this.prisma.getTenantClient();
+
     try {
-      return await prismaTenant.boardPosition.update({
-        where: { id },
-        data: {
-          tanggalBerhenti: new Date(), // Set tanggal berhenti ke sekarang
-          alasanBerhenti: reason,
-        },
+      // Gunakan transaksi
+      const updatedPosition = await prismaTenant.$transaction(async (tx) => {
+        // 1. Dapatkan posisi saat ini untuk mendapatkan memberId
+        const position = await tx.boardPosition.findUnique({
+          where: { id },
+          select: { memberId: true }, // Hanya ambil memberId
+        });
+
+        if (!position) {
+          throw new NotFoundException(
+            `Posisi Pengurus dengan ID ${id} tidak ditemukan.`,
+          );
+        }
+        const memberId = position.memberId;
+
+        // 2. Dapatkan ID Role "Anggota"
+        const anggotaRole = await tx.role.findUnique({
+          where: { name: Role.Anggota }, // Gunakan Enum Role
+        });
+        if (!anggotaRole) {
+          throw new InternalServerErrorException(
+            "KRITIS: Role 'Anggota' tidak ditemukan.",
+          );
+        }
+
+        // 3. Update BoardPosition (Soft Delete)
+        const updatedBoardPos = await tx.boardPosition.update({
+          where: { id },
+          data: {
+            tanggalBerhenti: new Date(), // Set tanggal berhenti
+            alasanBerhenti: reason,
+          },
+        });
+
+        // 4. Update User Role menjadi Anggota
+        await tx.user.update({
+          where: { id: memberId },
+          data: {
+            roleId: anggotaRole.id,
+          },
+        });
+
+        return updatedBoardPos;
       });
+
+      return updatedPosition;
     } catch (err: unknown) {
+      if (
+        err instanceof NotFoundException ||
+        err instanceof InternalServerErrorException
+      ) {
+        throw err;
+      }
+      // Tangani error Prisma P2025 jika findUnique gagal di luar dugaan
       if (
         err instanceof Prisma.PrismaClientKnownRequestError &&
         err.code === 'P2025'
       ) {
         throw new NotFoundException(
-          `Posisi Pengurus dengan ID ${id} tidak ditemukan.`,
+          `Posisi Pengurus dengan ID ${id} tidak ditemukan saat mencoba menghapus.`,
         );
       }
-      throw err;
+      console.error(`Gagal menghapus Posisi Pengurus ${id}:`, err);
+      throw new InternalServerErrorException(
+        'Gagal memproses pemberhentian pengurus.',
+      );
     }
   }
 
