@@ -16,7 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="id">
       {/* Body sekarang tidak lagi memiliki flex-col karena layout diatur oleh child layout */}
-      <body>
+      <body suppressHydrationWarning>
         {children}
       </body>
     </html>

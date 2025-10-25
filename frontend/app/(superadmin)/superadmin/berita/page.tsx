@@ -1,11 +1,12 @@
 // Lokasi: frontend/app/(superadmin)/superadmin/berita/page.tsx
 "use client";
 
-import { useState, useMemo, FormEvent, ChangeEvent } from "react";
+import { useState, useMemo, FormEvent, ChangeEvent, useEffect, useDeferredValue, useCallback } from "react";
+import clsx from "clsx";
 // Impor komponen yang mungkin perlu dibuat/disesuaikan untuk Super Admin jika berbeda
 // import SuperAdminPageHeader from "@/components/SuperAdminPageHeader"; // Contoh
 import Button from "@/components/Button";
-import { PlusCircle, Search, Edit, Trash2, X, Eye, ArrowLeft, Save, Upload, LinkIcon, Newspaper } from "lucide-react";
+import { PlusCircle, Search, Edit, Trash2, X, ArrowLeft, Save, Upload, LinkIcon, Newspaper } from "lucide-react";
 
 // --- Tipe Data Artikel (Sama seperti admin tenant) ---
 type Artikel = {
@@ -98,7 +99,7 @@ const ArtikelEditor = ({ artikel, onBack, onSave }: { artikel: Artikel | null; o
                          <div className="w-full h-40 border-2 border-dashed rounded-lg flex items-center justify-center text-gray-500"><Upload size={32}/></div>
                     </div>
                      <div className="bg-gray-50 p-4 rounded-lg border">
-                        <label htmlFor="sourceUrl" className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2"><LinkIcon size={16} /> Link Sumber (Opsional)</label>
+                        <label htmlFor="sourceUrl" className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-2"><LinkIcon size={16} /> Link Sumber (Opsional)</label>
                         <input id="sourceUrl" name="sourceUrl" type="url" placeholder="https://..." value={formData.sourceUrl} onChange={handleChange} className="w-full p-2 border rounded-lg" />
                     </div>
                 </div>
@@ -112,20 +113,31 @@ export default function ManajemenBeritaGlobalPage() {
     const [filters, setFilters] = useState({ search: '', status: '' });
     const [view, setView] = useState<'list' | 'editor'>('list');
     const [selectedArtikel, setSelectedArtikel] = useState<Artikel | null>(null);
-    const [artikelList, setArtikelList] = useState<Artikel[]>(mockArtikelGlobal); // State untuk data artikel
+    const [artikelList, setArtikelList] = useState<Artikel[]>([]); // akan diisi setelah loading
+    const [loading, setLoading] = useState(true);
 
-    const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    useEffect(() => {
+        const t = setTimeout(() => {
+            setArtikelList(mockArtikelGlobal);
+            setLoading(false);
+        }, 800);
+        return () => clearTimeout(t);
+    }, []);
+
+    const handleFilterChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    };
+    }, []);
 
     const resetFilters = () => setFilters({ search: '', status: '' });
 
+    const deferredSearch = useDeferredValue(filters.search);
     const filteredArtikel = useMemo(() => {
+        const q = deferredSearch.toLowerCase();
+        const status = filters.status;
         return artikelList.filter(artikel =>
-            artikel.judul.toLowerCase().includes(filters.search.toLowerCase()) &&
-            (filters.status === '' || artikel.status === filters.status)
+            artikel.judul.toLowerCase().includes(q) && (status === '' || artikel.status === status)
         );
-    }, [filters, artikelList]); // <-- Tambahkan artikelList sebagai dependency
+    }, [deferredSearch, filters.status, artikelList]);
 
     const handleHapus = (id: string, judul: string) => {
         if(window.confirm(`Hapus artikel global "${judul}"?`)){
@@ -159,6 +171,33 @@ export default function ManajemenBeritaGlobalPage() {
 
     if (view === 'editor') {
         return <ArtikelEditor artikel={selectedArtikel} onBack={() => setView('list')} onSave={handleSaveArtikel} />;
+    }
+
+    const Skeleton = ({ className = "" }: { className?: string }) => (
+        <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+    );
+
+    if (loading) {
+        return (
+            <div>
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <Skeleton className="h-9 w-80" />
+                        <Skeleton className="h-5 w-96 mt-2" />
+                    </div>
+                    <Skeleton className="h-10 w-44" />
+                </div>
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                    <Skeleton className="h-6 w-56" />
+                    <Skeleton className="h-24 w-full mt-6" />
+                    <div className="mt-6 space-y-2">
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return (

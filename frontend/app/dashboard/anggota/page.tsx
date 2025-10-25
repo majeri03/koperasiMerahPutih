@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Banknote, HandCoins, User, Newspaper, Activity, ArrowRight, MessageSquare, FileText, LayoutGrid } from "lucide-react";
 import Button from "@/components/Button";
 import { useEffect, useState } from "react";
+import clsx from "clsx";
 
 // Tipe data yang lebih lengkap untuk dasbor baru
 type DashboardData = {
@@ -30,8 +31,9 @@ export default function AnggotaDashboardPage() {
     { judul: "Program Pinjaman Modal Usaha Baru", ringkasan: "Ajukan pinjaman modal usaha dengan bunga...", href: "#" },
   ];
 
+  // Simulasikan delay agar skeleton terlihat
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const t = setTimeout(() => {
       const mockResult: DashboardData = {
         namaAnggota: "Alviansyah Burhani",
         simpanan: { total: 5750000, pokok: 500000, wajib: 4250000, sukarela: 1000000 },
@@ -39,12 +41,120 @@ export default function AnggotaDashboardPage() {
       };
       setData(mockResult);
       setLoading(false);
-    };
-    fetchDashboardData();
+    }, 800);
+    return () => clearTimeout(t);
   }, []);
 
+  // Skeleton kecil
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  const DashboardSkeleton = () => (
+    <div>
+      <Skeleton className="h-9 w-1/3" />
+      <Skeleton className="h-5 w-1/2 mt-2" />
+
+      <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Kolom kiri */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <div className="flex items-center gap-4">
+                <Skeleton className="w-12 h-12 rounded-full" />
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-6 w-40" />
+                </div>
+              </div>
+              <Skeleton className="mt-4 h-16 w-full rounded-lg" />
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <Skeleton className="h-10" />
+                <Skeleton className="h-10" />
+              </div>
+            </div>
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <div className="flex items-center gap-4">
+                <Skeleton className="w-12 h-12 rounded-full" />
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-28 mb-2" />
+                  <Skeleton className="h-6 w-44" />
+                </div>
+              </div>
+              <Skeleton className="mt-4 h-6 w-1/2" />
+              <Skeleton className="mt-2 h-2.5 w-full rounded-full" />
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <Skeleton className="h-10" />
+                <Skeleton className="h-10" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-lg">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-6 w-6 rounded-full" />
+              <Skeleton className="h-6 w-48" />
+            </div>
+            <ul className="mt-4 space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <li key={i} className="flex justify-between items-center border-b pb-2 last:border-b-0">
+                  <div className="flex-1">
+                    <Skeleton className="h-4 w-48 mb-1" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <Skeleton className="h-5 w-24" />
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Kolom kanan */}
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-xl shadow-lg text-center">
+            <Skeleton className="h-12 w-12 mx-auto rounded-full" />
+            <Skeleton className="h-5 w-40 mx-auto mt-4" />
+            <Skeleton className="h-4 w-24 mx-auto mt-2" />
+            <Skeleton className="h-10 w-full mt-4" />
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-lg">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-6 w-6 rounded-full" />
+              <Skeleton className="h-6 w-44" />
+            </div>
+            <div className="mt-4 space-y-2">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="flex justify-between items-center p-3 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-5 w-5 rounded-full" />
+                    <Skeleton className="h-4 w-40" />
+                  </div>
+                  <Skeleton className="h-5 w-5 rounded-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-lg">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-6 w-6 rounded-full" />
+              <Skeleton className="h-6 w-40" />
+            </div>
+            <ul className="mt-4 space-y-4">
+              {[...Array(2)].map((_, i) => (
+                <li key={i} className="border-b pb-2 last:border-b-0">
+                  <Skeleton className="h-4 w-64 mb-1" />
+                  <Skeleton className="h-3 w-40" />
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   if (loading || !data) {
-    return <div className="text-center p-10">Memuat data dashboard...</div>;
+    return <DashboardSkeleton />;
   }
 
   const pinjamanLunas = data.pinjaman.totalAngsuran - data.pinjaman.sisaAngsuran;
@@ -185,8 +295,8 @@ export default function AnggotaDashboardPage() {
             </ul>
           </div>
         </div>
-
       </div>
     </div>
   );
 }
+

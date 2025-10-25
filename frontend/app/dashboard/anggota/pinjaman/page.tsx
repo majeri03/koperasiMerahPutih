@@ -99,13 +99,13 @@ const mockPinjamanList: PinjamanAnggota[] = [
 ];
 
 const mockAngsuranDetail: Angsuran[] = [
-  { id: "inst004", installmentNumber: 4, dueDate: "2025-11-15", paymentDate: null, totalAmount: 363_333, status: "PENDING" },
-  { id: "inst005", installmentNumber: 5, dueDate: "2025-12-15", paymentDate: null, totalAmount: 363_333, status: "PENDING" },
-  { id: "inst006", installmentNumber: 6, dueDate: "2026-01-15", paymentDate: null, totalAmount: 363_333, status: "PENDING" },
-  { id: "inst000", installmentNumber: 3, dueDate: "2025-10-15", paymentDate: null, totalAmount: 363_333, status: "OVERDUE" },
-  { id: "inst003", installmentNumber: 3, dueDate: "2025-10-15", paymentDate: "2025-10-10", totalAmount: 363_333, status: "PAID" },
-  { id: "inst002", installmentNumber: 2, dueDate: "2025-09-15", paymentDate: "2025-09-12", totalAmount: 363_333, status: "PAID" },
-  { id: "inst001", installmentNumber: 1, dueDate: "2025-08-15", paymentDate: "2025-08-14", totalAmount: 363_333, status: "PAID" },
+  { id: "inst004", installmentNumber: 4, dueDate: "2025-11-15", paymentDate: null, totalAmount: 363_333, status: "PENDING" as const },
+  { id: "inst005", installmentNumber: 5, dueDate: "2025-12-15", paymentDate: null, totalAmount: 363_333, status: "PENDING" as const },
+  { id: "inst006", installmentNumber: 6, dueDate: "2026-01-15", paymentDate: null, totalAmount: 363_333, status: "PENDING" as const },
+  { id: "inst000", installmentNumber: 3, dueDate: "2025-10-15", paymentDate: null, totalAmount: 363_333, status: "OVERDUE" as const },
+  { id: "inst003", installmentNumber: 3, dueDate: "2025-10-15", paymentDate: "2025-10-10", totalAmount: 363_333, status: "PAID" as const },
+  { id: "inst002", installmentNumber: 2, dueDate: "2025-09-15", paymentDate: "2025-09-12", totalAmount: 363_333, status: "PAID" as const },
+  { id: "inst001", installmentNumber: 1, dueDate: "2025-08-15", paymentDate: "2025-08-14", totalAmount: 363_333, status: "PAID" as const },
 ].sort((a, b) => a.installmentNumber - b.installmentNumber);
 
 // ----------------------
@@ -230,7 +230,7 @@ const AjukanPinjamanModal = memo(({
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div className="fixed inset-0 z-[70]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <motion.div className="fixed inset-0 z-70" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <div className="absolute inset-0 bg-black/50" onClick={onClose} />
           <motion.div
             role="dialog"
@@ -273,7 +273,7 @@ const AjukanPinjamanModal = memo(({
                     id="jangkaWaktu"
                     name="jangkaWaktu"
                     required
-                    value={formData.jangkaWaktu as any}
+                    value={formData.jangkaWaktu === "" ? "" : String(formData.jangkaWaktu)}
                     onChange={handleChange}
                     className="mt-1 w-full rounded-lg border p-2 bg-white focus:outline-none focus:ring-2 focus:ring-red-300"
                   >
@@ -368,7 +368,7 @@ const BayarTagihanModal = memo(({
   return (
     <AnimatePresence>
       {isOpen && angsuran && (
-        <motion.div className="fixed inset-0 z-[70]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <motion.div className="fixed inset-0 z-70" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <div className="absolute inset-0 bg-black/50" onClick={onClose} />
           <motion.div
             className="absolute left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2"
@@ -576,9 +576,43 @@ export default function PinjamanAnggotaPage() {
 
   if (loading) {
     return (
-      <div className="p-10">
-        <div className="h-6 w-48 bg-gray-200 rounded animate-pulse mb-4" />
-        <div className="h-40 w-full bg-gray-200 rounded-xl animate-pulse" />
+      <div className="pb-12">
+        <div className="mb-8">
+          <div className="h-9 w-1/3 bg-gray-200 rounded animate-pulse" />
+          <div className="h-5 w-1/2 bg-gray-200 rounded mt-2 animate-pulse" />
+        </div>
+        <div className="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 space-y-8">
+          <div className="bg-white p-6 md:p-8 rounded-xl shadow-lg">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div className="flex items-center gap-3">
+                <div className="h-6 w-40 bg-gray-200 rounded animate-pulse" />
+                <div className="h-5 w-24 bg-gray-200 rounded animate-pulse" />
+              </div>
+              <div className="h-24 w-24 bg-gray-200 rounded-full animate-pulse" />
+            </div>
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="h-14 bg-gray-100 rounded-lg" />
+              <div className="h-14 bg-gray-100 rounded-lg" />
+              <div className="h-14 bg-gray-100 rounded-lg" />
+            </div>
+            <div className="mt-6 flex items-center justify-between">
+              <div>
+                <div className="h-4 w-48 bg-gray-200 rounded mb-2" />
+                <div className="h-6 w-60 bg-gray-200 rounded" />
+              </div>
+              <div className="h-10 w-40 bg-gray-200 rounded" />
+            </div>
+          </div>
+
+          <div className="bg-white p-6 md:p-8 rounded-xl shadow-lg">
+            <div className="h-6 w-40 bg-gray-200 rounded" />
+            <div className="mt-6 grid gap-3">
+              <div className="h-14 bg-gray-100 rounded-lg" />
+              <div className="h-14 bg-gray-100 rounded-lg" />
+              <div className="h-14 bg-gray-100 rounded-lg" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -729,10 +763,8 @@ export default function PinjamanAnggotaPage() {
             )}
 
             {dataTabelAktif.map((a) => (
-              <motion.div
+              <div
                 key={a.id}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
                 className="rounded-xl border p-4 md:p-5 flex items-center justify-between gap-4 hover:shadow-sm"
               >
                 <div className="min-w-0">
@@ -772,7 +804,7 @@ export default function PinjamanAnggotaPage() {
                     </Button>
                   )}
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </Section>

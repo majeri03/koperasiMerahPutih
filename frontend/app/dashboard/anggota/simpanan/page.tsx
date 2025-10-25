@@ -3,8 +3,8 @@
 import React, { useState, useEffect, memo, useMemo, useCallback, ChangeEvent, FormEvent } from "react";
 import { 
   Landmark, Gem, CalendarClock, Inbox, AlertTriangle, 
-  PlusCircle, ArrowDownCircle, Filter, X,
-  ChevronLeft, ChevronRight, PieChart as PieChartIcon, Wallet
+  PlusCircle, ArrowDownCircle, X,
+  ChevronLeft, ChevronRight, PieChart as PieChartIcon
 } from "lucide-react"; // Impor ikon
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
@@ -297,99 +297,7 @@ const SaldoCards = memo(({ saldo }: { saldo: SaldoAnggota }) => (
 ));
 SaldoCards.displayName = "SaldoCards";
 
-// Komponen Tabel Transaksi (di-memo)
-const TransaksiTable = memo(({ 
-  transaksi,
-  page,
-  totalPage
-}: { 
-  transaksi: SimpananTransaksi[],
-  page: number,
-  totalPage: number
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 15 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.3, delay: 0.4 }}
-    className="bg-white rounded-xl shadow-lg border border-gray-100"
-  >
-    <div className="p-6">
-      <h2 className="text-lg font-bold text-gray-700 mb-4">Riwayat Transaksi</h2>
-      
-      {/* KONTROL AKSI & FILTER PINDAH KE SINI */}
-      {/* Akan ditambahkan di komponen utama */}
-      
-      <div className="overflow-x-auto">
-        <table className="w-full text-left min-w-[600px]">
-          <thead className="border-b bg-gray-50 text-sm text-gray-600">
-            <tr>
-              <th className="p-4 font-medium">Tanggal</th>
-              <th className="p-4 font-medium">Keterangan</th>
-              <th className="p-4 font-medium">Jenis</th>
-              <th className="p-4 font-medium text-right">Debit (Rp)</th>
-              <th className="p-4 font-medium text-right">Kredit (Rp)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <AnimatePresence mode="wait">
-              {transaksi.length === 0 ? (
-                <motion.tr
-                  key="empty-state"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <td colSpan={5}>
-                    <EmptyState
-                      icon={Inbox}
-                      title="Tidak Ada Transaksi"
-                      description="Tidak ada transaksi yang cocok dengan filter Anda."
-                    />
-                  </td>
-                </motion.tr>
-              ) : (
-                transaksi.map((trx, index) => (
-                  <motion.tr
-                    key={trx.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                    exit={{ opacity: 0 }}
-                    className="border-b hover:bg-gray-50 text-sm"
-                  >
-                    <td className="p-4">{new Date(trx.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                    <td className="p-4 text-gray-800">{trx.keterangan}</td>
-                    <td className="p-4">
-                      <span className={clsx(
-                        'px-2 py-1 text-xs font-semibold rounded-full',
-                        trx.jenis === 'Pokok' ? 'bg-blue-100 text-blue-700' :
-                        trx.jenis === 'Wajib' ? 'bg-green-100 text-green-700' :
-                        'bg-purple-100 text-purple-700'
-                      )}>
-                        {trx.jenis}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right text-red-600 font-medium">
-                      {trx.tipe === 'Penarikan' ? trx.jumlah.toLocaleString('id-ID') : '-'}
-                    </td>
-                    <td className="p-4 text-right text-green-600 font-medium">
-                      {trx.tipe === 'Setoran' ? trx.jumlah.toLocaleString('id-ID') : '-'}
-                    </td>
-                  </motion.tr>
-                ))
-              )}
-            </AnimatePresence>
-          </tbody>
-        </table>
-      </div>
-
-      {/* KONTROL PAGINASI PINDAH KE SINI */}
-      {/* Akan ditambahkan di komponen utama */}
-      
-    </div>
-  </motion.div>
-));
-TransaksiTable.displayName = "TransaksiTable";
+// (Hapus komponen tabel animasi yang tidak dipakai untuk mengurangi overhead)
 
 
 // --- Komponen Skeleton Halaman ---
@@ -404,7 +312,7 @@ const SimpananPageSkeleton = () => (
     {/* Layout Skeleton Baru */}
     <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Skeleton Chart */}
-      <div className="lg:col-span-1 bg-white p-5 rounded-xl shadow-lg border border-gray-100 flex flex-col items-center">
+      <div className="lg:col-span-1 bg-white p-5 rounded-xl shadow-lg flex flex-col items-center">
         <Skeleton className="h-8 w-1/2 mb-4" />
         <Skeleton className="h-48 w-48 rounded-full mb-4" />
         <Skeleton className="h-5 w-3/4 mb-2" />
@@ -420,7 +328,7 @@ const SimpananPageSkeleton = () => (
     </div>
     
     {/* Skeleton Tabel */}
-    <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+    <div className="bg-white rounded-xl shadow-lg">
       <div className="p-6">
         <Skeleton className="h-6 w-48 mb-4" />
         <Skeleton className="h-10 w-full mb-4" />
@@ -460,17 +368,15 @@ export default function SimpananAnggotaPage() {
 
   // --- Logika Memoization untuk Filter & Paginasi ---
   const filteredTransaksi = useMemo(() => {
-    setCurrentPage(1); // Reset halaman saat filter berubah
     return transaksi
-      .filter(trx => {
-        if (filterTipe === 'Semua') return true;
-        return trx.tipe === filterTipe;
-      })
-      .filter(trx => {
-        if (filterJenis === 'Semua') return true;
-        return trx.jenis === filterJenis;
-      });
+      .filter(trx => (filterTipe === 'Semua' ? true : trx.tipe === filterTipe))
+      .filter(trx => (filterJenis === 'Semua' ? true : trx.jenis === filterJenis));
   }, [transaksi, filterTipe, filterJenis]);
+
+  // Reset halaman saat filter berubah (hindari setState di useMemo)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterTipe, filterJenis]);
 
   const totalPage = Math.ceil(filteredTransaksi.length / TRANSAKSI_PER_HALAMAN);
 
@@ -608,7 +514,7 @@ export default function SimpananAnggotaPage() {
               <label className="text-xs font-medium text-gray-600 block mb-1">Filter Tipe</label>
               <select 
                 value={filterTipe}
-                onChange={(e) => setFilterTipe(e.target.value as any)}
+                onChange={(e) => setFilterTipe(e.target.value as 'Semua' | 'Setoran' | 'Penarikan')}
                 className="w-full p-2 text-sm border border-gray-300 rounded-lg"
               >
                 <option value="Semua">Semua Tipe</option>
@@ -620,7 +526,7 @@ export default function SimpananAnggotaPage() {
               <label className="text-xs font-medium text-gray-600 block mb-1">Filter Jenis</label>
               <select 
                 value={filterJenis}
-                onChange={(e) => setFilterJenis(e.target.value as any)}
+                onChange={(e) => setFilterJenis(e.target.value as 'Semua' | 'Pokok' | 'Wajib' | 'Sukarela')}
                 className="w-full p-2 text-sm border border-gray-300 rounded-lg"
               >
                 <option value="Semua">Semua Jenis</option>
@@ -644,14 +550,8 @@ export default function SimpananAnggotaPage() {
                 </tr>
               </thead>
               <tbody>
-                <AnimatePresence mode="wait">
                   {paginatedTransaksi.length === 0 ? (
-                    <motion.tr
-                      key="empty-state"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                    >
+                    <tr>
                       <td colSpan={5}>
                         <EmptyState
                           icon={Inbox}
@@ -659,17 +559,10 @@ export default function SimpananAnggotaPage() {
                           description="Tidak ada transaksi yang cocok dengan filter Anda."
                         />
                       </td>
-                    </motion.tr>
+                    </tr>
                   ) : (
-                    paginatedTransaksi.map((trx, index) => (
-                      <motion.tr
-                        key={trx.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.3, delay: index * 0.05 }}
-                        exit={{ opacity: 0 }}
-                        className="border-b hover:bg-gray-50 text-sm"
-                      >
+                    paginatedTransaksi.map((trx) => (
+                      <tr key={trx.id} className="border-b hover:bg-gray-50 text-sm">
                         <td className="p-4">{new Date(trx.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                         <td className="p-4 text-gray-800">{trx.keterangan}</td>
                         <td className="p-4">
@@ -688,10 +581,9 @@ export default function SimpananAnggotaPage() {
                         <td className="p-4 text-right text-green-600 font-medium">
                           {trx.tipe === 'Setoran' ? trx.jumlah.toLocaleString('id-ID') : '-'}
                         </td>
-                      </motion.tr>
+                      </tr>
                     ))
                   )}
-                </AnimatePresence>
               </tbody>
             </table>
           </div>
