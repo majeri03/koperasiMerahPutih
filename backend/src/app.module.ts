@@ -31,6 +31,9 @@ import { OfficialRecommendationModule } from './official-recommendation/official
 import { ImportantEventModule } from './important-event/important-event.module';
 import { AgendaExpeditionModule } from './agenda-expedition/agenda-expedition.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { EmailService } from './email/email.service';
+import { EmailModule } from './email/email.module';
+import { CooperativeProfileModule } from './cooperative-profile/cooperative-profile.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -60,9 +63,11 @@ import { UploadsModule } from './uploads/uploads.module';
     ImportantEventModule,
     AgendaExpeditionModule,
     UploadsModule,
+    EmailModule,
+    CooperativeProfileModule,
   ],
   controllers: [AppController, SimpananController],
-  providers: [AppService, SimpananService],
+  providers: [AppService, SimpananService, EmailService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

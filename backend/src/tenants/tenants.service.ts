@@ -152,7 +152,14 @@ export class TenantsService {
             schemaName,
             adminDetailsForHelper, // <-- Kirim objek data admin
           );
-
+          await this.createInitialCooperativeProfile(
+            tx,
+            schemaName,
+            createTenantDto.name, // Ambil dari DTO
+            createTenantDto.adminAddress, // Gunakan alamat admin sebagai default
+            createTenantDto.adminEmail, // Gunakan email admin sebagai default
+            null, // createTenantDto tidak punya no HP koperasi
+          );
           return {
             message:
               'Koperasi berhasil dibuat beserta akun pengurus pertama, data anggota, dan jabatan awal.',
@@ -631,6 +638,82 @@ export class TenantsService {
         -- Tidak ada foreign key di sini
       );
     `);
+    // Tabel Password Reset Token
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".password_reset_tokens (
+        "id" TEXT NOT NULL,
+        "token" TEXT NOT NULL,
+        "user_id" TEXT NOT NULL,
+        "expires_at" TIMESTAMP(3) NOT NULL,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+        CONSTRAINT "password_reset_tokens_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "password_reset_tokens_token_key" UNIQUE ("token"),
+        CONSTRAINT "password_reset_tokens_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "${schemaName}"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE
+      );
+    `);
+    // profile koperasi
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".cooperative_profile (
+        "id" TEXT NOT NULL,
+        "display_name" TEXT NOT NULL,
+        "logo_url" TEXT,
+        "phone" TEXT,
+        "email" TEXT,
+        "website" TEXT,
+        "address" TEXT,
+        "description" TEXT,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "cooperative_profile_pkey" PRIMARY KEY ("id")
+      );
+    `);
+  }
+
+  /**
+   * Helper untuk membuat baris data awal (singleton) untuk profil koperasi.
+   * Dipanggil dari activateTenant dan create.
+   */
+  private async createInitialCooperativeProfile(
+    tx: Prisma.TransactionClient,
+    schemaName: string,
+    // Data awal diambil dari DTO registrasi
+    initialDisplayName: string,
+    initialAddress: string,
+    initialEmail: string,
+    initialPhone: string | null,
+  ): Promise<void> {
+    console.log(
+      `[TenantService] Membuat profil koperasi awal untuk ${schemaName}`,
+    );
+    const profileId = uuidv4(); // ID unik untuk baris profil
+
+    try {
+      const query = `
+        INSERT INTO "${schemaName}".cooperative_profile (
+          id, display_name, address, email, phone, updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6);
+      `;
+
+      await tx.$executeRawUnsafe(
+        query,
+        profileId,
+        initialDisplayName,
+        initialAddress,
+        initialEmail,
+        initialPhone,
+        new Date(),
+      );
+    } catch (error) {
+      console.error(
+        `[TenantService] Gagal membuat cooperative_profile awal:`,
+        error,
+      );
+      // Jangan gagalkan seluruh transaksi, tapi log errornya
+      // throw new InternalServerErrorException('Gagal inisialisasi profil koperasi.');
+    }
   }
 
   private async createFirstAdminMemberAndPosition(
@@ -886,7 +969,14 @@ export class TenantsService {
             adminDetailsForHelper,
           );
           // --- AKHIR PERBAIKAN ---
-
+          await this.createInitialCooperativeProfile(
+            tx,
+            tenant.schemaName,
+            registrationData.cooperativeName,
+            registrationData.alamatLengkap,
+            registrationData.email, // Gunakan email PIC sebagai email publik awal
+            registrationData.picPhoneNumber, // Gunakan no HP PIC sebagai no HP publik awal
+          );
           console.log(
             `[TenantService] Tenant ${tenant.name} (${tenantId}) berhasil diaktifkan sepenuhnya!`,
           );

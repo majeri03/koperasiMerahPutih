@@ -35,6 +35,7 @@ async function bootstrap() {
     .addTag('Public')
     .addTag('App')
     .addTag('Users')
+    .addTag('Cooperative Profile (Tenant)')
     .addTag('Members (Buku 01)')
     .addTag('Board Positions (Buku 02)')
     .addTag('Supervisory Positions (Buku 03)')

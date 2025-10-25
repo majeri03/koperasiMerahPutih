@@ -16,6 +16,7 @@ import { JwtPayloadDto } from './dto/jwt-payload.dto';
 import { RefreshTokenGuard } from './refresh-token/refresh-token.guard';
 import { RefreshTokenPayloadDto } from './dto/refresh-token-payload.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
@@ -53,5 +54,13 @@ export class AuthController {
     @GetUser() user: JwtPayloadDto, // <-- Ambil info user dari token
   ) {
     return this.authService.changePassword(user, changePasswordDto);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Meminta link reset password via email' })
+  @ApiBody({ type: ForgotPasswordDto })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.handleForgotPassword(forgotPasswordDto.email);
   }
 }
