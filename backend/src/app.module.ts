@@ -35,6 +35,7 @@ import { EmailService } from './email/email.service';
 import { EmailModule } from './email/email.module';
 import { CooperativeProfileModule } from './cooperative-profile/cooperative-profile.module';
 import { ProfileModule } from './profile/profile.module';
+import { ArticlesModule } from './articles/articles.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -67,6 +68,7 @@ import { ProfileModule } from './profile/profile.module';
     EmailModule,
     CooperativeProfileModule,
     ProfileModule,
+    ArticlesModule,
   ],
   controllers: [AppController, SimpananController],
   providers: [AppService, SimpananService, EmailService],

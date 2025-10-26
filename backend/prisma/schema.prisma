@@ -70,6 +70,7 @@ model User {
   officialRecommendationResponses OfficialRecommendation[] @relation("OfficialRecommendationResponses")
   importantEventsRecorded         ImportantEvent[] @relation("ImportantEventsRecorded")
   passwordResetTokens PasswordResetToken[]
+  articles Article[]
   @@map("users")
 }
 
@@ -617,4 +618,32 @@ model CooperativeProfile {
   updatedAt    DateTime  @updatedAt @map("updated_at") // Otomatis update timestamp
 
   @@map("cooperative_profile")
+}
+// =========================
+// Manajemen katalog website
+//==========================
+
+//1. Berita
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+model Article {
+  id          String         @id @default(uuid())
+  title       String
+  slug        String         @unique // Slug unik untuk URL
+  content     String         @db.Text // Gunakan tipe Text untuk konten panjang
+  excerpt     String?        // Ringkasan (opsional)
+  imageUrl    String?        @map("image_url") // URL Gambar Unggulan (opsional)
+  sourceLink  String?        @map("source_link") // Link Sumber Berita (opsional)
+  status      ArticleStatus  @default(DRAFT) // Status default saat dibuat
+  publishedAt DateTime?      @map("published_at") // Kapan dipublikasikan
+  authorId    String         @map("author_id") // ID User Pengurus
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  author      User           @relation(fields: [authorId], references: [id])
+
+  @@map("articles") // Nama tabel di database
 }
