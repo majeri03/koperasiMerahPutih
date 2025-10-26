@@ -820,6 +820,40 @@ export class TenantsService {
         CONSTRAINT "cooperative_profile_pkey" PRIMARY KEY ("id")
       );
     `);
+
+    // Tabel Artikel (Berita)
+    await tx.$executeRawUnsafe(`
+      CREATE TYPE "${schemaName}"."ArticleStatus" AS ENUM ('DRAFT', 'PUBLISHED', 'ARCHIVED');
+    `);
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".articles (
+        "id" TEXT NOT NULL,
+        "title" TEXT NOT NULL,
+        "slug" TEXT NOT NULL,
+        "content" TEXT NOT NULL,
+        "excerpt" TEXT,
+        "image_url" TEXT,
+        "source_link" TEXT,
+        "status" "${schemaName}"."ArticleStatus" NOT NULL DEFAULT 'DRAFT',
+        "published_at" TIMESTAMP(3),
+        "author_id" TEXT NOT NULL,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "articles_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "articles_slug_key" UNIQUE ("slug"),
+        CONSTRAINT "articles_author_id_fkey" FOREIGN KEY ("author_id") REFERENCES "${schemaName}"."users"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+      );
+    `);
+
+    // Tambahkan index pada slug untuk pencarian lebih cepat (opsional tapi bagus)
+    await tx.$executeRawUnsafe(`
+        CREATE INDEX "articles_slug_idx" ON "${schemaName}"."articles"("slug");
+    `);
+    // Tambahkan index pada status untuk filter lebih cepat (opsional tapi bagus)
+    await tx.$executeRawUnsafe(`
+        CREATE INDEX "articles_status_idx" ON "${schemaName}"."articles"("status");
+    `);
   }
 
   /**

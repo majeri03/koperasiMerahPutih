@@ -9,7 +9,7 @@ async function bootstrap() {
 
   // --- TAMBAHKAN KEMBALI KONFIGURASI CORS DI SINI ---
   app.enableCors({
-    origin: 'http://majujaya.localhost:3000', // Pastikan origin frontend benar
+    origin: 'http://gokiljaya.localhost:3000', // Pastikan origin frontend benar
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type, Accept, Authorization',
     credentials: true,
@@ -18,7 +18,7 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe());
   app.enableCors({
-    origin: 'http://majujaya.localhost:3000', // Pastikan origin frontend benar
+    origin: 'http://gokiljaya.localhost:3000', // Pastikan origin frontend benar
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type, Accept, Authorization',
     credentials: true,
@@ -51,6 +51,7 @@ async function bootstrap() {
     .addTag('Supervisory Suggestions (Buku 13)')
     .addTag('Official Recommendations (Buku 14)')
     .addTag('Important Events (Buku 15)')
+    .addTag('Articles (Berita & Artikel)')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
