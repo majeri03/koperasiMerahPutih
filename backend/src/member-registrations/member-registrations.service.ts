@@ -19,7 +19,7 @@ import {
   Prisma,
   RegistrationStatus,
 } from '@prisma/client';
-
+import { EmailService } from 'src/email/email.service';
 // --- BUAT SERVICE MENJADI REQUEST SCOPED ---
 @Injectable({ scope: Scope.REQUEST })
 export class MemberRegistrationsService {
@@ -28,6 +28,7 @@ export class MemberRegistrationsService {
   constructor(
     private prisma: PrismaService, // Ini tetap untuk getTenantClient() default
     @Inject(REQUEST) private request: Request, // <-- Inject Request object
+    private emailService: EmailService,
   ) {}
   // --- AKHIR PERUBAHAN CONSTRUCTOR ---
 
@@ -297,8 +298,9 @@ export class MemberRegistrationsService {
     }
 
     // 3. Gunakan Transaksi Database
+    let result: { memberId: string; userId: string };
     try {
-      const result = await prismaTenant.$transaction(async (tx) => {
+      result = await prismaTenant.$transaction(async (tx) => {
         // Generate UUID baru untuk Member dan User (bisa sama)
         // Jika Anda menggunakan `gen_random_uuid()` di DB, Prisma otomatis menanganinya
         // Jika tidak, Anda bisa generate di sini: import { v4 as uuidv4 } from 'uuid'; const newId = uuidv4();
@@ -347,6 +349,46 @@ export class MemberRegistrationsService {
 
         return { memberId: newMember.id, userId: newUser.id };
       });
+      try {
+        if (!registration || !registration.email || !registration.fullName) {
+          console.error(
+            `[MemberRegService] Data registrasi krusial hilang saat mencoba kirim email approval untuk ID ${registrationId}`,
+          );
+          // Jangan throw error, cukup batalkan pengiriman email
+          return result; // Kembalikan hasil transaksi
+        }
+        const subdomain = this.request.tenantId;
+        if (!subdomain) {
+          throw new Error('Subdomain (tenantId) tidak ditemukan di request.');
+        }
+
+        // Ambil nama Koperasi dari DB Publik
+        const tenant = await this.prismaPublic.tenant.findUnique({
+          where: { subdomain },
+          select: { name: true },
+        });
+        const cooperativeName = tenant?.name ?? 'Koperasi Anda';
+
+        const htmlBody = this.emailService.createMemberApprovedHtml(
+          registration.fullName,
+          cooperativeName,
+          subdomain,
+        );
+
+        await this.emailService.sendEmail(
+          registration.email,
+          `Pendaftaran Anggota Disetujui - ${cooperativeName}`,
+          htmlBody,
+          cooperativeName, // Nama Pengirim (Sender Name)
+        );
+      } catch (emailError) {
+        // Jika email gagal, jangan gagalkan request. Cukup log error.
+        console.error(
+          `[MemberRegService] Registrasi ${registrationId} berhasil, TAPI GAGAL kirim email notifikasi ke ${registration.email}:`,
+          emailError,
+        );
+      }
+
       return result;
     } catch (error) {
       console.error(`Gagal menyetujui pendaftaran ${registrationId}:`, error);
@@ -382,7 +424,7 @@ export class MemberRegistrationsService {
     // 1. Ambil data registrasi & pastikan statusnya PENDING
     const registration = await prismaTenant.memberRegistration.findUnique({
       where: { id: registrationId },
-      select: { status: true }, // Cukup ambil status
+      select: { status: true, fullName: true, email: true }, // Cukup ambil status
     });
 
     if (!registration) {
@@ -407,6 +449,46 @@ export class MemberRegistrationsService {
           rejectionReason: reason, // Gunakan parameter
         },
       });
+      // 3. (BARU) Kirim Email Notifikasi (SETELAH UPDATE SUKSES)
+      try {
+        if (!registration || !registration.email || !registration.fullName) {
+          console.error(
+            `[MemberRegService] Data registrasi krusial hilang saat mencoba kirim email rejection untuk ID ${registrationId}`,
+          );
+          // Jangan throw error, cukup batalkan pengiriman email
+          return; // Keluar dari fungsi (karena return type void)
+        }
+        const subdomain = this.request.tenantId;
+        if (!subdomain) {
+          throw new Error('Subdomain (tenantId) tidak ditemukan di request.');
+        }
+
+        // Ambil nama Koperasi dari DB Publik
+        const tenant = await this.prismaPublic.tenant.findUnique({
+          where: { subdomain },
+          select: { name: true },
+        });
+        const cooperativeName = tenant?.name ?? 'Koperasi Anda';
+
+        const htmlBody = this.emailService.createMemberRejectedHtml(
+          registration.fullName,
+          cooperativeName,
+          reason, // <-- Masukkan alasan penolakan
+        );
+
+        await this.emailService.sendEmail(
+          registration.email,
+          `Pendaftaran Anggota Ditolak - ${cooperativeName}`,
+          htmlBody,
+          cooperativeName, // Nama Pengirim (Sender Name)
+        );
+      } catch (emailError) {
+        // Jika email gagal, jangan gagalkan request. Cukup log error.
+        console.error(
+          `[MemberRegService] Penolakan ${registrationId} berhasil, TAPI GAGAL kirim email notifikasi ke ${registration.email}:`,
+          emailError,
+        );
+      }
       // Tidak perlu return apa-apa (void)
     } catch (error) {
       console.error(`Gagal menolak pendaftaran ${registrationId}:`, error);

@@ -17,6 +17,7 @@ import { CreateTenantDto } from './dto/create-tenant.dto';
 import * as bcrypt from 'bcrypt';
 import { MidtransService } from 'src/midtrans/midtrans.service';
 import { v4 as uuidv4 } from 'uuid';
+import { EmailService } from 'src/email/email.service';
 @Injectable()
 export class TenantsService {
   private readonly prisma = new PrismaClient();
@@ -24,6 +25,7 @@ export class TenantsService {
   constructor(
     @Inject(forwardRef(() => MidtransService))
     private midtransService: MidtransService,
+    private emailService: EmailService,
   ) {}
 
   findPending() {
@@ -34,11 +36,21 @@ export class TenantsService {
   async approve(tenantId: string) {
     const tenant = await this.prisma.tenant.findFirst({
       where: { id: tenantId, status: 'PENDING' },
+      select: { id: true, name: true, subdomain: true },
     });
 
     if (!tenant) {
       throw new NotFoundException(
         'Tenant tidak ditemukan atau sudah disetujui.',
+      );
+    }
+    const registrationData = await this.prisma.tenantRegistration.findUnique({
+      where: { tenantId: tenant.id },
+      select: { picFullName: true, email: true },
+    });
+    if (!registrationData) {
+      throw new InternalServerErrorException(
+        `Data pendaftaran untuk tenant ${tenantId} tidak ditemukan.`,
       );
     }
 
@@ -80,12 +92,45 @@ export class TenantsService {
     // =================================================================
     // Panggil fungsi aktivasi secara langsung. Fungsi ini sudah menggunakan
     // data asli dari `tenant_registrations` dan tidak lagi memakai data dummy.
-    await this.activateTenant(tenantId);
+    try {
+      // Panggil fungsi aktivasi (yang sekarang fokus pada DB setup)
+      await this.activateTenant(tenantId); // activateTenant sekarang tidak perlu return message
 
-    return {
-      message: 'Koperasi telah berhasil diaktifkan secara manual.',
-      tenantId: tenant.id,
-    };
+      // Kirim Email Notifikasi (SETELAH activateTenant SUKSES)
+      try {
+        const htmlBody = this.emailService.createTenantApprovedHtml(
+          registrationData.picFullName,
+          tenant.name,
+          tenant.subdomain, // Gunakan subdomain dari query
+        );
+
+        await this.emailService.sendEmail(
+          registrationData.email,
+          `Pendaftaran Koperasi Disetujui - ${tenant.name}`,
+          htmlBody,
+          'Platform Koperasi', // Sender Name (Generik)
+        );
+      } catch (emailError) {
+        console.error(
+          `[TenantService] Aktivasi tenant ${tenantId} berhasil, TAPI GAGAL kirim email notifikasi ke ${registrationData.email}:`,
+          emailError,
+        );
+        // Jangan gagalkan proses utama
+      }
+
+      return {
+        message: 'Koperasi telah berhasil diaktifkan dan notifikasi terkirim.',
+        tenantId: tenant.id,
+      };
+    } catch (activationError) {
+      // Tangani error dari activateTenant
+      console.error(
+        `[TenantService] Gagal mengaktifkan tenant ${tenantId} saat proses approval:`,
+        activationError,
+      );
+      // Lemparkan ulang error agar controller tahu
+      throw activationError;
+    }
   }
   async create(createTenantDto: CreateTenantDto) {
     const {
@@ -178,6 +223,112 @@ export class TenantsService {
         throw error;
       }
       throw new InternalServerErrorException('Gagal membuat koperasi baru.');
+    }
+  }
+
+  /**
+   * Menolak pendaftaran tenant (koperasi).
+   * Mengubah status Tenant menjadi REJECTED.
+   * Mengirim email notifikasi ke PIC.
+   * @param tenantId ID Tenant yang akan ditolak
+   * @param reason Alasan penolakan
+   */
+  async rejectTenant(tenantId: string, reason: string) {
+    console.log(`[TenantService] Mencoba menolak tenant ID: ${tenantId}`);
+
+    // 1. Cari Tenant & Registrasi Data
+    // Kita butuh transaksi karena membaca dari 2 tabel & update 1 tabel
+    try {
+      const result = await this.prisma.$transaction(async (tx) => {
+        // Cari tenant yang statusnya PENDING
+        const tenant = await tx.tenant.findFirst({
+          where: { id: tenantId, status: TenantStatus.PENDING },
+        });
+
+        if (!tenant) {
+          throw new NotFoundException(
+            `Tenant dengan ID ${tenantId} tidak ditemukan atau statusnya bukan PENDING.`,
+          );
+        }
+
+        // Cari data registrasi terkait untuk info PIC
+        const registrationData = await tx.tenantRegistration.findUnique({
+          where: { tenantId: tenant.id },
+          select: { picFullName: true, email: true }, // Hanya ambil data yg perlu
+        });
+
+        if (!registrationData) {
+          // Ini seharusnya tidak terjadi jika data konsisten
+          throw new InternalServerErrorException(
+            `Data pendaftaran untuk tenant ${tenantId} tidak ditemukan.`,
+          );
+        }
+
+        // 2. Update Status Tenant menjadi REJECTED
+        await tx.tenant.update({
+          where: { id: tenantId },
+          data: { status: TenantStatus.SUSPENDED }, // Gunakan Enum
+        });
+
+        return { tenant, registrationData }; // Kembalikan data untuk email
+      });
+      // --- AKHIR TRANSAKSI ---
+
+      // 3. Kirim Email Notifikasi (SETELAH TRANSAKSI SUKSES)
+      try {
+        const { tenant, registrationData } = result;
+        if (
+          !tenant ||
+          !registrationData ||
+          !registrationData.email ||
+          !registrationData.picFullName
+        ) {
+          console.error(
+            `[TenantService] Data tenant/registrasi krusial hilang saat mencoba kirim email rejection untuk ID ${tenantId}`,
+          );
+          // Jangan throw error, cukup batalkan pengiriman email
+          return {
+            // Kembalikan pesan sukses tanpa email
+            message: `Tenant ${result.tenant?.name ?? tenantId} berhasil ditolak (email gagal dikirim).`,
+            tenantId: result.tenant?.id ?? tenantId,
+          };
+        }
+        const htmlBody = this.emailService.createTenantRejectedHtml(
+          registrationData.picFullName,
+          tenant.name,
+          reason,
+        );
+
+        await this.emailService.sendEmail(
+          registrationData.email,
+          `Pendaftaran Koperasi Ditolak - ${tenant.name}`,
+          htmlBody,
+          'Platform Koperasi', // Sender Name (Generik)
+        );
+      } catch (emailError) {
+        console.error(
+          `[TenantService] Penolakan tenant ${tenantId} berhasil, TAPI GAGAL kirim email notifikasi ke ${result.registrationData.email}:`,
+          emailError,
+        );
+        // Jangan gagalkan proses utama
+      }
+
+      return {
+        message: `Tenant ${result.tenant.name} berhasil ditolak.`,
+        tenantId: result.tenant.id,
+      };
+    } catch (error) {
+      // Tangani error dari transaksi
+      console.error(`[TenantService] Gagal menolak tenant ${tenantId}:`, error);
+      if (
+        error instanceof NotFoundException ||
+        error instanceof InternalServerErrorException
+      ) {
+        throw error; // Lemparkan error spesifik
+      }
+      throw new InternalServerErrorException(
+        'Terjadi kesalahan saat menolak pendaftaran koperasi.',
+      );
     }
   }
 
@@ -896,9 +1047,9 @@ export class TenantsService {
     return { userId: newUserId, memberId: newUserId };
   }
 
-  async activateTenant(tenantId: string) {
+  async activateTenant(tenantId: string): Promise<void> {
     console.log(`[TenantService] Mengaktifkan tenant dengan ID: ${tenantId}`);
-    return this.prisma
+    await this.prisma
       .$transaction(
         async (tx) => {
           const tenant = await tx.tenant.findFirst({
@@ -978,18 +1129,14 @@ export class TenantsService {
             registrationData.picPhoneNumber, // Gunakan no HP PIC sebagai no HP publik awal
           );
           console.log(
-            `[TenantService] Tenant ${tenant.name} (${tenantId}) berhasil diaktifkan sepenuhnya!`,
+            `[TenantService] Tenant ${tenant.name} (${tenantId}) berhasil diaktifkan (setup database selesai).`,
           );
-          return {
-            message: `Tenant ${tenant.name} berhasil diaktifkan.`,
-            tenantId: tenant.id,
-          };
         },
         { timeout: 25000, maxWait: 10000 },
       )
       .catch((error) => {
         console.error(
-          `[TenantService] Terjadi error saat aktivasi tenant ${tenantId}:`,
+          `[TenantService] Terjadi error saat aktivasi (setup database) tenant ${tenantId}:`,
           error,
         );
         if (
