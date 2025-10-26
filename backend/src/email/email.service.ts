@@ -12,11 +12,15 @@ export class EmailService {
   private readonly resend: Resend;
   private readonly fromAddress: string;
   private readonly logger = new Logger(EmailService.name); // Untuk logging
-
+  private readonly frontendDomain: string;
   constructor(private configService: ConfigService) {
     const apiKey = this.configService.getOrThrow<string>('RESEND_API_KEY');
     this.fromAddress =
       this.configService.getOrThrow<string>('EMAIL_FROM_ADDRESS');
+    this.frontendDomain = this.configService.get<string>(
+      'FRONTEND_DOMAIN',
+      'localhost:3000',
+    );
     this.resend = new Resend(apiKey);
     this.logger.log('EmailService initialized');
   }
@@ -83,5 +87,85 @@ export class EmailService {
       <p>Terima kasih,</p>
       <p>Tim Platform Koperasi</p> 
     `; // Ganti "Tim Platform Koperasi" sesuai nama platform Anda
+  }
+
+  /**
+   * Membuat HTML untuk notifikasi tenant (koperasi) disetujui.
+   */
+  createTenantApprovedHtml(
+    picName: string,
+    tenantName: string,
+    subdomain: string,
+  ): string {
+    const loginUrl = `http://${subdomain}.${this.frontendDomain}`;
+    return `
+      <p>Halo ${picName},</p>
+      <p>Kabar baik! Pendaftaran koperasi Anda, <b>${tenantName}</b>, telah disetujui.</p>
+      <p>Anda sekarang dapat mengakses platform koperasi Anda melalui link di bawah ini:</p>
+      <p><a href="${loginUrl}" target="_blank">${loginUrl}</a></p>
+      <p>Silakan login menggunakan email dan password yang telah Anda daftarkan.</p>
+      <br>
+      <p>Terima kasih,</p>
+      <p>Tim Platform Koperasi</p>
+    `;
+  }
+
+  /**
+   * Membuat HTML untuk notifikasi tenant (koperasi) ditolak.
+   */
+  createTenantRejectedHtml(
+    picName: string,
+    tenantName: string,
+    reason: string,
+  ): string {
+    return `
+      <p>Halo ${picName},</p>
+      <p>Setelah peninjauan, kami informasikan bahwa pendaftaran koperasi Anda, <b>${tenantName}</b>, belum dapat kami setujui saat ini.</p>
+      <p><b>Alasan Penolakan:</b> ${reason}</p>
+      <p>Jika Anda memiliki pertanyaan lebih lanjut, silakan hubungi tim support kami.</p>
+      <br>
+      <p>Terima kasih,</p>
+      <p>Tim Platform Koperasi</p>
+    `;
+  }
+
+  /**
+   * Membuat HTML untuk notifikasi pendaftaran anggota disetujui.
+   */
+  createMemberApprovedHtml(
+    memberName: string,
+    cooperativeName: string,
+    subdomain: string,
+  ): string {
+    const loginUrl = `http://${subdomain}.${this.frontendDomain}`;
+    return `
+      <p>Halo ${memberName},</p>
+      <p>Selamat! Pendaftaran Anda sebagai anggota <b>${cooperativeName}</b> telah disetujui oleh Pengurus.</p>
+      <p>Anda sekarang dapat login ke akun Anda melalui link di bawah ini:</p>
+      <p><a href="${loginUrl}" target="_blank">${loginUrl}</a></p>
+      <p>Silakan login menggunakan email dan password yang telah Anda daftarkan.</p>
+      <br>
+      <p>Terima kasih,</p>
+      <p>Pengurus ${cooperativeName}</p>
+    `;
+  }
+
+  /**
+   * Membuat HTML untuk notifikasi pendaftaran anggota ditolak.
+   */
+  createMemberRejectedHtml(
+    memberName: string,
+    cooperativeName: string,
+    reason: string,
+  ): string {
+    return `
+      <p>Halo ${memberName},</p>
+      <p>Setelah peninjauan oleh Pengurus, kami informasikan bahwa pendaftaran Anda sebagai anggota <b>${cooperativeName}</b> belum dapat disetujui saat ini.</p>
+      <p><b>Alasan Penolakan:</b> ${reason}</p>
+      <p>Silakan hubungi Pengurus koperasi Anda secara langsung untuk informasi lebih lanjut.</p>
+      <br>
+      <p>Terima kasih,</p>
+      <p>Pengurus ${cooperativeName}</p>
+    `;
   }
 }

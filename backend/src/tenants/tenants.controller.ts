@@ -1,8 +1,19 @@
-import { Controller, Get, Post, Body, UseGuards, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  Param,
+  ParseUUIDPipe, // <-- Import ParseUUIDPipe
+  HttpCode, // <-- Import HttpCode
+  HttpStatus,
+} from '@nestjs/common';
 import { TenantsService } from './tenants.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { SuperAdminGuard } from '../admin/super-admin/super-admin.guard';
-
+import { RejectTenantDto } from './dto/reject-tenant.dto'; // <-- Import DTO Baru
+import { ApiBody, ApiOperation, ApiParam } from '@nestjs/swagger';
 @UseGuards(SuperAdminGuard)
 @Controller('tenants')
 export class TenantsController {
@@ -24,7 +35,22 @@ export class TenantsController {
   }
 
   @Post(':id/approve')
-  approve(@Param('id') id: string) {
+  @ApiOperation({ summary: '(Super Admin) Menyetujui pendaftaran tenant' }) // Tambah deskripsi Swagger
+  @ApiParam({ name: 'id', description: 'ID Tenant (UUID)' })
+  approve(@Param('id', ParseUUIDPipe) id: string) {
+    // Tambah ParseUUIDPipe
     return this.tenantsService.approve(id);
+  }
+
+  @Post(':id/reject')
+  @HttpCode(HttpStatus.OK) // Status 200 OK jika berhasil tolak
+  @ApiOperation({ summary: '(Super Admin) Menolak pendaftaran tenant' })
+  @ApiParam({ name: 'id', description: 'ID Tenant (UUID)' })
+  @ApiBody({ type: RejectTenantDto })
+  reject(
+    @Param('id', ParseUUIDPipe) id: string, // Validasi ID
+    @Body() rejectDto: RejectTenantDto, // Ambil alasan dari body
+  ) {
+    return this.tenantsService.rejectTenant(id, rejectDto.reason);
   }
 }
