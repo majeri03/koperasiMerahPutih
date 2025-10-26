@@ -3,10 +3,11 @@
 
 import { 
     Users, PiggyBank, HandCoins, UserPlus, ArrowUpRight, 
-    MessageSquare, ClipboardList, Send, Landmark, BookUser
+    MessageSquare, Send, Landmark, BookUser
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+// PERBAIKAN: Impor ElementType untuk tipe data ikon
+import { useEffect, useState, ElementType } from "react";
 
 // --- Tipe Data Diperbarui ---
 type DashboardData = {
@@ -21,11 +22,23 @@ type DashboardData = {
       saranBaru: number;
   };
   anggotaTerbaru: { nama: string; tanggalMasuk: string }[];
-  aktivitasTerbaru: { ikon: any; teks: string; waktu: string; }[];
+  // PERBAIKAN: Mengganti 'any' dengan 'ElementType'
+  aktivitasTerbaru: { ikon: ElementType; teks: string; waktu: string; }[];
+};
+
+// --- PERBAIKAN: Definisikan tipe props untuk StatCard ---
+type StatCardProps = {
+  icon: ElementType;
+  title: string;
+  value: number;
+  change: number;
+  color: string;
+  unit?: string;
 };
 
 // --- Komponen Kartu Statistik ---
-const StatCard = ({ icon, title, value, change, color, unit = '' }: any) => {
+// PERBAIKAN: Terapkan tipe StatCardProps
+const StatCard = ({ icon, title, value, change, color, unit = '' }: StatCardProps) => {
   const IconComponent = icon;
   const isPositive = change >= 0;
 
@@ -51,8 +64,18 @@ const StatCard = ({ icon, title, value, change, color, unit = '' }: any) => {
   );
 };
 
+// --- PERBAIKAN: Definisikan tipe props untuk ActionCard ---
+type ActionCardProps = {
+  href: string;
+  icon: ElementType;
+  title: string;
+  description: string;
+  color: string;
+};
+
 // --- Komponen Kartu Aksi Cepat ---
-const ActionCard = ({ href, icon, title, description, color }: any) => {
+// PERBAIKAN: Terapkan tipe ActionCardProps
+const ActionCard = ({ href, icon, title, description, color }: ActionCardProps) => {
     const Icon = icon;
     return (
         <Link href={href} className={`p-5 rounded-xl border bg-white hover:shadow-lg hover:border-${color}-200 transition-all flex items-center gap-4`}>
@@ -168,7 +191,7 @@ export default function AdminDashboardPage() {
                             <li key={index} className="flex items-start gap-3">
                                 <div className="p-2 bg-gray-100 rounded-full mt-1">
                                     <Icon className="h-5 w-5 text-gray-500" />
-                                </div>
+                                D</div>
                                 <div>
                                     <p className="text-sm text-gray-800">{aktivitas.teks}</p>
                                     <p className="text-xs text-gray-400">{aktivitas.waktu}</p>

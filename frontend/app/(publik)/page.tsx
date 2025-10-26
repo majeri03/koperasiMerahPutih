@@ -1,126 +1,194 @@
 "use client";
 
-import { useState, useEffect, FormEvent, ChangeEvent, useRef } from "react";
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, ChangeEvent, useRef } from "react";
 import Button from "@/components/Button";
 import Image from "next/image";
 import Gallery, { GALLERY_IMAGES } from "@/components/Gallery";
 import Link from "next/link";
-// Tipe data mungkin perlu diimpor (sesuaikan path jika perlu)
-import { NewsItem } from "@/components/NewsTypes"; // Pastikan path benar
+import { NewsItem } from "@/components/NewsTypes";
 import NewsCard from "@/components/NewsCard";
 import QuoteFader from "@/components/QuoteFader";
 import ProductCard from "@/components/ProductCard";
-import { Search } from "lucide-react"; // Import ikon search jika belum
+import { Search } from "lucide-react";
 
-// === TAMBAHKAN IMPORT INI KEMBALI ===
 import { fetchLatest } from "@/lib/news";
 import { fetchFeaturedProducts } from "@/lib/products";
-// === SELESAI ===
 
-// Tipe data untuk hasil pencarian
+/* =========================
+   TIPE DATA & UTIL (tanpa any)
+   ========================= */
+
+// Hasil search koperasi
 type KoperasiSearchResult = {
-  id: string; // ID dari tabel tenants
-  nama: string; // Nama koperasi
-  subdomain: string; // Subdomain koperasi
+  id: string;
+  nama: string;
+  subdomain: string;
 };
 
-// --- Komponen Utama Halaman ---
+// Union yang diharapkan ProductCard
+type ProdukKategori = "Sembako" | "Elektronik" | "Jasa" | "Lainnya";
+type ProdukStatus = "Tersedia" | "Habis";
+
+// Tipe final yang dipakai ProductCard
+export type Produk = {
+  id: string;
+  nama: string;
+  harga: number;
+  imageUrl: string;
+  kategori: ProdukKategori;
+  status: ProdukStatus;
+};
+
+// Tipe "mentah" dari API (longgar, TANPA any)
+type RawProduct = {
+  id?: string | number;
+  nama?: string;
+  title?: string;
+  harga?: number | string;
+  price?: number | string;
+  imageUrl?: string;
+  gambar?: string;
+  kategori?: unknown;
+  status?: unknown;
+};
+
+// Type guard: memastikan array RawProduct
+function isRawProductArray(x: unknown): x is RawProduct[] {
+  return Array.isArray(x);
+}
+
+// Helper normalisasi ke union
+const toKategori = (val: unknown): ProdukKategori => {
+  return val === "Sembako" || val === "Elektronik" || val === "Jasa"
+    ? val
+    : "Lainnya";
+};
+
+const toStatus = (val: unknown): ProdukStatus => {
+  return val === "Habis" ? "Habis" : "Tersedia";
+};
+
+const toStringSafe = (v: unknown, fallback = ""): string =>
+  typeof v === "string" ? v : typeof v === "number" ? String(v) : fallback;
+
+const toNumberSafe = (v: unknown, fallback = 0): number => {
+  if (typeof v === "number") return v;
+  if (typeof v === "string") {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+  }
+  return fallback;
+};
+
+/* =========================
+   KOMPONEN HALAMAN
+   ========================= */
 export default function Home() {
-  // State untuk data yang sebelumnya diambil di server
-  const [latest, setLatest] = useState<NewsItem[]>([]);
-  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  // Data awal
+  const [latest, setLatest] = useState<NewsItem[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<Produk[]>([]);
 
-  // State untuk search bar interaktif
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<KoperasiSearchResult[]>([]);
-  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const router = useRouter();
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Ref untuk debounce
-  const searchWrapperRef = useRef<HTMLDivElement>(null); // Ref untuk deteksi klik di luar
+  // Search interaktif
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<KoperasiSearchResult[]>([]);
+  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
 
-  // === ISI useEffect INI ===
-  useEffect(() => {
-    const loadData = async () => {
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchWrapperRef = useRef<HTMLDivElement | null>(null);
+
+  // Ambil data awal
+  useEffect(() => {
+    const loadData = async () => {
       try {
-        // Ambil data berita dan produk
         const newsData = await fetchLatest(3);
-        const productData = await fetchFeaturedProducts(4);
-        
-        // Set state dengan data yang didapat
+        const raw = (await fetchFeaturedProducts(4)) as unknown;
+
+        // Validasi & mapping ke Produk (tanpa any)
+        const productData: Produk[] = isRawProductArray(raw)
+          ? raw.map((p): Produk => {
+              const id = toStringSafe(p.id, crypto.randomUUID());
+              const nama = toStringSafe(p.nama ?? p.title ?? "Produk");
+              const harga = toNumberSafe(p.harga ?? p.price ?? 0, 0);
+              const imageUrl = toStringSafe(
+                p.imageUrl ?? p.gambar ?? "/images/placeholder.png",
+                "/images/placeholder.png"
+              );
+              const kategori = toKategori(p.kategori);
+              const status = toStatus(p.status);
+
+              return { id, nama, harga, imageUrl, kategori, status };
+            })
+          : [];
+
         setLatest(newsData);
         setFeaturedProducts(productData);
-
-      } catch (error) {
-        console.error("Gagal mengambil data awal:", error);
-        // Biarkan state tetap kosong jika gagal
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.error("Gagal mengambil data awal:", err.message);
+        } else {
+          console.error("Gagal mengambil data awal:", "Terjadi error tidak dikenal");
+        }
       }
     };
-    loadData();
-  }, []);
-  // === SELESAI ===
+    loadData();
 
-  // --- Fungsi untuk Fetch Hasil Pencarian (dengan debounce) ---
-  const fetchSearchResults = async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      setShowDropdown(false);
-      return;
-    }
+    // Cleanup debounce
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, []);
 
-    setIsLoadingSearch(true);
-    setShowDropdown(true); // Tampilkan dropdown saat loading
+  // Fetch hasil pencarian (debounce)
+  const fetchSearchResults = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
 
-    try {
-      // --- GANTI DENGAN FETCH API BACKEND ---
-      // Contoh: const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/public/search-koperasi?q=${encodeURIComponent(query)}`);
-      // const data: KoperasiSearchResult[] = await response.json();
+    setIsLoadingSearch(true);
+    setShowDropdown(true);
 
-      // Data Mock untuk sementara:
-      await new Promise(resolve => setTimeout(resolve, 300)); // Simulasi delay
-      const mockData: KoperasiSearchResult[] = [
-        { id: "1", nama: "Koperasi Maju Jaya", subdomain: "majujaya" },
-        { id: "2", nama: "Koperasi Warga Sejahtera", subdomain: "wargasejahtera" },
-        { id: "3", nama: "Kopdes Sumber Rejeki", subdomain: "sumberrejeki" },
-      ].filter(k => k.nama.toLowerCase().includes(query.toLowerCase()));
-      // --- AKHIR DATA MOCK ---
+    try {
+      // Mock sementara
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const mockData: KoperasiSearchResult[] = [
+        { id: "1", nama: "Koperasi Maju Jaya", subdomain: "majujaya" },
+        { id: "2", nama: "Koperasi Warga Sejahtera", subdomain: "wargasejahtera" },
+        { id: "3", nama: "Kopdes Sumber Rejeki", subdomain: "sumberrejeki" },
+      ].filter((k) => k.nama.toLowerCase().includes(query.toLowerCase()));
 
-      setSearchResults(mockData);
-    } catch (error) {
-      console.error("Gagal mencari koperasi:", error);
-      setSearchResults([]); // Kosongkan hasil jika error
-    } finally {
-      setIsLoadingSearch(false);
-    }
-  };
-
+      setSearchResults(mockData);
+    } catch (err) {
+      console.error("Gagal mencari koperasi:", err);
+      setSearchResults([]);
+    } finally {
+      setIsLoadingSearch(false);
+    }
+  };
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchTerm(query);
 
-
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-
-  searchTimeoutRef.current = setTimeout(() => {
-  fetchSearchResults(query);
-    }, 300);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => fetchSearchResults(query), 300);
   };
 
-  // --- Fungsi untuk Redirect ke Subdomain ---
+  // Redirect subdomain (dev vs prod)
   const redirectToSubdomain = (subdomain: string) => {
-
-    if (typeof window !== 'undefined') {
-      const rootDomain = window.location.hostname === 'localhost' ? 'localhost:3000' : 'sistemkoperasi.id'; // Sesuaikan domain produksi
+    if (typeof window !== "undefined") {
+      const isLocal = window.location.hostname === "localhost";
       const protocol = window.location.protocol;
-      window.location.href = `${protocol}//${subdomain}.${rootDomain}`;
+      const rootDomain = isLocal ? "localhost:3000" : "sistemkoperasi.id";
+      window.location.href = isLocal
+        ? `${protocol}//${rootDomain}/${subdomain}`
+        : `${protocol}//${subdomain}.${rootDomain}`;
     }
   };
 
+  // Tutup dropdown saat klik di luar
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (searchWrapperRef.current && !searchWrapperRef.current.contains(event.target as Node)) {
@@ -129,16 +197,15 @@ export default function Home() {
     }
 
     document.addEventListener("mousedown", handleClickOutside);
-  return () => {
-
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [searchWrapperRef]);
 
-
+  /* =========================
+     RENDER
+     ========================= */
   return (
     <>
-      {/* HERO SECTION (MODIFIED FOR BETTER UX) */}
+      {/* HERO SECTION */}
       <section className="relative h-screen flex items-center justify-center text-center text-white">
         <Image
           src="https://cdn.pixabay.com/photo/2023/05/04/02/24/bali-7969001_1280.jpg"
@@ -147,9 +214,8 @@ export default function Home() {
           priority
           className="object-cover"
         />
-        {/* Slightly darker overlay for better text contrast */}
         <div className="absolute inset-0 bg-black/50" />
-        <div className="relative z-10 container px-4 flex flex-col items-center"> {/* Use flex column for centering */}
+        <div className="relative z-10 container px-4 flex flex-col items-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white drop-shadow-lg">
             Koperasi Merah Putih
           </h1>
@@ -158,18 +224,15 @@ export default function Home() {
             dan layanan koperasi modern.
           </p>
 
-{/* === MULAI FITUR PENCARIAN INTERAKTIF === */}
-          <div ref={searchWrapperRef} className="mt-8 mb-4 max-w-lg w-full relative"> {/* Tambahkan relative */}
-            <form
-              // onSubmit tidak diperlukan lagi jika kita handle klik di dropdown
-              // onSubmit={(e) => e.preventDefault()}
-              className="relative flex w-full"
-            >
-              <label htmlFor="search-koperasi" className="sr-only">Cari Koperasi</label>
-               {/* Tambahkan ikon search di dalam input */}
-               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
-               </div>
+          {/* SEARCH BAR */}
+          <div ref={searchWrapperRef} className="mt-8 mb-4 max-w-lg w-full relative">
+            <form className="relative flex w-full">
+              <label htmlFor="search-koperasi" className="sr-only">
+                Cari Koperasi
+              </label>
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
               <input
                 id="search-koperasi"
                 type="search"
@@ -178,12 +241,11 @@ export default function Home() {
                 className="block w-full rounded-full border-2 border-transparent bg-white/90 pl-12 pr-6 py-3 text-gray-900 placeholder:text-gray-500 shadow-md transition focus:border-brand-red-500 focus:ring-brand-red-500 focus:bg-white"
                 value={searchTerm}
                 onChange={handleSearchChange}
-                onFocus={() => searchTerm.trim() && fetchSearchResults(searchTerm)} // Tampilkan dropdown saat fokus jika ada teks
-                autoComplete="off" // Hindari autofill browser mengganggu dropdown
+                onFocus={() => searchTerm.trim() && fetchSearchResults(searchTerm)}
+                autoComplete="off"
               />
             </form>
 
-            {/* Dropdown Hasil Pencarian */}
             {showDropdown && (
               <div className="absolute z-20 mt-2 w-full bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden max-h-60 overflow-y-auto">
                 {isLoadingSearch && (
@@ -199,28 +261,34 @@ export default function Home() {
                         onMouseDown={(e) => e.preventDefault()}
                       >
                         <p className="font-semibold text-gray-800">{koperasi.nama}</p>
-                        <p className="text-xs text-blue-600">{koperasi.subdomain}.sistemkoperasi.id</p>
+                        <p className="text-xs text-blue-600">
+                          {koperasi.subdomain}.sistemkoperasi.id
+                        </p>
                       </li>
                     ))}
                   </ul>
                 )}
-                {!isLoadingSearch && searchResults.length === 0 && searchTerm.trim() !== '' && (
-                  <div className="p-4 text-sm text-gray-500 text-center">Koperasi tidak ditemukan.</div>
+                {!isLoadingSearch && searchResults.length === 0 && searchTerm.trim() !== "" && (
+                  <div className="p-4 text-sm text-gray-500 text-center">
+                    Koperasi tidak ditemukan.
+                  </div>
                 )}
               </div>
             )}
           </div>
 
-          {/* Buttons */}
-          <div className="mt-6 flex flex-col sm:flex-row justify-center gap-4 w-full max-w-md"> {/* Adjusted spacing and width for mobile */}
+          {/* CTA BUTTONS */}
+          <div className="mt-6 flex flex-col sm:flex-row justify-center gap-4 w-full max-w-md">
             <Link href="/auth/login" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto">Daftar Anggota</Button>
+              <Button size="lg" className="w-full sm:w-auto">
+                Daftar Anggota
+              </Button>
             </Link>
             <Link href="/berita" className="w-full sm:w-auto">
               <Button
                 size="lg"
                 variant="outline"
-                className="w-full sm:w-auto bg-white/20 border-white text-white hover:bg-white/30 focus:ring-white/50" // Semi-transparent style
+                className="w-full sm:w-auto bg-white/20 border-white text-white hover:bg-white/30 focus:ring-white/50"
               >
                 Lihat Berita
               </Button>
@@ -229,7 +297,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SEJARAH SECTION */}
+      {/* SEJARAH */}
       <section className="py-16 md:py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -247,7 +315,9 @@ export default function Home() {
                 Membangun Ekonomi Kerakyatan Berbasis Gotong Royong
               </h2>
               <p className="text-gray-700 leading-relaxed">
-                Koperasi Desa/Kelurahan Merah Putih dibentuk berdasarkan semangat Pasal 33 UUD 1945, sebagai fondasi untuk memperkuat ketahanan ekonomi rakyat.
+                Koperasi Desa/Kelurahan Merah Putih dibentuk berdasarkan semangat
+                Pasal 33 UUD 1945, sebagai fondasi untuk memperkuat ketahanan
+                ekonomi rakyat.
               </p>
               <QuoteFader />
             </div>
@@ -255,7 +325,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FITUR SECTION */}
+      {/* FITUR */}
       <section className="py-12 md:py-16 bg-gray-50 border-y">
         <div className="container mx-auto px-4 grid md:grid-cols-3 gap-6">
           <div className="rounded-2xl bg-white p-6 shadow-sm border">
@@ -279,7 +349,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* GALERI PREVIEW SECTION */}
+      {/* GALERI */}
       <section className="py-12 md:py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="mb-8 flex items-center justify-between">
@@ -288,25 +358,25 @@ export default function Home() {
               <p className="text-gray-600 mt-1">Cuplikan momen terbaik dari kegiatan kami.</p>
             </div>
             <Link href="/galeri" className="hidden sm:inline-block">
-                <Button variant="outline">Lihat Semua</Button>
+              <Button variant="outline">Lihat Semua</Button>
             </Link>
           </div>
           <Gallery images={GALLERY_IMAGES} limit={6} />
         </div>
       </section>
 
-      {/* BERITA TERKINI SECTION */}
+      {/* BERITA TERKINI */}
       <section className="py-12 md:py-16 bg-red-50/50 border-t">
         <div className="container mx-auto px-4">
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h2 className="text-3xl font-extrabold text-brand-red-600">
-                Berita Terkini
-              </h2>
-              <p className="text-gray-600 mt-1">Update terbaru seputar kegiatan dan layanan koperasi.</p>
+              <h2 className="text-3xl font-extrabold text-brand-red-600">Berita Terkini</h2>
+              <p className="text-gray-600 mt-1">
+                Update terbaru seputar kegiatan dan layanan koperasi.
+              </p>
             </div>
             <Link href="/berita" className="hidden sm:inline-block">
-                <Button variant="outline">Lihat Semua</Button>
+              <Button variant="outline">Lihat Semua</Button>
             </Link>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
@@ -316,23 +386,25 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* PRODUK UNGGULAN */}
       <section className="py-12 md:py-16 bg-white border-t">
         <div className="container mx-auto px-4">
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h2 className="text-3xl font-extrabold text-brand-red-600">
-                Produk Unggulan
-              </h2>
+              <h2 className="text-3xl font-extrabold text-brand-red-600">Produk Unggulan</h2>
               <p className="text-gray-600 mt-1">Jelajahi produk dan layanan terbaik kami.</p>
             </div>
             <Link href="/katalog" className="hidden sm:inline-block">
-                <Button variant="outline">Lihat Semua Produk</Button>
+              <Button variant="outline">Lihat Semua Produk</Button>
             </Link>
           </div>
+
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredProducts.map((produk) => (
-              <ProductCard key={produk.id} produk={produk} />
+            {featuredProducts.map((itemProduk) => (
+              <ProductCard key={itemProduk.id} produk={itemProduk} />
             ))}
+
             {featuredProducts.length === 0 && (
               <p className="sm:col-span-2 lg:col-span-4 text-center text-gray-500">
                 Belum ada produk unggulan yang tersedia saat ini.
@@ -342,47 +414,44 @@ export default function Home() {
         </div>
       </section>
 
-{/* SEKSI CALL TO ACTION BARU (GABUNGAN) */}
-<section className="bg-slate-100 border-y">
-  <div className="container mx-auto px-4 py-16 md:py-20">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+      {/* CTA */}
+      <section className="bg-slate-100 border-y">
+        <div className="container mx-auto px-4 py-16 md:py-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div className="text-center md:text-left">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-brand-red-600 leading-tight">
+                Mari Bangun Negeri Dengan Jadi Bagian Dari Koperasi
+              </h2>
+              <p className="mt-4 text-gray-600 max-w-lg mx-auto md:mx-0">
+                Wujudkan Koperasi Modern yang transparan, efisien, dan mensejahterakan Anggota.
+              </p>
+              <div className="mt-8 flex flex-col sm:flex-row justify-center md:justify-start gap-4">
+                <Link href="/auth/daftar-koperasi">
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    Daftarkan Koperasi Anda
+                  </Button>
+                </Link>
+                <Link href="/auth/daftar-anggota">
+                  <Button className="w-full sm:w-auto">
+                    Bergabung Menjadi Anggota Koperasi
+                  </Button>
+                </Link>
+              </div>
+            </div>
 
-      {/* Kolom Kiri: Teks dan Tombol Aksi */}
-      <div className="text-center md:text-left">
-        <h2 className="text-3xl md:text-4xl font-extrabold text-brand-red-600 leading-tight">
-          Mari Bangun Negeri Dengan Jadi Bagian Dari Koperasi
-        </h2>
-        <p className="mt-4 text-gray-600 max-w-lg mx-auto md:mx-0">
-          Wujudkan Koperasi Modern yang transparan, efisien, dan mensejahterakan Anggota.
-        </p>
-
-        <div className="mt-8 flex flex-col sm:flex-row justify-center md:justify-start gap-4">
-          <Link href="/auth/daftar-koperasi">
-            <Button variant="outline" className="w-full sm:w-auto">Daftarkan Koperasi Anda</Button>
-          </Link>
-          <Link href="/auth/daftar-anggota">
-            <Button className="w-full sm:w-auto">Bergabung Menjadi Anggota Koperasi</Button>
-          </Link>
+            <div className="relative hidden h-[350px] w-full md:flex justify-center items-end">
+              <Image
+                src="/images/merahputih-rmv.png"
+                alt="Anak-anak Indonesia membawa bendera"
+                fill
+                style={{ objectFit: "contain" }}
+                className="rounded-lg"
+              />
+              <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-slate-100 via-slate-100 to-transparent" />
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* Kolom Kanan: Gambar dengan Efek Fade */}
-      <div className="relative hidden h-[350px] w-full md:flex justify-center items-end">
-        <Image
-            src="/images/merahputih-rmv.png"
-            alt="Anak-anak Indonesia membawa bendera"
-            fill
-            style={{ objectFit: 'contain' }}
-            className="rounded-lg"
-        />
-        {/* EFEK ASAP/FADE DITAMBAHKAN DI SINI */}
-        <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-slate-100 via-slate-100 to-transparent" />
-      </div>
-
-    </div>
-  </div>
-</section>
-
+      </section>
     </>
   );
 }

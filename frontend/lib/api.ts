@@ -1,167 +1,235 @@
 // frontend/lib/api.ts
+import axios, {
+  AxiosError,
+  InternalAxiosRequestConfig,
+  AxiosResponse,
+} from 'axios';
+import { tokenStorage } from './token';
+import { ApiErrorResponse, LoginResponse } from '@/types/api.types';
 
-// Tipe data sederhana untuk payload JWT (sesuaikan jika backend mengirim lebih banyak data)
-interface JwtPayload {
-  userId: string;
-  email: string;
-  role: string;
-  // tambahkan properti lain jika ada (iat, exp, dll.)
-  fullName?: string; // Opsional dulu
-}
-
-// 1. Ambil Base URL dari environment variable
-// Pastikan NEXT_PUBLIC_API_BASE_URL sudah diatur di .env.local (misal: http://localhost:3001)
+// Ambil Base URL dari environment variables
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+if (!API_BASE_URL) {
+  console.error(
+    'FATAL ERROR: NEXT_PUBLIC_API_BASE_URL is not defined in .env.local',
+  );
+}
+
 /**
- * Helper untuk mendapatkan access token dari localStorage.
- * Hanya berjalan di sisi client.
- * @returns {string | null} Access token atau null jika tidak ada/di server.
+ * Instance axios utama yang digunakan untuk semua request API.
  */
-const getAccessToken = (): string | null => {
-  // typeof window !== 'undefined' memastikan kode ini hanya berjalan di browser
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('accessToken');
-  }
-  return null;
+export const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+/**
+ * 1. REQUEST INTERCEPTOR
+ * Secara otomatis melampirkan Access Token ke header Authorization
+ * untuk setiap request, kecuali untuk endpoint publik.
+ */
+api.interceptors.request.use(
+  (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
+    // Daftar endpoint yang tidak memerlukan token
+    const publicEndpoints = [
+      '/auth/login',
+      '/auth/refresh',
+      '/public/register',
+      '/member-registrations',
+    ];
+    
+    // Khusus untuk endpoint upload, biarkan header 'Content-Type' di-manage
+    // oleh axios untuk multipart/form-data
+    if (config.data instanceof FormData) {
+       // Hapus header Content-Type agar Axios dapat mengaturnya
+       // (termasuk boundary) secara otomatis
+       delete config.headers['Content-Type'];
+    }
+
+    // Cek apakah URL request termasuk dalam public endpoints
+    const isPublicEndpoint = publicEndpoints.some((endpoint) =>
+      config.url?.startsWith(endpoint),
+    );
+    // Endpoint upload juga kita anggap public
+    const isUploadEndpoint = config.url?.startsWith('/uploads');
+
+    if (isPublicEndpoint || isUploadEndpoint) {
+      console.log(`REQ [PUBLIC]: ${config.method?.toUpperCase()} ${config.url}`);
+      return config;
+    }
+
+    const token = tokenStorage.getAccessToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.warn(`REQ [AUTH]: ${config.method?.toUpperCase()} ${config.url} without token.`);
+    }
+    
+    return config;
+  },
+  (error: AxiosError): Promise<AxiosError> => {
+    // Kembalikan promise yang di-reject jika ada error di request setup
+    return Promise.reject(error);
+  },
+);
+
+// Flag untuk mencegah loop refresh token
+let isRefreshing = false;
+
+// Tipe untuk antrian request yang gagal
+type FailedQueuePromise = {
+  resolve: (response: AxiosResponse) => void;
+  reject: (error: AxiosError<ApiErrorResponse>) => void;
+  config: InternalAxiosRequestConfig; // Simpan config untuk retry
+};
+let failedQueue: FailedQueuePromise[] = [];
+
+/**
+ * Memproses antrian request yang gagal setelah token berhasil di-refresh.
+ * Fungsi ini akan me-retry setiap request dalam antrian dengan token baru.
+ */
+const processQueue = (
+  error: AxiosError<ApiErrorResponse> | null,
+  token: string | null = null,
+): void => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      // Jika refresh token gagal, tolak semua promise di antrian
+      prom.reject(error);
+    } else if (token) {
+      // Jika refresh token berhasil, perbarui header & ulangi request
+      prom.config.headers.Authorization = `Bearer ${token}`;
+      api(prom.config)
+        .then(prom.resolve)
+        .catch(prom.reject);
+    }
+  });
+  
+  failedQueue = [];
 };
 
-// Tipe untuk opsi fetch tambahan
-interface FetchOptions extends RequestInit {
-  useAuth?: boolean; // Flag: kirim token otentikasi? (default: true)
-}
+/**
+ * 2. RESPONSE INTERCEPTOR
+ * Menangani error secara global.
+ * Fitur utama: Jika request gagal karena token kedaluwarsa (401),
+ * interceptor ini akan otomatis mencoba me-refresh token dan
+ * mengulang request yang gagal.
+ */
+api.interceptors.response.use(
+  (response: AxiosResponse): AxiosResponse => {
+    // Jika sukses (status 2xx), langsung kembalikan response
+    return response;
+  },
+  async (error: AxiosError<ApiErrorResponse>): Promise<AxiosResponse> => {
+    // Dapatkan konfigurasi request original
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
+
+    // Cek jika ini adalah error 401 dan bukan dari request refresh-token itu sendiri
+    if (
+      error.response?.status === 401 &&
+      originalRequest.url !== '/auth/refresh' &&
+      !originalRequest._retry
+    ) {
+      if (isRefreshing) {
+        // Jika PROSES REFRESH SEDANG BERJALAN,
+        // masukkan request yang gagal ini ke dalam antrian.
+        // Buat promise baru yang akan di-resolve/reject oleh processQueue.
+        return new Promise<AxiosResponse>((resolve, reject) => {
+          failedQueue.push({
+            resolve,
+            reject: reject as (error: AxiosError<ApiErrorResponse>) => void,
+            config: originalRequest,
+          });
+        });
+      }
+
+      // Tandai request ini sebagai sudah di-retry
+      originalRequest._retry = true;
+      // Mulai proses refresh token
+      isRefreshing = true;
+
+      const refreshToken = tokenStorage.getRefreshToken();
+      if (!refreshToken) {
+        console.error('No refresh token available. Logging out.');
+        isRefreshing = false;
+        tokenStorage.clearTokens();
+        // TODO: Handle redirect to login in UI layer (e.g., AuthContext)
+        // window.location.href = '/auth/login'; 
+        return Promise.reject(error);
+      }
+
+      try {
+        console.log('Attempting to refresh token...');
+        
+        // Panggil endpoint refresh token
+        const rs = await axios.post<LoginResponse>(
+          `${API_BASE_URL}/auth/refresh`,
+          {}, // Body kosong
+          {
+            headers: { Authorization: `Bearer ${refreshToken}` },
+          },
+        );
+
+        const { accessToken, refreshToken: newRefreshToken } = rs.data;
+        
+        // Simpan token baru
+        tokenStorage.setTokens({ accessToken, refreshToken: newRefreshToken });
+        console.log('Token refreshed successfully.');
+
+        // Perbarui header default instance axios
+        api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+        
+        // Proses semua request yang tertunda di antrian dengan token baru
+        processQueue(null, accessToken);
+
+        // Ulangi request *original* yang memicu error 401
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return api(originalRequest); // Kembalikan promise dari retry request
+        
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
+        tokenStorage.clearTokens();
+        
+        // Tolak semua request di antrian karena refresh gagal
+        processQueue(refreshError as AxiosError<ApiErrorResponse>, null);
+        
+        // TODO: Handle redirect to login in UI layer
+        // window.location.href = '/auth/login';
+        
+        // Tolak promise utama dengan error dari refresh
+        return Promise.reject(refreshError as AxiosError<ApiErrorResponse>);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    // Untuk semua error lain (selain 401), langsung tolak
+    return Promise.reject(error);
+  },
+);
 
 /**
- * Wrapper fetch global untuk komunikasi dengan API backend.
- * Secara otomatis menambahkan header Authorization jika diperlukan.
- * @template T Tipe data yang diharapkan dari respons JSON.
- * @param {string} endpoint Path API setelah base URL (misal: '/auth/login').
- * @param {FetchOptions} options Opsi standar fetch ditambah `useAuth`.
- * @returns {Promise<T>} Promise yang resolve dengan data JSON dari respons.
- * @throws {Error} Jika network error atau respons API mengindikasikan error.
+ * Utility untuk mem-parsing error axios menjadi format yang konsisten.
+ * Komponen bisa menggunakan ini untuk mendapatkan pesan error yang bersih.
  */
-async function fetchApi<T = any>(
-  endpoint: string,
-  options: FetchOptions = {}
-): Promise<T> {
-  // Pastikan base URL ada
-  if (!API_BASE_URL) {
-    console.error("API base URL missing in environment variables!"); // Log error
-    throw new Error("API base URL is not configured. Set NEXT_PUBLIC_API_BASE_URL in your environment variables.");
+export const parseApiError = (error: unknown): ApiErrorResponse => {
+  if (axios.isAxiosError<ApiErrorResponse>(error) && error.response) {
+    // Ini adalah error API yang terstruktur dari backend NestJS kita
+    // (misal: error validasi dari class-validator)
+    return error.response.data;
   }
 
-  const url = `${API_BASE_URL}${endpoint}`;
-  const { useAuth = true, headers: customHeaders, ...restOptions } = options;
-
-  // Inisialisasi sebagai Record<string, string> untuk keamanan tipe
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json', // Default content type
-    ...(customHeaders as Record<string, string>), // Gabungkan header custom (asumsikan object)
+  
+  
+  // Error jaringan (misal: backend mati) atau error tak terduga lainnya
+  return {
+    statusCode: 500,
+    message: (error instanceof Error) ? error.message : 'Terjadi kesalahan tidak diketahui.',
+    error: 'Network Error or Unknown',
   };
-
-  // Tambahkan token Authorization jika useAuth true dan token ada di localStorage
-  if (useAuth) {
-    const token = getAccessToken();
-    if (token) {
-      // Sekarang aman untuk menambahkan properti Authorization
-      headers['Authorization'] = `Bearer ${token}`;
-    } else {
-      console.warn(`Attempting to call authenticated endpoint ${endpoint} without an access token.`);
-    }
-  }
-
-  try {
-    // Log URL dan Opsi (token disensor untuk keamanan log)
-    console.log(`Attempting to fetch: ${url} with options:`, { ...restOptions, headers: { ...headers, Authorization: headers['Authorization'] ? 'Bearer [REDACTED]' : undefined } });
-    const response = await fetch(url, { //
-      ...restOptions,
-      headers, // Pass the headers object here
-    });
-
-    console.log(`Response status from ${endpoint}: ${response.status}`); // Log status respons
-
-    // Coba parse JSON, tapi tangani jika respons kosong (misal status 204 No Content)
-    let data: T | null = null;
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json') && response.status !== 204) {
-       try {
-         data = await response.json();
-       } catch (jsonError: any) {
-          // Jika parsing gagal tapi status OK (misal 200 tapi body aneh), anggap error
-          if(response.ok) {
-             console.error(`API response from ${endpoint} was OK but JSON parsing failed:`, jsonError);
-             throw new Error('Gagal memproses respons dari server.');
-          }
-          // Jika status tidak OK dan parsing gagal, biarkan error asli dari !response.ok di bawah
-          console.error(`API response from ${endpoint} failed (${response.status}) and JSON parsing also failed:`, jsonError);
-          // Kita akan melempar error berdasarkan status di bawah
-       }
-    }
-
-    // Jika respons tidak OK (status bukan 2xx)
-    if (!response.ok) {
-      // Jika ada data JSON di respons error (umumnya dari NestJS), gunakan pesannya
-      // Jika tidak, gunakan status text default
-      const errorMessage = (data as any)?.message || response.statusText || `HTTP error! status: ${response.status}`;
-      console.error(`API Error (${response.status}) on ${endpoint}:`, data || errorMessage); //
-      throw new Error(errorMessage); //
-    }
-
-    // Kembalikan data (bisa null jika status 204 atau respons bukan JSON tapi OK)
-    return data as T;
-
-  } catch (error) { // Tangani error fetch (network error) seperti "Failed to fetch"
-    console.error(`Network or processing error fetching ${endpoint}:`, error);
-    // Lempar error yang lebih spesifik jika memungkinkan, atau error generik
-    if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        throw new Error('Failed to fetch'); // Error koneksi jaringan
-    }
-    // Re-throw error lain yang mungkin terjadi (termasuk yang dilempar dari blok try)
-    throw error;
-  }
-}
-
-/**
- * Fungsi spesifik untuk melakukan login.
- * @param {string} email Email pengguna.
- * @param {string} password Password pengguna.
- * @returns {Promise<{ accessToken: string; refreshToken: string }>} Promise berisi token.
- */
-export async function apiLogin(email: string, password: string): Promise<{ accessToken: string; refreshToken: string }> {
-  // Panggil fetchApi, login tidak memerlukan token (useAuth: false)
-  return fetchApi<{ accessToken: string; refreshToken: string }>('/auth/login', { //
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-    useAuth: false, // Penting: Jangan kirim token saat login
-  });
-}
-
-/**
- * Contoh fungsi untuk mengambil profil pengguna (memerlukan token).
- * @returns {Promise<JwtPayload>} Promise berisi data profil pengguna.
- */
-export async function apiGetProfile(): Promise<JwtPayload> {
-  // Panggil fetchApi, secara default akan mengirim token jika ada (useAuth: true)
-  return fetchApi<JwtPayload>('/auth/profile', { //
-    method: 'GET',
-    // useAuth: true (ini default, jadi tidak perlu ditulis)
-  });
-}
-
-/**
- * Fungsi Logout Sederhana. Menghapus token dari localStorage.
- * Redirect harus dilakukan di komponen setelah memanggil fungsi ini.
- */
-export function apiLogout(): void {
-   if (typeof window !== 'undefined') {
-     localStorage.removeItem('accessToken');
-     localStorage.removeItem('refreshToken');
-     console.log('Tokens removed from localStorage.');
-     // Contoh redirect: window.location.href = '/auth/login'; (lebih baik pakai router.push di komponen)
-   }
-}
-
-// --- Tambahkan fungsi API lainnya di sini sesuai kebutuhan ---
-
-// Ekspor fungsi yang akan digunakan di komponen lain
-export { fetchApi, getAccessToken };
+};
