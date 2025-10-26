@@ -1,45 +1,53 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Home, PiggyBank, CreditCard, User, LogOut, X, Landmark, HandCoins, MessageSquare, FileText } from "lucide-react";
+import { usePathname } from "next/navigation";
+import {
+  Home,
+  LogOut,
+  X,
+  Landmark,
+  HandCoins,
+  MessageSquare,
+  FileText,
+  User,
+} from "lucide-react";
 import clsx from "clsx";
-import { apiLogout } from "@/lib/api"; // <-- Import apiLogout
+import { authService } from "@/services/auth.service";
+import { JwtPayload } from "@/types/api.types"; // <-- 1. Import JwtPayload
 
-// PERBAIKAN 1: Pastikan link ini sesuai dengan struktur folder Anda
+// Definisikan link navigasi
 const navLinks = [
   { href: "/dashboard/anggota", label: "Dashboard", icon: Home },
   { href: "/dashboard/anggota/simpanan", label: "Simpanan", icon: Landmark },
   { href: "/dashboard/anggota/pinjaman", label: "Pinjaman", icon: HandCoins },
-  { href: "/dashboard/anggota/saran", label: "Kirim Saran", icon: MessageSquare }, // <-- BARU
-  { href: "/dashboard/anggota/notulen", label: "Arsip Notulen", icon: FileText },   // <-- BARU
+  { href: "/dashboard/anggota/saran", label: "Kirim Saran", icon: MessageSquare },
+  { href: "/dashboard/anggota/notulen", label: "Arsip Notulen", icon: FileText },
   { href: "/dashboard/anggota/profile", label: "Profil Saya", icon: User },
 ];
 
-interface UserData {
-  email: string;
-  fullName?: string; // Nama mungkin belum ada di payload JWT
-}
-
+// 2. Definisikan tipe Props untuk menerima userData
 type Props = {
   isSidebarOpen: boolean;
   toggleSidebar: () => void;
-  userData?: UserData | null; // <-- Tambahkan props userData (opsional)
+  userData: JwtPayload | null; // <-- Prop ini yang menyebabkan error
 };
 
-export default function AnggotaSidebar({ isSidebarOpen, toggleSidebar, userData }: Props) {
+export default function AnggotaSidebar({
+  isSidebarOpen,
+  toggleSidebar,
+  userData, // <-- 3. Terima prop userData di sini
+}: Props) {
   const pathname = usePathname();
-  const router = useRouter();
 
   const handleLogout = () => {
     console.log("Logging out...");
-    apiLogout(); // <-- Panggil fungsi logout dari api.ts
-    router.push("/auth/login"); // Arahkan ke halaman login publik
+    authService.logout(); // Gunakan service yang sudah benar
   };
 
   return (
     <>
-      {/* Backdrop untuk mobile, klik untuk menutup */}
+      {/* Backdrop untuk mobile */}
       <div
         onClick={toggleSidebar}
         className={clsx(
@@ -48,37 +56,45 @@ export default function AnggotaSidebar({ isSidebarOpen, toggleSidebar, userData 
         )}
       />
 
+      {/* Konten Sidebar */}
       <aside
         className={clsx(
           "fixed inset-y-0 left-0 w-64 bg-brand-red-700 text-white flex flex-col z-40 transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
+        {/* Header Sidebar */}
         <div className="p-6 flex items-center justify-between border-b border-white/10">
           <div>
             <h2 className="text-xl font-bold">Koperasi Digital</h2>
-            <span className="text-sm text-red-200">Anggota Panel</span>
+            {/* 4. Tampilkan nama pengguna jika ada */}
+            <span className="text-sm text-red-200">
+              {userData?.fullName || "Anggota Panel"}
+            </span>
           </div>
-          <button onClick={toggleSidebar} className="md:hidden" aria-label="Tutup Menu">
+          <button
+            onClick={toggleSidebar}
+            className="md:hidden"
+            aria-label="Tutup Menu"
+          >
             <X className="h-6 w-6 text-white" />
           </button>
         </div>
-        <nav className="flex-1 p-4 space-y-2">
-          {navLinks.map((link) => {
-            // Cek apakah link saat ini aktif
-            const isActive = pathname === link.href;
 
+        {/* Navigasi */}
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => isSidebarOpen && toggleSidebar()} // Tutup sidebar saat link diklik di mobile
-                // PERBAIKAN 2: Logika className diubah agar lebih jelas
+                onClick={() => isSidebarOpen && toggleSidebar()} // Tutup sidebar di mobile saat link diklik
                 className={clsx(
                   "flex items-center gap-3 rounded-lg px-4 py-2 transition-all",
                   {
-                    "bg-white text-brand-red-700 font-semibold": isActive, // Style untuk link aktif
-                    "text-white/80 hover:bg-white/20": !isActive, // Style untuk link tidak aktif
+                    "bg-white text-brand-red-700 font-semibold": isActive,
+                    "text-white/80 hover:bg-white/20": !isActive,
                   }
                 )}
               >
@@ -88,6 +104,8 @@ export default function AnggotaSidebar({ isSidebarOpen, toggleSidebar, userData 
             );
           })}
         </nav>
+
+        {/* Tombol Logout */}
         <div className="p-4 border-t border-white/10">
           <button
             onClick={handleLogout}
