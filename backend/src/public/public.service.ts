@@ -3,15 +3,17 @@ import {
   ConflictException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaClient, TenantStatus } from '@prisma/client';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
 import * as bcrypt from 'bcrypt';
-
+import { PrismaService } from 'src/prisma/prisma.service'; // <-- Tambahkan PrismaService
+import { CreateContactMessageDto } from './dto/create-contact-message.dto';
 @Injectable()
 export class PublicService {
   private readonly prisma = new PrismaClient();
-
+  constructor(private prismaTenantScoped: PrismaService) {}
   async register(registerTenantDto: RegisterTenantDto) {
     const {
       subdomain,
@@ -223,6 +225,81 @@ export class PublicService {
           'Gagal melakukan pendaftaran, data mungkin duplikat.',
         );
       }
+    }
+  }
+  /**
+   * Mengambil informasi kontak publik dari profil koperasi tenant saat ini.
+   */
+  async getContactInfo() {
+    // Gunakan PrismaService yang sudah request-scoped
+    const prismaTenant: PrismaClient =
+      await this.prismaTenantScoped.getTenantClient();
+
+    try {
+      // Ambil data profil, pilih hanya field yang relevan untuk publik
+      const profile = await prismaTenant.cooperativeProfile.findFirst({
+        select: {
+          displayName: true,
+          address: true,
+          phone: true,
+          email: true,
+          operatingHours: true,
+          mapCoordinates: true,
+          logoUrl: true, // Sertakan logo jika perlu
+          website: true, // Sertakan website jika perlu
+        },
+      });
+
+      if (!profile) {
+        // Ini seharusnya jarang terjadi jika inisialisasi profil berjalan lancar
+        throw new NotFoundException(
+          'Informasi profil koperasi tidak ditemukan.',
+        );
+      }
+
+      return profile;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error; // Lemparkan ulang jika NotFound
+      }
+      console.error('[PublicService] Gagal mengambil info kontak:', error);
+      throw new InternalServerErrorException(
+        'Gagal mengambil informasi kontak koperasi.',
+      );
+    }
+  }
+
+  /**
+   * Menyimpan pesan kontak yang dikirim melalui form publik.
+   */
+  async saveContactMessage(
+    createDto: CreateContactMessageDto,
+  ): Promise<{ message: string }> {
+    const prismaTenant: PrismaClient =
+      await this.prismaTenantScoped.getTenantClient();
+
+    try {
+      await prismaTenant.contactMessage.create({
+        data: {
+          senderName: createDto.senderName,
+          senderEmail: createDto.senderEmail,
+          subject: createDto.subject,
+          message: createDto.message,
+        },
+      });
+
+      // Opsional: Kirim notifikasi email ke admin koperasi di sini
+      // const profile = await this.getContactInfo(); // Ambil email admin dari profil
+      // if (profile?.email) {
+      //   // Panggil EmailService (perlu di-inject dulu)
+      // }
+
+      return { message: 'Pesan Anda berhasil dikirim.' };
+    } catch (error) {
+      console.error('[PublicService] Gagal menyimpan pesan kontak:', error);
+      throw new InternalServerErrorException(
+        'Terjadi kesalahan saat mengirim pesan.',
+      );
     }
   }
 }

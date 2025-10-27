@@ -614,10 +614,23 @@ model CooperativeProfile {
   website      String?
   address      String?
   description  String?
+  operatingHours String?  @map("operating_hours")
+  mapCoordinates String?  @map("map_coordinates")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at") // Otomatis update timestamp
 
   @@map("cooperative_profile")
+}
+// Contact message
+model ContactMessage {
+  id          String   @id @default(uuid())
+  senderName  String   @map("sender_name")
+  senderEmail String   @map("sender_email")
+  subject     String
+  message     String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("contact_messages")
 }
 // =========================
 // Manajemen katalog website
