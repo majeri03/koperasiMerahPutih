@@ -36,6 +36,8 @@ import { EmailModule } from './email/email.module';
 import { CooperativeProfileModule } from './cooperative-profile/cooperative-profile.module';
 import { ProfileModule } from './profile/profile.module';
 import { ArticlesModule } from './articles/articles.module';
+import { ProductCategoriesModule } from './product-categories/product-categories.module';
+import { ProductsModule } from './products/products.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -69,6 +71,8 @@ import { ArticlesModule } from './articles/articles.module';
     CooperativeProfileModule,
     ProfileModule,
     ArticlesModule,
+    ProductCategoriesModule,
+    ProductsModule,
   ],
   controllers: [AppController, SimpananController],
   providers: [AppService, SimpananService, EmailService],

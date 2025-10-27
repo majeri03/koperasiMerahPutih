@@ -854,6 +854,60 @@ export class TenantsService {
     await tx.$executeRawUnsafe(`
         CREATE INDEX "articles_status_idx" ON "${schemaName}"."articles"("status");
     `);
+    // Tabel Kategori Produk
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".product_categories (
+        "id" TEXT NOT NULL,
+        "name" TEXT NOT NULL,
+        "slug" TEXT NOT NULL,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "product_categories_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "product_categories_name_key" UNIQUE ("name"),
+        CONSTRAINT "product_categories_slug_key" UNIQUE ("slug")
+      );
+    `);
+
+    // Index pada slug (opsional tapi bagus)
+    await tx.$executeRawUnsafe(`
+        CREATE INDEX "product_categories_slug_idx" ON "${schemaName}"."product_categories"("slug");
+    `);
+    // Tabel Produk
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".products (
+        "id" TEXT NOT NULL,
+        "name" TEXT NOT NULL,
+        "slug" TEXT NOT NULL,
+        "description" TEXT,
+        "price" INTEGER NOT NULL, -- Simpan sebagai integer
+        "unit" TEXT,
+        "sku" TEXT,
+        "image_url" TEXT,
+        "is_available" BOOLEAN NOT NULL DEFAULT true,
+        "category_id" TEXT NOT NULL,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "products_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "products_slug_key" UNIQUE ("slug"),
+        CONSTRAINT "products_sku_key" UNIQUE ("sku"), -- Constraint unik untuk SKU
+        CONSTRAINT "products_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "${schemaName}"."product_categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE -- ON DELETE RESTRICT mencegah kategori dihapus jika masih ada produk
+      );
+    `);
+
+    // Index pada slug produk (opsional tapi bagus)
+    await tx.$executeRawUnsafe(`
+        CREATE INDEX "products_slug_idx" ON "${schemaName}"."products"("slug");
+    `);
+    // Index pada category_id untuk filter (opsional tapi bagus)
+    await tx.$executeRawUnsafe(`
+        CREATE INDEX "products_category_id_idx" ON "${schemaName}"."products"("category_id");
+    `);
+    // Index pada is_available untuk filter (opsional tapi bagus)
+    await tx.$executeRawUnsafe(`
+        CREATE INDEX "products_is_available_idx" ON "${schemaName}"."products"("is_available");
+    `);
   }
 
   /**
