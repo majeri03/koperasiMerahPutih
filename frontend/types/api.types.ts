@@ -119,6 +119,26 @@ export interface MemberRegistrationResponse {
   registrationId: string;
 }
 
+export interface MemberRegistration {
+  id: string;
+  createdAt: string; // ISO Date string
+  updatedAt: string; // ISO Date string
+  nik: string;
+  fullName: string;
+  gender: Gender;
+  email: string;
+  phoneNumber: string;
+  placeOfBirth: string;
+  dateOfBirth: string; // ISO Date string
+  occupation: string;
+  address: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  processedById?: string | null;
+  processedAt?: string | null; // ISO Date string
+  rejectionReason?: string | null;
+  // hashedPassword tidak disertakan
+}
+
 // === Uploads ===
 export interface UploadResponse {
   url: string;
