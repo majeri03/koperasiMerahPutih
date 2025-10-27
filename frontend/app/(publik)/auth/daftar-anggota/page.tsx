@@ -6,11 +6,11 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import Button from "@/components/Button";
 import { publicService } from "@/services/auth.service"; // <-- Gunakan service
 import toast, { Toaster } from 'react-hot-toast';
-import { 
-  ApiErrorResponse, 
-  CreateMemberRegistrationDto, 
-  Gender 
-} from "@/types/api.types"; // <-- Tipe ketat
+import {
+  ApiErrorResponse,
+  CreateMemberRegistrationDto
+} from "@/types/api.types"; // <-- Impor tipe DTO dari sini
+import { Gender } from "@/types/enums";
 
 export default function DaftarAnggotaPage() {
   const [formData, setFormData] = useState<CreateMemberRegistrationDto & { 
@@ -69,13 +69,15 @@ export default function DaftarAnggotaPage() {
 
     setLoading(true);
     const toastId = toast.loading('Mengirim permohonan pendaftaran...');
-
+    
+    
     try {
-      // Siapkan payload bersih tanpa field 'ulangiKataSandi' dan 'terms'
-      const { 
-        ulangiKataSandi, 
-        terms, 
-        ...payload 
+      const {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        ulangiKataSandi,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        terms,
+        ...payload
       } = formData;
 
       // Cek subdomain saat ini (jika pendaftaran via subdomain)

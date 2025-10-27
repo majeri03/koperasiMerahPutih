@@ -2,16 +2,12 @@
 
 import { useState, FormEvent, ChangeEvent } from "react";
 import Link from 'next/link';
-
 import { FiEye, FiEyeOff, FiUpload } from 'react-icons/fi';
 import Button from "@/components/Button";
-import { publicService } from "@/services/auth.service"; // <-- Gunakan service
+import { publicService } from "@/services/auth.service";
 import toast, { Toaster } from 'react-hot-toast';
-import { 
-  ApiErrorResponse, 
-  RegisterTenantDto, 
-  Gender 
-} from "@/types/api.types"; // <-- Tipe ketat
+import { ApiErrorResponse, RegisterTenantDto } from "@/types/api.types";
+import { Gender } from "@/types/enums";
 
 // Definisikan tipe untuk state file
 type FileState = {
@@ -43,9 +39,9 @@ export default function DaftarKoperasiPage() {
     petaLokasi: '',
     picFullName: '',
     picNik: '',
-    picGender: Gender.MALE, // Default value
+    picGender: Gender.MALE,
     picPlaceOfBirth: '',
-    picDateOfBirth: '', // YYYY-MM-DD
+    picDateOfBirth: '',
     picOccupation: '',
     picAddress: '',
     picPhoneNumber: '',
