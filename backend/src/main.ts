@@ -52,6 +52,8 @@ async function bootstrap() {
     .addTag('Official Recommendations (Buku 14)')
     .addTag('Important Events (Buku 15)')
     .addTag('Articles (Berita & Artikel)')
+    .addTag('Product Categories')
+    .addTag('Products (Katalog)')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
