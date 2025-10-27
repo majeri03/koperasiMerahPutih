@@ -1,7 +1,7 @@
 // Lokasi: frontend/app/dashboard/admin/persetujuan-anggota/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CheckCircle, XCircle, Search, Eye, FileText } from "lucide-react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import clsx from "clsx";
@@ -141,6 +141,17 @@ const DetailAnggotaModal = ({ anggota, onClose }: { anggota: CalonAnggota; onClo
 
 export default function PersetujuanAnggotaPage() {
   const [selectedAnggota, setSelectedAnggota] = useState<CalonAnggota | null>(null);
+  const [calonAnggotaList, setCalonAnggotaList] = useState<CalonAnggota[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Simulate loading data
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCalonAnggotaList(mockCalonAnggota);
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleAction = (nama: string, action: 'approve' | 'reject') => {
     const message = action === 'approve' 
@@ -152,6 +163,63 @@ export default function PersetujuanAnggotaPage() {
     }
   };
 
+  // Skeleton kecil
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  const PersetujuanSkeleton = () => (
+    <div>
+      <div className="mb-8">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96 mt-2" />
+      </div>
+
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <Skeleton className="h-10 w-full max-w-sm" />
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="border-b bg-gray-50 text-sm text-gray-600">
+                <tr>
+                  <th className="p-4 font-medium"><Skeleton className="h-4 w-32" /></th>
+                  <th className="p-4 font-medium"><Skeleton className="h-4 w-20" /></th>
+                  <th className="p-4 font-medium"><Skeleton className="h-4 w-24" /></th>
+                  <th className="p-4 font-medium"><Skeleton className="h-4 w-28" /></th>
+                  <th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...Array(5)].map((_, i) => (
+                  <tr key={i} className="border-b text-sm">
+                    <td className="p-4 font-medium"><Skeleton className="h-4 w-32" /></td>
+                    <td className="p-4"><Skeleton className="h-4 w-28" /></td>
+                    <td className="p-4"><Skeleton className="h-4 w-24" /></td>
+                    <td className="p-4"><Skeleton className="h-4 w-20" /></td>
+                    <td className="p-4 text-center">
+                      <div className="flex justify-center space-x-2">
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <PersetujuanSkeleton />;
+  }
+
   return (
     <div>
       <AdminPageHeader
@@ -161,7 +229,18 @@ export default function PersetujuanAnggotaPage() {
 
       <div className="bg-white rounded-xl shadow-lg border border-gray-100">
         <div className="p-6">
-          {/* ... bagian search tidak berubah ... */}
+          <div className="flex justify-between items-center mb-6">
+            <div className="relative w-full max-w-sm">
+              <input 
+                type="text" 
+                placeholder="Cari nama, email, atau pekerjaan..." 
+                name="search"
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red-200" 
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            </div>
+          </div>
+
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="border-b bg-gray-50 text-sm text-gray-600">
@@ -174,7 +253,7 @@ export default function PersetujuanAnggotaPage() {
                 </tr>
               </thead>
               <tbody>
-                {mockCalonAnggota.map((calon) => (
+                {calonAnggotaList.map((calon) => (
                   <tr key={calon.id} className="border-b hover:bg-red-300 text-sm transition-colors duration-150">
                     <td className="p-4 font-medium text-gray-800">{calon.fullName}</td>
                     <td className="p-4">{calon.email}</td>

@@ -5,6 +5,7 @@ import { useState, useMemo, FormEvent, ChangeEvent, useEffect } from "react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
 import { PlusCircle, Search, FileText, Download, Edit, Trash2, X } from "lucide-react";
+import clsx from "clsx";
 
 // --- Tipe Data ---
 type NotulenRapat = {
@@ -162,9 +163,19 @@ const DetailNotulenModal = ({ isOpen, onClose, notulen }: { isOpen: boolean; onC
 // KOMPONEN UTAMA HALAMAN
 // ===================================================================
 export default function NotulenRapatAnggotaPage() {
-    const [notulenList, setNotulenList] = useState<NotulenRapat[]>(mockNotulen);
+    const [notulenList, setNotulenList] = useState<NotulenRapat[]>([]);
     const [filters, setFilters] = useState({ search: '', tanggalMulai: '', tanggalSelesai: '' });
+    const [loading, setLoading] = useState(true);
     
+    // Simulate loading data
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setNotulenList(mockNotulen);
+            setLoading(false);
+        }, 800);
+        return () => clearTimeout(timer);
+    }, []);
+
     // --- State untuk mengelola modal ---
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
@@ -192,7 +203,78 @@ export default function NotulenRapatAnggotaPage() {
                 (!tanggalSelesai || tanggalRapat <= tanggalSelesai)
             );
         });
-    }, [filters, notulenList]);
+    }, [notulenList, filters]);
+
+    // Skeleton kecil
+    const Skeleton = ({ className = "" }: { className?: string }) => (
+        <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+    );
+
+    const NotulenRapatAnggotaSkeleton = () => (
+        <div>
+            <div className="mb-8">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-4 w-96 mt-2" />
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+                <div className="p-6 border-b border-gray-200">
+                    <Skeleton className="h-6 w-1/2 mx-auto text-center" />
+                    <div className="mt-6 max-w-4xl mx-auto grid grid-cols-2 gap-x-12 text-sm">
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-full" />
+                        </div>
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-full" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-6">
+                    <Skeleton className="h-6 w-40 mb-6" />
+
+                    {/* Filter Section */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 flex items-end gap-4">
+                        <div className="grow">
+                            <Skeleton className="h-4 w-24 mb-1" />
+                            <Skeleton className="w-full h-10 rounded-lg" />
+                        </div>
+                        <Skeleton className="h-10 w-24" />
+                    </div>
+
+                    {/* Cards Grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {[...Array(4)].map((_, i) => (
+                            <div key={i} className="border border-gray-200 rounded-lg p-5 bg-white">
+                                <div className="border-b pb-3">
+                                    <Skeleton className="h-3 w-48 mb-2" />
+                                    <Skeleton className="h-5 w-64 mt-1" />
+                                    <Skeleton className="h-3 w-32 mt-2" />
+                                </div>
+                                <div className="py-4">
+                                    <Skeleton className="h-4 w-24 mb-2" />
+                                    <div className="space-y-1">
+                                        <Skeleton className="h-3 w-full" />
+                                        <Skeleton className="h-3 w-5/6" />
+                                        <Skeleton className="h-3 w-4/6" />
+                                    </div>
+                                </div>
+                                <div className="flex justify-end gap-2 border-t pt-3">
+                                    <Skeleton className="h-8 w-20 rounded" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    if (loading) {
+        return <NotulenRapatAnggotaSkeleton />;
+    }
 
     // --- Fungsi untuk membuka modal ---
     const handleOpenModal = (mode: 'add' | 'edit', notulen?: NotulenRapat) => {

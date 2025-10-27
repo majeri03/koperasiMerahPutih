@@ -4,8 +4,6 @@
 import { useState } from "react";
 import { CheckCircle, XCircle, Search, Eye, FileText } from "lucide-react";
 import AdminPageHeader from "@/components/AdminPageHeader";
-import Button from "@/components/Button"; // Pastikan path Button benar
-import clsx from "clsx";
 
 // --- Tipe Data (sesuaikan dengan data pendaftaran koperasi) ---
 type CalonKoperasi = {

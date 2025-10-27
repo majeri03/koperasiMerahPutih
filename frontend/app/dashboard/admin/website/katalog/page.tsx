@@ -1,11 +1,12 @@
 // Lokasi: frontend/app/dashboard/admin/website/katalog/page.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
-import { PlusCircle, Search, Edit, Trash2, X, Tag, ShoppingBag, EyeOff } from "lucide-react";
+import { PlusCircle, Search, Edit, Trash2, X, Tag, EyeOff } from "lucide-react";
 import Image from "next/image";
+import clsx from "clsx";
 
 // --- Tipe Data ---
 type Produk = {
@@ -32,6 +33,17 @@ export default function ManajemenKatalogPage() {
     kategori: '',
     status: '',
   });
+  const [produkList, setProdukList] = useState<Produk[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Simulate loading data
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setProdukList(mockProduk);
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -42,16 +54,80 @@ export default function ManajemenKatalogPage() {
   };
 
   const filteredProduk = useMemo(() => {
-    return mockProduk.filter(produk => {
+    return produkList.filter(produk => {
       return (
         produk.nama.toLowerCase().includes(filters.search.toLowerCase()) &&
         (filters.kategori === '' || produk.kategori === filters.kategori) &&
         (filters.status === '' || produk.status === filters.status)
       );
     });
-  }, [filters]);
+  }, [produkList, filters]);
 
   const handleTambahProduk = () => alert("Membuka form untuk menambah produk baru...");
+
+  // Skeleton kecil
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  const KatalogSkeleton = () => (
+    <div>
+      <div className="mb-8">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96 mt-2" />
+      </div>
+
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+        <div className="p-6">
+          <Skeleton className="h-6 w-40 mb-6" />
+
+          {/* Filter Section */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 my-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end mb-8">
+            <div>
+              <Skeleton className="h-4 w-24 mb-1" />
+              <Skeleton className="w-full h-10 rounded-lg" />
+            </div>
+            <div>
+              <Skeleton className="h-4 w-20 mb-1" />
+              <Skeleton className="w-full h-10 rounded-lg" />
+            </div>
+             <div>
+              <Skeleton className="h-4 w-16 mb-1" />
+              <Skeleton className="w-full h-10 rounded-lg" />
+            </div>
+            <div>
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+
+          {/* Product Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                <div className="w-full h-40 bg-gray-200 flex items-center justify-center">
+                  <Skeleton className="w-full h-full" />
+                </div>
+                <div className="p-4">
+                  <Skeleton className="h-3 w-16 mb-2" />
+                  <Skeleton className="h-4 w-3/4 mb-2" />
+                  <Skeleton className="h-5 w-1/2 mt-2" />
+                </div>
+                <div className="flex justify-end gap-2 border-t p-3 bg-gray-50">
+                  <Skeleton className="h-8 w-8 rounded" />
+                  <Skeleton className="h-8 w-8 rounded" />
+                  <Skeleton className="h-8 w-8 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <KatalogSkeleton />;
+  }
 
   return (
     <div>

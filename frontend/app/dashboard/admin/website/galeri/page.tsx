@@ -1,11 +1,12 @@
 // Lokasi: frontend/app/dashboard/admin/website/galeri/page.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
-import { UploadCloud, Image as ImageIcon, Trash2, X } from "lucide-react";
+import { UploadCloud, Trash2 } from "lucide-react";
 import Image from "next/image";
+import clsx from "clsx";
 
 // --- Tipe Data ---
 type Foto = {
@@ -27,16 +28,87 @@ const mockFoto: Foto[] = [
 
 export default function ManajemenGaleriPage() {
   const [filterAlbum, setFilterAlbum] = useState('');
+  const [fotoList, setFotoList] = useState<Foto[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Simulate loading data
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFotoList(mockFoto);
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const filteredFoto = useMemo(() => {
-    if (!filterAlbum) return mockFoto;
-    return mockFoto.filter(foto => foto.album === filterAlbum);
-  }, [filterAlbum]);
+    if (!filterAlbum) return fotoList;
+    return fotoList.filter(foto => foto.album === filterAlbum);
+  }, [filterAlbum, fotoList]);
   
   const handleHapus = (keterangan: string) => {
       if(window.confirm(`Apakah Anda yakin ingin menghapus foto "${keterangan}"?`)){
           alert(`Simulasi: Foto "${keterangan}" telah dihapus.`);
       }
+  }
+
+  // Skeleton kecil
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  const GaleriSkeleton = () => (
+    <div>
+      <div className="mb-8">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96 mt-2" />
+      </div>
+
+      {/* Upload Area */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
+        <Skeleton className="h-6 w-40 mb-4" />
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <Skeleton className="h-12 w-12 mx-auto mb-4" />
+          <Skeleton className="h-4 w-40 mx-auto mb-2" />
+          <Skeleton className="h-4 w-16 mx-auto mb-2" />
+          <Skeleton className="h-8 w-28 mx-auto mt-2" />
+          <Skeleton className="h-3 w-40 mx-auto mt-4" />
+        </div>
+      </div>
+
+      {/* Gallery Section */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+        <div className="p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <Skeleton className="h-6 w-40" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-10 w-40" />
+            </div>
+          </div>
+
+          {/* Grid of photos */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                  <Skeleton className="w-full h-full" />
+                </div>
+                <div className="p-4">
+                  <Skeleton className="h-3 w-3/4 mb-2" />
+                  <div className="flex justify-end gap-2 mt-3">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <GaleriSkeleton />;
   }
 
   return (

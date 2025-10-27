@@ -3,7 +3,8 @@
 import { useState, useMemo, FormEvent, useEffect } from "react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
-import { PlusCircle, Search, Eye, Edit, Trash2, XCircle } from "lucide-react";
+import { PlusCircle, Search, Eye, Trash2, XCircle } from "lucide-react";
+import clsx from "clsx";
 
 // Tipe Data disesuaikan dengan semua kolom di file Excel "Buku Daftar Pengurus"
 type Pengurus = {
@@ -89,14 +90,7 @@ const TambahPengurusModal = ({ onClose, onPengurusAdded }: { onClose: () => void
   );
 };
 
-// ===================================================================
-// KOMPONEN MODAL UNTUK EDIT PENGURUS
-// ===================================================================
-const EditPengurusModal = ({ pengurus, onClose, onPengurusUpdated }: { pengurus: Pengurus; onClose: () => void; onPengurusUpdated: (updatedPengurus: Pengurus) => void; }) => {
-    // Implementasi Modal Edit (sama seperti pada Daftar Anggota, disesuaikan fieldnya)
-    // Untuk mempersingkat, logika di sini akan sama dengan TambahPengurusModal tapi dengan value yang sudah terisi
-    return <div />; // Placeholder
-};
+
 
 // ===================================================================
 // KOMPONEN MODAL UNTUK DETAIL PENGURUS
@@ -142,10 +136,19 @@ const DetailPengurusModal = ({ pengurus, onClose }: { pengurus: Pengurus; onClos
 // ===================================================================
 export default function DaftarPengurusPage() {
     const [searchTerm, setSearchTerm] = useState("");
-    const [pengurusList, setPengurusList] = useState<Pengurus[]>(mockPengurus);
+    const [pengurusList, setPengurusList] = useState<Pengurus[]>([]);
     const [isTambahModalOpen, setTambahModalOpen] = useState(false);
-    const [pengurusToEdit, setPengurusToEdit] = useState<Pengurus | null>(null);
     const [pengurusToView, setPengurusToView] = useState<Pengurus | null>(null); // State untuk detail
+    const [loading, setLoading] = useState(true);
+
+    // Simulate loading data
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setPengurusList(mockPengurus);
+            setLoading(false);
+        }, 800);
+        return () => clearTimeout(timer);
+    }, []);
 
     const filteredPengurus = useMemo(() => {
         if (!searchTerm) return pengurusList;
@@ -159,9 +162,79 @@ export default function DaftarPengurusPage() {
         }
     };
     
-    const handleUpdatePengurus = (updatedPengurus: Pengurus) => {
-        setPengurusList(prev => prev.map(p => p.no === updatedPengurus.no ? updatedPengurus : p));
-    };
+
+
+    // Skeleton kecil
+    const Skeleton = ({ className = "" }: { className?: string }) => (
+        <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+    );
+
+    const DaftarPengurusSkeleton = () => (
+        <div>
+            <div className="mb-8">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-4 w-96 mt-2" />
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+                <div className="p-6 border-b border-gray-200">
+                    <Skeleton className="h-6 w-1/2 mx-auto text-center" />
+                    <div className="mt-6 max-w-4xl mx-auto grid grid-cols-2 gap-x-12 text-sm">
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-full" />
+                        </div>
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-full" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-6">
+                    <div className="flex justify-between items-center mb-4">
+                        <div className="relative w-full max-w-sm">
+                            <Skeleton className="w-full h-10 rounded-lg" />
+                        </div>
+                        <Skeleton className="h-10 w-40 ml-4" />
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="border-b bg-gray-50 text-sm text-gray-600">
+                                <tr>
+                                    <th className="p-4 font-medium"><Skeleton className="h-4 w-12" /></th>
+                                    <th className="p-4 font-medium"><Skeleton className="h-4 w-32" /></th>
+                                    <th className="p-4 font-medium"><Skeleton className="h-4 w-24" /></th>
+                                    <th className="p-4 font-medium"><Skeleton className="h-4 w-20" /></th>
+                                    <th className="p-4 font-medium"><Skeleton className="h-4 w-24" /></th>
+                                    <th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th>
+                                    <th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {[...Array(5)].map((_, i) => (
+                                    <tr key={i} className="border-b text-sm">
+                                        <td className="p-4"><Skeleton className="h-4 w-8" /></td>
+                                        <td className="p-4"><Skeleton className="h-4 w-32" /></td>
+                                        <td className="p-4"><Skeleton className="h-4 w-20" /></td>
+                                        <td className="p-4"><Skeleton className="h-4 w-16" /></td>
+                                        <td className="p-4"><Skeleton className="h-4 w-24" /></td>
+                                        <td className="p-4 text-center"><Skeleton className="h-5 w-16 mx-auto rounded-full" /></td>
+                                        <td className="p-4 text-center"><Skeleton className="h-8 w-24 mx-auto" /></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    if (loading) {
+        return <DaftarPengurusSkeleton />;
+    }
 
     return (
         <div>
@@ -215,7 +288,7 @@ export default function DaftarPengurusPage() {
                                         </td>
                                         <td className="p-4 text-center space-x-2">
                                             <button onClick={() => setPengurusToView(pengurus)} className="p-2 text-blue-600 bg-blue-100 rounded-full hover:bg-blue-200" title="Lihat Detail"><Eye size={20} /></button>
-                                            <button onClick={() => setPengurusToEdit(pengurus)} className="p-2 text-green-600 bg-green-100 rounded-full hover:bg-green-200" title="Edit Pengurus"><Edit size={20} /></button>
+
                                             {pengurus.tanggalBerhenti && <button onClick={() => handleHapus(pengurus.namaLengkap, pengurus.no)} className="p-2 text-red-600 bg-red-100 rounded-full hover:bg-red-200" title="Hapus Data"><Trash2 size={20} /></button>}
                                         </td>
                                     </tr>
@@ -227,7 +300,6 @@ export default function DaftarPengurusPage() {
             </div>
             
             {isTambahModalOpen && <TambahPengurusModal onClose={() => setTambahModalOpen(false)} onPengurusAdded={(newPengurus) => setPengurusList(prev => [...prev, newPengurus])} />}
-            {pengurusToEdit && <EditPengurusModal pengurus={pengurusToEdit} onClose={() => setPengurusToEdit(null)} onPengurusUpdated={handleUpdatePengurus} />}
             {pengurusToView && <DetailPengurusModal pengurus={pengurusToView} onClose={() => setPengurusToView(null)} />}
         </div>
     );

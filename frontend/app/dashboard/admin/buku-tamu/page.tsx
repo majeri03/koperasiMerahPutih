@@ -1,10 +1,11 @@
 // Lokasi: frontend/app/dashboard/admin/buku-tamu/page.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
 import { Search, Trash2, CheckSquare, X } from "lucide-react";
+import clsx from "clsx";
 
 // --- Tipe Data ---
 type BukuTamuEntry = {
@@ -30,6 +31,17 @@ export default function BukuTamuPage() {
     search: '',
     status: '',
   });
+  const [entriesList, setEntriesList] = useState<BukuTamuEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Simulate loading data
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setEntriesList(mockBukuTamu);
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -40,23 +52,100 @@ export default function BukuTamuPage() {
   };
 
   const filteredEntries = useMemo(() => {
-    return mockBukuTamu.filter(entry => {
+    return entriesList.filter(entry => {
       return (
         entry.nama.toLowerCase().includes(filters.search.toLowerCase()) &&
         (filters.status === '' || entry.status === filters.status)
       );
     });
-  }, [filters]);
+  }, [entriesList, filters]);
 
   const handleAction = (nama: string, action: 'tanggapi' | 'hapus') => {
     const message = action === 'tanggapi'
-      ? `Apakah Anda yakin ingin menandai pesan dari "${nama}" sebagai sudah ditanggapi?`
-      : `Apakah Anda yakin ingin menghapus pesan dari "${nama}"?`;
+      ? `Apakah Anda yakin ingin menandai pesan dari &quot;${nama}&quot; sebagai sudah ditanggapi?`
+      : `Apakah Anda yakin ingin menghapus pesan dari &quot;${nama}&quot;?`;
 
     if (window.confirm(message)) {
-      alert(`Simulasi: Aksi "${action}" untuk pesan dari "${nama}" berhasil.`);
+      alert(`Simulasi: Aksi &quot;${action}&quot; untuk pesan dari &quot;${nama}&quot; berhasil.`);
     }
   };
+
+  // Skeleton kecil
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  const BukuTamuSkeleton = () => (
+    <div>
+      <div className="mb-8">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96 mt-2" />
+      </div>
+
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+        <div className="p-6 border-b border-gray-200">
+          <Skeleton className="h-6 w-1/2 mx-auto text-center" />
+          <div className="mt-6 max-w-4xl mx-auto grid grid-cols-2 gap-x-12 text-sm">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <Skeleton className="h-6 w-40 mb-6" />
+
+          {/* Filter Section */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 my-6 grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="md:col-span-1">
+              <Skeleton className="h-4 w-24 mb-1" />
+              <Skeleton className="w-full h-10 rounded-lg" />
+            </div>
+            <div>
+              <Skeleton className="h-4 w-20 mb-1" />
+              <Skeleton className="w-full h-10 rounded-lg" />
+            </div>
+            <div>
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+
+          {/* Entries List */}
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="border border-gray-200 rounded-lg p-4 bg-white">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                    </div>
+                    <Skeleton className="h-3 w-40 mt-1" />
+                  </div>
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                </div>
+                <Skeleton className="h-4 w-full mt-3" />
+                <Skeleton className="h-4 w-5/6 mt-2" />
+                <div className="flex justify-end gap-2 mt-4">
+                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-8 w-16" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <BukuTamuSkeleton />;
+  }
 
   return (
     <div>
@@ -150,7 +239,7 @@ export default function BukuTamuPage() {
                   </span>
                 </div>
                 <p className="text-sm text-gray-700 mt-3 italic border-l-4 border-gray-200 pl-4">
-                  "{entry.pesan}"
+                  &quot;{entry.pesan}&quot;
                 </p>
                 <div className="flex justify-end gap-2 mt-4">
                   {entry.status === 'Baru' && (

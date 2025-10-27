@@ -1,10 +1,11 @@
 // Lokasi: frontend/app/dashboard/admin/sistem/log-audit/page.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
-import { Search, X, User, Edit, Trash2, PlusCircle, History } from "lucide-react";
+import { X, User, PlusCircle, History } from "lucide-react";
+import clsx from "clsx";
 
 // --- Tipe Data ---
 type LogAktivitas = {
@@ -37,6 +38,17 @@ export default function LogAktivitasPage() {
     tanggalMulai: '',
     tanggalSelesai: ''
   });
+  const [logList, setLogList] = useState<LogAktivitas[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Simulate loading data
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLogList(mockLog);
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -47,7 +59,7 @@ export default function LogAktivitasPage() {
   };
 
   const filteredLog = useMemo(() => {
-    return mockLog.filter(log => {
+    return logList.filter(log => {
       const tanggalLog = new Date(log.timestamp);
       const tanggalMulai = filters.tanggalMulai ? new Date(filters.tanggalMulai) : null;
       const tanggalSelesai = filters.tanggalSelesai ? new Date(filters.tanggalSelesai) : null;
@@ -63,18 +75,66 @@ export default function LogAktivitasPage() {
         (!tanggalSelesai || tanggalLog <= tanggalSelesai)
       );
     });
-  }, [filters]);
+  }, [filters, logList]);
 
   const getAksiInfo = (aksi: LogAktivitas['aksi']) => {
     switch (aksi) {
       case 'CREATE': return { icon: PlusCircle, color: 'bg-green-100 text-green-600' };
-      case 'UPDATE': return { icon: Edit, color: 'bg-blue-100 text-blue-600' };
-      case 'DELETE': return { icon: Trash2, color: 'bg-red-100 text-red-600' };
+      case 'UPDATE': return { icon: User, color: 'bg-blue-100 text-blue-600' };
+      case 'DELETE': return { icon: X, color: 'bg-red-100 text-red-600' };
       case 'LOGIN': return { icon: User, color: 'bg-gray-100 text-gray-600' };
       default: return { icon: History, color: 'bg-gray-100 text-gray-600' };
     }
   };
 
+  // Skeleton kecil
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  const LogAktivitasSkeleton = () => (
+    <div>
+      <div className="mb-8">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96 mt-2" />
+      </div>
+
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+        <Skeleton className="h-6 w-40 mb-6" />
+          
+        {/* Filter Section */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 my-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end mb-8">
+          <div><Skeleton className="h-4 w-24 mb-1" /><Skeleton className="h-10 w-full" /></div>
+          <div><Skeleton className="h-4 w-24 mb-1" /><Skeleton className="h-10 w-full" /></div>
+          <div><Skeleton className="h-4 w-24 mb-1" /><Skeleton className="h-10 w-full" /></div>
+          <div className="lg:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div className="md:col-span-2 grid grid-cols-2 gap-2"><Skeleton className="h-4 w-24 mb-1" /><Skeleton className="h-10" /><Skeleton className="h-10" /></div>
+            <div><Skeleton className="h-10 w-full" /></div>
+          </div>
+        </div>
+
+        {/* Timeline Section */}
+        <div className="relative border-l-2 border-gray-200 ml-4 space-y-8">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="mb-8 ml-8">
+              <Skeleton className="absolute -left-5 w-8 h-8 rounded-full" />
+              <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                <div className="flex justify-between items-center mb-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <Skeleton className="h-4 w-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <LogAktivitasSkeleton />;
+  }
 
   return (
     <div>
@@ -130,7 +190,7 @@ export default function LogAktivitasPage() {
 
         {/* --- Tampilan Log Linimasa --- */}
         <div className="relative border-l-2 border-gray-200 ml-4">
-            {filteredLog.map((log, index) => {
+            {filteredLog.map((log) => {
                 const { icon: Icon, color } = getAksiInfo(log.aksi);
                 const dateTime = new Date(log.timestamp);
                 const date = dateTime.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
