@@ -1,10 +1,11 @@
 // Lokasi: frontend/app/dashboard/admin/notulen-rapat-pengawas/page.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
-import { PlusCircle, Search, FileText, Download, Edit, Trash2, X } from "lucide-react";
+import { PlusCircle, Search, FileText, X } from "lucide-react";
+import clsx from "clsx";
 
 // --- Tipe Data (berdasarkan file 09. Buku Notulen Rapat Pengawas.xls) ---
 type NotulenRapat = {
@@ -41,6 +42,17 @@ const mockNotulen: NotulenRapat[] = [
 
 export default function NotulenRapatPengawasPage() {
   const [filters, setFilters] = useState({ search: '' });
+  const [notulenList, setNotulenList] = useState<NotulenRapat[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Simulate loading data
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setNotulenList(mockNotulen);
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -49,12 +61,80 @@ export default function NotulenRapatPengawasPage() {
   const resetFilters = () => setFilters({ search: '' });
 
   const filteredNotulen = useMemo(() => {
-    return mockNotulen.filter(notulen => 
+    return notulenList.filter(notulen => 
       notulen.judul.toLowerCase().includes(filters.search.toLowerCase())
     );
-  }, [filters]);
+  }, [notulenList, filters]);
 
   const handleTambahNotulen = () => alert("Membuka halaman untuk membuat notulen rapat pengawas baru...");
+
+  // Skeleton kecil
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  const NotulenRapatPengawasSkeleton = () => (
+    <div>
+      <div className="mb-8">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96 mt-2" />
+      </div>
+
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+        <div className="p-6 border-b border-gray-200">
+          <Skeleton className="h-6 w-1/2 mx-auto text-center" />
+          <div className="mt-6 max-w-4xl mx-auto grid grid-cols-2 gap-x-12 text-sm">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 flex items-end gap-4">
+            <div className="grow">
+              <Skeleton className="h-4 w-24 mb-1" />
+              <Skeleton className="w-full h-10 rounded-lg" />
+            </div>
+            <Skeleton className="h-10 w-24" />
+          </div>
+
+          {/* Cards Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="border border-gray-200 rounded-lg p-5 bg-white">
+                <div className="border-b pb-3">
+                  <Skeleton className="h-3 w-48 mb-2" />
+                  <Skeleton className="h-5 w-64 mt-1" />
+                  <Skeleton className="h-3 w-32 mt-2" />
+                </div>
+                <div className="py-4">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <div className="space-y-1">
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-5/6" />
+                    <Skeleton className="h-3 w-4/6" />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 border-t pt-3">
+                  <Skeleton className="h-8 w-20 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <NotulenRapatPengawasSkeleton />;
+  }
 
   return (
     <div>
@@ -89,7 +169,7 @@ export default function NotulenRapatPengawasPage() {
 
         <div className="p-6">
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 flex items-end gap-4">
-              <div className="flex-grow">
+              <div className="grow">
                 <label htmlFor="search" className="block text-sm font-medium text-gray-600 mb-1">Cari Judul Rapat</label>
                 <div className="relative">
                   <input id="search" name="search" type="text" placeholder="Ketik judul rapat..." value={filters.search} onChange={handleFilterChange} className="w-full pl-10 pr-4 py-2 border rounded-lg" />

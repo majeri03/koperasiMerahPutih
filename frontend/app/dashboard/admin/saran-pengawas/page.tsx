@@ -1,10 +1,11 @@
 // Lokasi: frontend/app/dashboard/admin/saran-pengawas/page.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
 import { PlusCircle, Search, Edit2, Trash2, X } from "lucide-react";
+import clsx from "clsx";
 
 // --- Tipe Data (berdasarkan file 13. Buku Saran Pengawas.xls) ---
 type SaranPengawas = {
@@ -23,6 +24,17 @@ const mockSaran: SaranPengawas[] = [
 
 export default function SaranPengawasPage() {
   const [filters, setFilters] = useState({ search: '' });
+  const [saranList, setSaranList] = useState<SaranPengawas[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Simulate loading data
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSaranList(mockSaran);
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -31,13 +43,84 @@ export default function SaranPengawasPage() {
   const resetFilters = () => setFilters({ search: '' });
 
   const filteredSaran = useMemo(() => {
-    return mockSaran.filter(saran => 
+    return saranList.filter(saran => 
       saran.namaPengawas.toLowerCase().includes(filters.search.toLowerCase()) || 
       saran.isiSaran.toLowerCase().includes(filters.search.toLowerCase())
     );
-  }, [filters]);
+  }, [saranList, filters]);
 
   const handleTambahSaran = () => alert("Membuka form untuk mencatat saran/temuan baru dari pengawas...");
+
+  // Skeleton kecil
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  const SaranPengawasSkeleton = () => (
+    <div>
+      <div className="mb-8">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96 mt-2" />
+      </div>
+
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+        <div className="p-6 border-b border-gray-200">
+          <Skeleton className="h-6 w-1/2 mx-auto text-center" />
+          <div className="mt-6 max-w-4xl mx-auto grid grid-cols-2 gap-x-12 text-sm">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 flex items-end gap-4">
+            <div className="grow">
+              <Skeleton className="h-4 w-24 mb-1" />
+              <Skeleton className="w-full h-10 rounded-lg" />
+            </div>
+            <Skeleton className="h-10 w-24" />
+          </div>
+
+          {/* Entries List */}
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="border border-gray-200 rounded-lg">
+                <div className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <Skeleton className="h-4 w-40 mb-1" />
+                      <Skeleton className="h-3 w-64 mt-1" />
+                    </div>
+                    <div className="flex gap-2">
+                      <Skeleton className="h-8 w-20 rounded" />
+                      <Skeleton className="h-8 w-16 rounded" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-4 w-full mt-4" />
+                  <Skeleton className="h-4 w-5/6 mt-2" />
+                </div>
+                <div className="p-4 bg-green-50 border-t border-green-200 rounded-b-lg">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-4 w-full mt-2" />
+                  <Skeleton className="h-4 w-5/6 mt-1" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <SaranPengawasSkeleton />;
+  }
 
   return (
     <div>
@@ -72,14 +155,14 @@ export default function SaranPengawasPage() {
 
         <div className="p-6">
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 flex items-end gap-4">
-              <div className="flex-grow">
-                <label htmlFor="search" className="block text-sm font-medium text-gray-600 mb-1">Cari Saran / Pengawas</label>
-                <div className="relative">
-                  <input id="search" name="search" type="text" placeholder="Ketik kata kunci..." value={filters.search} onChange={handleFilterChange} className="w-full pl-10 pr-4 py-2 border rounded-lg" />
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                </div>
+            <div className="grow">
+              <label htmlFor="search" className="block text-sm font-medium text-gray-600 mb-1">Cari Saran / Pengawas</label>
+              <div className="relative">
+                <input id="search" name="search" type="text" placeholder="Ketik kata kunci..." value={filters.search} onChange={handleFilterChange} className="w-full pl-10 pr-4 py-2 border rounded-lg" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               </div>
-              <Button onClick={resetFilters} variant="outline"><X size={16} /> Reset</Button>
+            </div>
+            <Button onClick={resetFilters} variant="outline"><X size={16} /> Reset</Button>
           </div>
 
           <div className="space-y-4">
@@ -105,7 +188,7 @@ export default function SaranPengawasPage() {
                 {saran.tanggapanPengurus && (
                     <div className="p-4 bg-green-50 border-t border-green-200 rounded-b-lg">
                         <p className="text-sm font-semibold text-green-800">Tanggapan Pengurus:</p>
-                        <p className="text-sm text-green-700 mt-2 italic">"{saran.tanggapanPengurus}"</p>
+                        <p className="text-sm text-green-700 mt-2 italic">&quot;{saran.tanggapanPengurus}&quot;</p>
                     </div>
                 )}
               </div>

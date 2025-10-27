@@ -4,6 +4,7 @@ import { useState, useMemo, FormEvent, useEffect } from "react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
 import { PlusCircle, Search, Eye, Edit, Trash2, XCircle } from "lucide-react";
+import clsx from "clsx";
 
 // Tipe Data disesuaikan dengan semua kolom di file Excel "Buku Daftar Pengawas"
 type Pengawas = {
@@ -171,10 +172,20 @@ const DetailPengawasModal = ({ pengawas, onClose }: { pengawas: Pengawas; onClos
 // ===================================================================
 export default function DaftarPengawasPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [pengawasList, setPengawasList] = useState<Pengawas[]>(mockPengawas);
+  const [pengawasList, setPengawasList] = useState<Pengawas[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isTambahModalOpen, setTambahModalOpen] = useState(false);
   const [pengawasToEdit, setPengawasToEdit] = useState<Pengawas | null>(null);
   const [pengawasToView, setPengawasToView] = useState<Pengawas | null>(null);
+
+  // Simulate loading data
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPengawasList(mockPengawas);
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const filteredPengawas = useMemo(() => {
     if (!searchTerm) return pengawasList;
@@ -191,6 +202,78 @@ export default function DaftarPengawasPage() {
   const handleUpdatePengawas = (updatedPengawas: Pengawas) => {
     setPengawasList(prev => prev.map(p => p.no === updatedPengawas.no ? updatedPengawas : p));
   };
+
+  // Skeleton kecil
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  const DaftarPengawasSkeleton = () => (
+    <div>
+      <div className="mb-8">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96 mt-2" />
+      </div>
+
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+        <div className="p-6 border-b border-gray-200">
+          <Skeleton className="h-6 w-1/2 mx-auto text-center" />
+          <div className="mt-6 max-w-4xl mx-auto grid grid-cols-2 gap-x-12 text-sm">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <div className="relative w-full max-w-sm">
+              <Skeleton className="w-full h-10 rounded-lg" />
+            </div>
+            <Skeleton className="h-10 w-40 ml-4" />
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="border-b bg-gray-50 text-sm text-gray-600">
+                <tr>
+                  <th className="p-4 font-medium"><Skeleton className="h-4 w-12" /></th>
+                  <th className="p-4 font-medium"><Skeleton className="h-4 w-32" /></th>
+                  <th className="p-4 font-medium"><Skeleton className="h-4 w-24" /></th>
+                  <th className="p-4 font-medium"><Skeleton className="h-4 w-20" /></th>
+                  <th className="p-4 font-medium"><Skeleton className="h-4 w-24" /></th>
+                  <th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th>
+                  <th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...Array(5)].map((_, i) => (
+                  <tr key={i} className="border-b text-sm">
+                    <td className="p-4 font-medium"><Skeleton className="h-4 w-8" /></td>
+                    <td className="p-4"><Skeleton className="h-4 w-32" /></td>
+                    <td className="p-4"><Skeleton className="h-4 w-20" /></td>
+                    <td className="p-4"><Skeleton className="h-4 w-16" /></td>
+                    <td className="p-4"><Skeleton className="h-4 w-24" /></td>
+                    <td className="p-4 text-center"><Skeleton className="h-5 w-16 mx-auto rounded-full" /></td>
+                    <td className="p-4 text-center"><Skeleton className="h-8 w-24 mx-auto" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <DaftarPengawasSkeleton />;
+  }
 
   return (
     <div>

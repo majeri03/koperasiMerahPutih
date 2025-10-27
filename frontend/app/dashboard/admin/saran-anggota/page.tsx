@@ -1,10 +1,11 @@
 // Lokasi: frontend/app/dashboard/admin/saran-anggota/page.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
-import { Search, Trash2, CheckSquare, X, Lightbulb } from "lucide-react";
+import { Search, Trash2, X, Lightbulb } from "lucide-react";
+import clsx from "clsx";
 
 // --- Tipe Data ---
 type SaranAnggota = {
@@ -32,6 +33,17 @@ export default function SaranAnggotaPage() {
     search: '',
     status: '',
   });
+  const [saranList, setSaranList] = useState<SaranAnggota[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Simulate loading data
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSaranList(mockSaran);
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -42,19 +54,95 @@ export default function SaranAnggotaPage() {
   };
 
   const filteredSaran = useMemo(() => {
-    return mockSaran.filter(saran => {
+    return saranList.filter(saran => {
       return (
         (saran.anggota.nama.toLowerCase().includes(filters.search.toLowerCase()) || saran.judul.toLowerCase().includes(filters.search.toLowerCase())) &&
         (filters.status === '' || saran.status === saran.status)
       );
     });
-  }, [filters]);
+  }, [saranList, filters]);
 
-  const handleAction = (nama: string, action: 'hapus') => {
+  const handleAction = (nama: string) => {
     if (window.confirm(`Apakah Anda yakin ingin menghapus saran dari "${nama}"?`)) {
       alert(`Simulasi: Saran dari "${nama}" telah dihapus.`);
     }
   };
+
+  // Skeleton kecil
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  const SaranAnggotaSkeleton = () => (
+    <div>
+      <div className="mb-8">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96 mt-2" />
+      </div>
+
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+        <div className="p-6 border-b border-gray-200">
+          <Skeleton className="h-6 w-1/2 mx-auto text-center" />
+          <div className="mt-6 max-w-4xl mx-auto grid grid-cols-2 gap-x-12 text-sm">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <Skeleton className="h-6 w-40 mb-6" />
+
+          {/* Filter Section */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 my-6 grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div>
+              <Skeleton className="h-4 w-24 mb-1" />
+              <Skeleton className="w-full h-10 rounded-lg" />
+            </div>
+            <div>
+              <Skeleton className="h-4 w-20 mb-1" />
+              <Skeleton className="w-full h-10 rounded-lg" />
+            </div>
+            <div>
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+
+          {/* Entries List */}
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="border border-gray-200 rounded-lg bg-white">
+                <div className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <Skeleton className="h-4 w-40 mb-1" />
+                      <Skeleton className="h-3 w-64 mt-1" />
+                    </div>
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </div>
+                  <Skeleton className="h-4 w-full mt-3" />
+                  <Skeleton className="h-4 w-5/6 mt-2" />
+                </div>
+                <div className="flex justify-end gap-2 p-3 bg-gray-50/50 border-t rounded-b-lg">
+                  <Skeleton className="h-8 w-24" />
+                  <Skeleton className="h-8 w-16" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <SaranAnggotaSkeleton />;
+  }
 
   return (
     <div>
@@ -134,7 +222,7 @@ export default function SaranAnggotaPage() {
                 <div className="flex justify-end gap-2 p-3 bg-gray-50/50 border-t rounded-b-lg">
                   {/* Di sini Anda bisa menambahkan dropdown untuk mengubah status */}
                   <Button variant="outline" className="text-xs px-3 py-1"><Lightbulb size={14} /> Ubah Status</Button>
-                  <Button onClick={() => handleAction(saran.anggota.nama, 'hapus')} variant="outline" className="text-xs px-3 py-1 text-red-600 border-red-200 hover:bg-red-50">
+                  <Button onClick={() => handleAction(saran.anggota.nama)} variant="outline" className="text-xs px-3 py-1 text-red-600 border-red-200 hover:bg-red-50">
                     <Trash2 size={14} /> Hapus
                   </Button>
                 </div>

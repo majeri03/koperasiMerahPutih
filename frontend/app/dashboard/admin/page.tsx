@@ -6,8 +6,8 @@ import {
     MessageSquare, Send, Landmark, BookUser
 } from "lucide-react";
 import Link from "next/link";
-// PERBAIKAN: Impor ElementType untuk tipe data ikon
 import { useEffect, useState, ElementType } from "react";
+import clsx from "clsx";
 
 // --- Tipe Data Diperbarui ---
 type DashboardData = {
@@ -127,8 +127,101 @@ export default function AdminDashboardPage() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Skeleton kecil
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  const DashboardSkeleton = () => (
+    <div>
+      <Skeleton className="h-9 w-1/3" />
+      <Skeleton className="h-5 w-1/2 mt-2" />
+
+      {/* --- KARTU AKSI CEPAT --- */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="bg-white p-5 rounded-xl shadow-lg">
+            <Skeleton className="w-12 h-12 rounded-full mb-4" />
+            <Skeleton className="h-5 w-3/4 mb-2" />
+            <Skeleton className="h-4 w-full" />
+          </div>
+        ))}
+      </div>
+
+      {/* --- KARTU STATISTIK MODERN --- */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-white p-6 rounded-xl shadow-lg">
+            <div className="flex items-center gap-4">
+              <Skeleton className="w-12 h-12 rounded-full" />
+              <div className="flex-1">
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-7 w-16" />
+              </div>
+            </div>
+            <Skeleton className="mt-4 h-5 w-1/2" />
+          </div>
+        ))}
+      </div>
+
+      {/* --- LAYOUT DUA KOLOM --- */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        {/* KOLOM KIRI (LEBIH BESAR) */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* TUGAS & NOTIFIKASI */}
+          <div className="bg-white p-6 rounded-xl shadow-lg">
+            <Skeleton className="h-6 w-40 mb-4" />
+            <div className="space-y-3">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="flex justify-between items-center p-3 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-5 w-5 rounded-full" />
+                    <Skeleton className="h-4 w-40" />
+                  </div>
+                  <Skeleton className="h-6 w-8 rounded-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* AKTIVITAS TERBARU */}
+          <div className="bg-white p-6 rounded-xl shadow-lg">
+            <Skeleton className="h-6 w-48 mb-4" />
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <Skeleton className="mt-1 h-8 w-8 rounded-full" />
+                  <div>
+                    <Skeleton className="h-4 w-64 mb-1" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* KOLOM KANAN (LEBIH KECIL) */}
+        <div className="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg">
+          <Skeleton className="h-6 w-56 mb-4" />
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center space-x-4">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-48 mb-1" />
+                  <Skeleton className="h-3 w-40" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   if (loading || !data) {
-    return <div className="text-center p-10">Memuat dashboard modern Anda... ✨</div>;
+    return <DashboardSkeleton />;
   }
 
   return (
@@ -191,7 +284,7 @@ export default function AdminDashboardPage() {
                             <li key={index} className="flex items-start gap-3">
                                 <div className="p-2 bg-gray-100 rounded-full mt-1">
                                     <Icon className="h-5 w-5 text-gray-500" />
-                                D</div>
+                                </div>
                                 <div>
                                     <p className="text-sm text-gray-800">{aktivitas.teks}</p>
                                     <p className="text-xs text-gray-400">{aktivitas.waktu}</p>
@@ -210,7 +303,7 @@ export default function AdminDashboardPage() {
                 <ul role="list" className="-my-5 divide-y divide-gray-200">
                     {data.anggotaTerbaru.map((anggota, index) => (
                     <li key={index} className="py-3 flex items-center space-x-4">
-                        <div className="flex-shrink-0">
+                        <div className="shrink-0">
                             <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-500">
                                 {anggota.nama.charAt(0)}
                             </div>

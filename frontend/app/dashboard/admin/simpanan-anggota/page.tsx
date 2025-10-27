@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo, FormEvent, ChangeEvent } from "react";
+import { useState, useMemo, FormEvent, ChangeEvent, useEffect } from "react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
 import { PlusCircle, Search, Landmark, Gem, CalendarClock, Download, X } from "lucide-react";
+import clsx from "clsx";
 
 // --- Tipe Data ---
 type SimpananTransaksi = {
@@ -130,10 +131,20 @@ const TransaksiSimpananModal = ({
 // ===================================================================
 export default function SimpananAnggotaPage() {
     const [filters, setFilters] = useState({ search: '', tipe: '', jenis: '', tanggalMulai: '', tanggalSelesai: '' });
-    const [transaksiList, setTransaksiList] = useState<SimpananTransaksi[]>(mockTransaksi);
+    const [transaksiList, setTransaksiList] = useState<SimpananTransaksi[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalType, setModalType] = useState<'Setoran' | 'Penarikan' | null>(null);
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    // Simulate loading data
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setTransaksiList(mockTransaksi);
+            setLoading(false);
+        }, 800);
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -159,6 +170,94 @@ export default function SimpananAnggotaPage() {
             );
         });
     }, [filters, transaksiList]);
+
+    // Skeleton kecil
+    const Skeleton = ({ className = "" }: { className?: string }) => (
+        <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+    );
+
+    const SimpananSkeleton = () => (
+        <div>
+            <div className="mb-8">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-4 w-96 mt-2" />
+            </div>
+
+            {/* Stat Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {[...Array(3)].map((_, i) => (
+                    <div key={i} className="bg-white p-5 rounded-xl shadow-lg border border-gray-100">
+                        <div className="flex items-center gap-3">
+                            <Skeleton className="w-12 h-12 rounded-full" />
+                            <div>
+                                <Skeleton className="h-4 w-32 mb-2" />
+                                <Skeleton className="h-6 w-24" />
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Filter & Action Bar */}
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-32" />
+                </div>
+                
+                <div className="flex justify-between">
+                    <Skeleton className="h-10 w-40" />
+                    <div className="flex space-x-2">
+                        <Skeleton className="h-10 w-32" />
+                        <Skeleton className="h-10 w-32" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Table */}
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+                <div className="p-6">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="border-b bg-gray-50 text-sm text-gray-600">
+                                <tr>
+                                    <th className="p-4 font-medium"><Skeleton className="h-4 w-12" /></th>
+                                    <th className="p-4 font-medium"><Skeleton className="h-4 w-24" /></th>
+                                    <th className="p-4 font-medium"><Skeleton className="h-4 w-16" /></th>
+                                    <th className="p-4 font-medium"><Skeleton className="h-4 w-20" /></th>
+                                    <th className="p-4 font-medium"><Skeleton className="h-4 w-16" /></th>
+                                    <th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th>
+                                    <th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th>
+                                    <th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {[...Array(5)].map((_, i) => (
+                                    <tr key={i} className="border-b text-sm">
+                                        <td className="p-4"><Skeleton className="h-4 w-16" /></td>
+                                        <td className="p-4"><Skeleton className="h-4 w-32" /></td>
+                                        <td className="p-4"><Skeleton className="h-4 w-20" /></td>
+                                        <td className="p-4"><Skeleton className="h-4 w-24" /></td>
+                                        <td className="p-4"><Skeleton className="h-4 w-16" /></td>
+                                        <td className="p-4 text-center"><Skeleton className="h-4 w-20 mx-auto" /></td>
+                                        <td className="p-4 text-center"><Skeleton className="h-5 w-16 mx-auto rounded-full" /></td>
+                                        <td className="p-4 text-center"><Skeleton className="h-8 w-24 mx-auto" /></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    if (loading) {
+        return <SimpananSkeleton />;
+    }
     
     const handleOpenModal = (tipe: 'Setoran' | 'Penarikan') => {
         setModalType(tipe);

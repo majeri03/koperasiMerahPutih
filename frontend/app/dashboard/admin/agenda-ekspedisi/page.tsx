@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
-import { PlusCircle, Search, Mail, ArrowLeftRight, Download, X } from "lucide-react";
+import { PlusCircle, Search, ArrowLeftRight, X } from "lucide-react";
+import clsx from "clsx";
 
 // --- Tipe Data ---
 type Surat = {
@@ -20,8 +21,8 @@ type Surat = {
 const mockSurat: Surat[] = [
   { id: 'sur001', tanggal: '2025-09-15', nomorSurat: '123/DISP/IX/2025', jenis: 'Masuk', asalAtauTujuan: 'Dinas Koperasi & UKM Kota Makassar', perihal: 'Undangan Sosialisasi Program 2026', fileUrl: '#' },
   { id: 'sur002', tanggal: '2025-09-14', nomorSurat: '005/KMP/IX/2025', jenis: 'Keluar', asalAtauTujuan: 'Seluruh Anggota', perihal: 'Pemberitahuan Jadwal Rapat Anggota', fileUrl: '#' },
-  { id: 'sur003', tanggal: '2025-09-10', nomorSurat: '050/BANK-X/IX/2025', jenis: 'Masuk', asalAtauTujuan: 'Bank X Cabang Makassar', perihal: 'Penawaran Kerjasama Produk Pinjaman', status: 'Baru' },
-  { id: 'sur004', tanggal: '2025-09-08', nomorSurat: '004/KMP/IX/2025', jenis: 'Keluar', asalAtauTujuan: 'Dinas Koperasi & UKM Kota Makassar', perihal: 'Permohonan Data Anggota Terbaru', status: 'Baru' },
+  { id: 'sur003', tanggal: '2025-09-10', nomorSurat: '050/BANK-X/IX/2025', jenis: 'Masuk', asalAtauTujuan: 'Bank X Cabang Makassar', perihal: 'Penawaran Kerjasama Produk Pinjaman' },
+  { id: 'sur004', tanggal: '2025-09-08', nomorSurat: '004/KMP/IX/2025', jenis: 'Keluar', asalAtauTujuan: 'Dinas Koperasi & UKM Kota Makassar', perihal: 'Permohonan Data Anggota Terbaru' },
 ];
 
 export default function AgendaEkspedisiPage() {
@@ -29,6 +30,17 @@ export default function AgendaEkspedisiPage() {
     search: '',
     jenis: '',
   });
+  const [suratList, setSuratList] = useState<Surat[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Simulate loading data
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSuratList(mockSurat);
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -39,14 +51,93 @@ export default function AgendaEkspedisiPage() {
   };
 
   const filteredSurat = useMemo(() => {
-    return mockSurat.filter(surat => {
+    return suratList.filter(surat => {
       const searchTerm = filters.search.toLowerCase();
       return (
         (surat.perihal.toLowerCase().includes(searchTerm) || surat.asalAtauTujuan.toLowerCase().includes(searchTerm) || surat.nomorSurat.toLowerCase().includes(searchTerm)) &&
         (filters.jenis === '' || surat.jenis === filters.jenis)
       );
     });
-  }, [filters]);
+  }, [filters, suratList]);
+
+  // Skeleton kecil
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+  );
+
+  const AgendaSkeleton = () => (
+    <div>
+      <div className="mb-8">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96 mt-2" />
+      </div>
+
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+        <div className="p-6 border-b border-gray-200">
+          <Skeleton className="h-6 w-1/2 mx-auto text-center" />
+          <div className="mt-6 max-w-4xl mx-auto grid grid-cols-2 gap-x-12 text-sm">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <Skeleton className="h-6 w-32 mb-6" />
+
+          {/* Filter Area */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 my-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Skeleton className="h-4 w-20 mb-1" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div>
+              <Skeleton className="h-4 w-24 mb-1" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div>
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="border-b bg-gray-50 text-sm text-gray-600">
+                <tr>
+                  <th className="p-4 font-medium"><Skeleton className="h-4 w-20" /></th>
+                  <th className="p-4 font-medium"><Skeleton className="h-4 w-24" /></th>
+                  <th className="p-4 font-medium"><Skeleton className="h-4 w-20" /></th>
+                  <th className="p-4 font-medium"><Skeleton className="h-4 w-28" /></th>
+                  <th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...Array(5)].map((_, i) => (
+                  <tr key={i} className="border-b text-sm">
+                    <td className="p-4"><Skeleton className="h-4 w-20" /></td>
+                    <td className="p-4"><Skeleton className="h-4 w-24" /></td>
+                    <td className="p-4"><Skeleton className="h-4 w-32" /></td>
+                    <td className="p-4"><Skeleton className="h-4 w-28" /></td>
+                    <td className="p-4 text-center"><Skeleton className="h-8 w-20 mx-auto" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return <AgendaSkeleton />;
+  }
 
   return (
     <div>

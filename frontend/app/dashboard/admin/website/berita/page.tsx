@@ -1,10 +1,11 @@
 // Lokasi: frontend/app/dashboard/admin/website/berita/page.tsx
 "use client";
 
-import { useState, useMemo, FormEvent, ChangeEvent } from "react";
+import { useState, useMemo, FormEvent, ChangeEvent, useEffect } from "react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
 import { PlusCircle, Search, Edit, Trash2, X, Eye, ArrowLeft, Save, Upload, LinkIcon } from "lucide-react"; // 1. Impor LinkIcon
+import clsx from "clsx";
 
 // --- Tipe Data Diperbarui ---
 type Artikel = {
@@ -102,7 +103,7 @@ const ArtikelEditor = ({ artikel, onBack, onSave }: { artikel: Artikel | null; o
                     </div>
                     {/* 3. Tambahkan input field untuk link berita di sini */}
                     <div className="bg-gray-50 p-4 rounded-lg border">
-                        <label htmlFor="sourceUrl" className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                        <label htmlFor="sourceUrl" className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                             <LinkIcon size={16} /> Link Sumber Berita (Opsional)
                         </label>
                         <input id="sourceUrl" name="sourceUrl" type="url" placeholder="https://..." value={formData.sourceUrl} onChange={handleChange} className="w-full p-2 border rounded-lg" />
@@ -118,6 +119,17 @@ export default function ManajemenBeritaPage() {
     const [filters, setFilters] = useState({ search: '', status: '' });
     const [view, setView] = useState<'list' | 'editor'>('list');
     const [selectedArtikel, setSelectedArtikel] = useState<Artikel | null>(null);
+    const [artikelList, setArtikelList] = useState<Artikel[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Simulate loading data
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setArtikelList(mockArtikel);
+            setLoading(false);
+        }, 800);
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -128,13 +140,13 @@ export default function ManajemenBeritaPage() {
     };
 
     const filteredArtikel = useMemo(() => {
-        return mockArtikel.filter(artikel => {
+        return artikelList.filter(artikel => {
             return (
                 artikel.judul.toLowerCase().includes(filters.search.toLowerCase()) &&
                 (filters.status === '' || artikel.status === filters.status)
             );
         });
-    }, [mockArtikel]);
+    }, [artikelList, filters]);
 
     const handleHapus = (judul: string) => {
         if(window.confirm(`Apakah Anda yakin ingin menghapus artikel "${judul}"?`)){
@@ -158,8 +170,77 @@ export default function ManajemenBeritaPage() {
         setView('list');
     };
 
+    // Skeleton kecil
+    const Skeleton = ({ className = "" }: { className?: string }) => (
+        <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+    );
+
+    const BeritaSkeleton = () => (
+        <div>
+            <div className="mb-8">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-4 w-96 mt-2" />
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+                <div className="p-6">
+                    <Skeleton className="h-6 w-40 mb-6" />
+                    
+                    {/* Filter Section */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 my-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        <div className="md:col-span-1">
+                            <Skeleton className="h-4 w-24 mb-1" />
+                            <Skeleton className="w-full h-10 rounded-lg" />
+                        </div>
+                        <div>
+                            <Skeleton className="h-4 w-16 mb-1" />
+                            <Skeleton className="w-full h-10 rounded-lg" />
+                        </div>
+                        <div>
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                    </div>
+                    
+                    {/* Table */}
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="border-b bg-gray-50 text-sm text-gray-600">
+                                <tr>
+                                    <th className="p-4 font-medium"><Skeleton className="h-4 w-32" /></th>
+                                    <th className="p-4 font-medium"><Skeleton className="h-4 w-24" /></th>
+                                    <th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th>
+                                    <th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th>
+                                    <th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {[...Array(5)].map((_, i) => (
+                                    <tr key={i} className="border-b text-sm">
+                                        <td className="p-4">
+                                            <Skeleton className="h-4 w-40 mb-1" />
+                                            <Skeleton className="h-3 w-24" />
+                                        </td>
+                                        <td className="p-4"><Skeleton className="h-4 w-28" /></td>
+                                        <td className="p-4 text-center"><Skeleton className="h-4 w-12 mx-auto" /></td>
+                                        <td className="p-4 text-center"><Skeleton className="h-5 w-16 mx-auto rounded-full" /></td>
+                                        <td className="p-4 text-center"><Skeleton className="h-8 w-24 mx-auto" /></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    // If we're in editor mode, don't show skeleton
     if (view === 'editor') {
         return <ArtikelEditor artikel={selectedArtikel} onBack={() => setView('list')} onSave={handleSaveArtikel} />;
+    }
+
+    if (loading) {
+        return <BeritaSkeleton />;
     }
 
     return (
