@@ -908,6 +908,27 @@ export class TenantsService {
     await tx.$executeRawUnsafe(`
         CREATE INDEX "products_is_available_idx" ON "${schemaName}"."products"("is_available");
     `);
+    // Tabel Item Galeri Foto
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".gallery_items (
+        "id" TEXT NOT NULL,
+        "image_url" TEXT NOT NULL,
+        "description" TEXT,
+        "order" INTEGER,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL,
+
+        CONSTRAINT "gallery_items_pkey" PRIMARY KEY ("id")
+      );
+    `);
+
+    // Index pada createdAt atau order (opsional, untuk sorting)
+    await tx.$executeRawUnsafe(`
+        CREATE INDEX "gallery_items_created_at_idx" ON "${schemaName}"."gallery_items"("created_at" DESC);
+    `);
+    await tx.$executeRawUnsafe(`
+        CREATE INDEX "gallery_items_order_idx" ON "${schemaName}"."gallery_items"("order" ASC NULLS LAST); -- Urutkan berdasarkan order, NULLS di akhir
+    `);
   }
 
   /**

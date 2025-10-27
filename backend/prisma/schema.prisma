@@ -679,3 +679,15 @@ model Product {
 
   @@map("products")
 }
+
+// Galeri
+model GalleryItem {
+  id          String    @id @default(uuid())
+  imageUrl    String    @map("image_url") 
+  description String?   @db.Text 
+  order       Int?      
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("gallery_items")
+}
