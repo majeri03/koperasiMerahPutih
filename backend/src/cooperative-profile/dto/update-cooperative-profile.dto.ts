@@ -1,6 +1,6 @@
 // src/cooperative-profile/dto/update-cooperative-profile.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString, IsUrl } from 'class-validator';
+import { IsEmail, IsOptional, IsString, IsUrl, Matches } from 'class-validator';
 
 export class UpdateCooperativeProfileDto {
   @ApiProperty({
@@ -67,4 +67,27 @@ export class UpdateCooperativeProfileDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @ApiProperty({
+    example: 'Senin – Jumat, 08.00 – 16.00 WIB',
+    description: 'Jam operasional koperasi',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  operatingHours?: string; // Tambahkan field ini
+
+  @ApiProperty({
+    example: '-6.878757, 107.597829',
+    description: 'Koordinat peta Latitude,Longitude (opsional)',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  @Matches(/^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/, {
+    // Validasi format Lat,Lng
+    message:
+      'Koordinat peta harus dalam format "latitude,longitude", contoh: "-6.8787, 107.5978"',
+  })
+  mapCoordinates?: string; // Tambahkan field ini
 }

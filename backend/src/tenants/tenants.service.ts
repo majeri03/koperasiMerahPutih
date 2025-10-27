@@ -814,13 +814,27 @@ export class TenantsService {
         "website" TEXT,
         "address" TEXT,
         "description" TEXT,
+        "operating_hours" TEXT,
+        "map_coordinates" TEXT,
         "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updated_at" TIMESTAMP(3) NOT NULL,
 
         CONSTRAINT "cooperative_profile_pkey" PRIMARY KEY ("id")
       );
     `);
+    // Tabel Contact Messages (BARU)
+    await tx.$executeRawUnsafe(`
+      CREATE TABLE "${schemaName}".contact_messages (
+        "id" TEXT NOT NULL,
+        "sender_name" TEXT NOT NULL,
+        "sender_email" TEXT NOT NULL,
+        "subject" TEXT NOT NULL,
+        "message" TEXT NOT NULL,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
+        CONSTRAINT "contact_messages_pkey" PRIMARY KEY ("id")
+      );
+    `);
     // Tabel Artikel (Berita)
     await tx.$executeRawUnsafe(`
       CREATE TYPE "${schemaName}"."ArticleStatus" AS ENUM ('DRAFT', 'PUBLISHED', 'ARCHIVED');
@@ -943,6 +957,8 @@ export class TenantsService {
     initialAddress: string,
     initialEmail: string,
     initialPhone: string | null,
+    initialOperatingHours?: string | null,
+    initialMapCoordinates?: string | null,
   ): Promise<void> {
     console.log(
       `[TenantService] Membuat profil koperasi awal untuk ${schemaName}`,
@@ -952,7 +968,7 @@ export class TenantsService {
     try {
       const query = `
         INSERT INTO "${schemaName}".cooperative_profile (
-          id, display_name, address, email, phone, updated_at
+          id, display_name, address, email, phone, operating_hours, map_coordinates, updated_at
         )
         VALUES ($1, $2, $3, $4, $5, $6);
       `;
@@ -964,6 +980,8 @@ export class TenantsService {
         initialAddress,
         initialEmail,
         initialPhone,
+        initialOperatingHours ?? null, // Masukkan nilai atau null
+        initialMapCoordinates ?? null,
         new Date(),
       );
     } catch (error) {
