@@ -38,6 +38,7 @@ import { ProfileModule } from './profile/profile.module';
 import { ArticlesModule } from './articles/articles.module';
 import { ProductCategoriesModule } from './product-categories/product-categories.module';
 import { ProductsModule } from './products/products.module';
+import { GalleryModule } from './gallery/gallery.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -73,6 +74,7 @@ import { ProductsModule } from './products/products.module';
     ArticlesModule,
     ProductCategoriesModule,
     ProductsModule,
+    GalleryModule,
   ],
   controllers: [AppController, SimpananController],
   providers: [AppService, SimpananService, EmailService],

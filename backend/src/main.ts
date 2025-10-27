@@ -54,6 +54,7 @@ async function bootstrap() {
     .addTag('Articles (Berita & Artikel)')
     .addTag('Product Categories')
     .addTag('Products (Katalog)')
+    .addTag('Gallery (Foto)')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
