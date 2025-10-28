@@ -4,8 +4,9 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
-import { PrismaClient, TenantStatus } from '@prisma/client';
+import { PrismaClient, TenantStatus, PlatformSetting } from '@prisma/client';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma/prisma.service'; // <-- Tambahkan PrismaService
@@ -13,6 +14,7 @@ import { CreateContactMessageDto } from './dto/create-contact-message.dto';
 @Injectable()
 export class PublicService {
   private readonly prisma = new PrismaClient();
+  private readonly logger = new Logger(PublicService.name);
   constructor(private prismaTenantScoped: PrismaService) {}
   async register(registerTenantDto: RegisterTenantDto) {
     const {
@@ -301,5 +303,38 @@ export class PublicService {
         'Terjadi kesalahan saat mengirim pesan.',
       );
     }
+  }
+  /**
+   * Mengambil semua pengaturan platform publik.
+   * @returns Object { key: value, ... }
+   */
+  async getPlatformSettings(): Promise<Record<string, string | null>> {
+    try {
+      // --- Use 'this.prismaPublic' ---
+      const settingsList = await this.prisma.platformSetting.findMany();
+      // -----------------------------
+
+      const settingsObject = settingsList.reduce(
+        (acc: Record<string, string | null>, setting: PlatformSetting) => {
+          acc[setting.key] = setting.value;
+          return acc;
+        },
+        {} as Record<string, string | null>,
+      );
+      return settingsObject;
+    } catch (error: any) {
+      // <-- Add type 'any' or 'unknown'
+      this.logger.error('Failed to get public platform settings', error);
+      throw new InternalServerErrorException(
+        'Gagal mengambil informasi platform.',
+      );
+    }
+  }
+
+  // --- onModuleDestroy method (CORRECTED & ASYNC) ---
+  async onModuleDestroy() {
+    // --- Use 'this.prismaPublic' ---
+    await this.prisma.$disconnect();
+    // -----------------------------
   }
 }

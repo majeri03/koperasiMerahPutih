@@ -4,6 +4,6 @@ import { BoardPositionsService } from './board-positions.service';
 
 @Module({
   controllers: [BoardPositionsController],
-  providers: [BoardPositionsService]
+  providers: [BoardPositionsService],
 })
 export class BoardPositionsModule {}

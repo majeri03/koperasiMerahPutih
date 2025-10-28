@@ -53,4 +53,21 @@ export class PublicController {
     // Middleware Tenancy akan menentukan tenant
     return this.publicService.saveContactMessage(createDto);
   }
+  // --- TAMBAHKAN ENDPOINT BARU ---
+  @Get('platform-settings')
+  @ApiOperation({
+    summary: 'Get public platform settings/content for main landing page',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns platform settings as a key-value object.',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Failed to retrieve platform settings.',
+  })
+  // Disarankan menambahkan Caching di sini nanti
+  getPlatformSettings() {
+    return this.publicService.getPlatformSettings();
+  }
 }
