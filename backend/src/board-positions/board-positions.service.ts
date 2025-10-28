@@ -9,6 +9,7 @@ import { CreateBoardPositionDto } from './dto/create-board-position.dto';
 import { UpdateBoardPositionDto } from './dto/update-board-position.dto';
 import { BoardPosition, PrismaClient, Prisma } from '@prisma/client';
 import { Role } from 'src/auth/enums/role.enum';
+
 @Injectable()
 export class BoardPositionsService {
   constructor(private prisma: PrismaService) {}
@@ -235,6 +236,40 @@ export class BoardPositionsService {
     }
   }
 
+  async findMyActivePositions(memberId: string) {
+    const prismaTenant: PrismaClient = await this.prisma.getTenantClient();
+    console.log(
+      `[BoardPositionsService] Mencari jabatan aktif untuk memberId: ${memberId}`,
+    ); // Logging
+    try {
+      const activePositions = await prismaTenant.boardPosition.findMany({
+        where: {
+          memberId: memberId, // Cari berdasarkan ID member yang login
+          tanggalBerhenti: null, // Hanya yang masih aktif (belum berhenti)
+        },
+        select: {
+          // Hanya ambil data yang diperlukan frontend
+          jabatan: true,
+          tanggalDiangkat: true,
+          // id: true // Bisa ditambahkan jika perlu ID record jabatannya
+        },
+      });
+      console.log(
+        `[BoardPositionsService] Jabatan aktif ditemukan:`,
+        activePositions,
+      ); // Logging hasil
+      return activePositions;
+    } catch (error) {
+      console.error(
+        `[BoardPositionsService] Error mencari jabatan aktif untuk ${memberId}:`,
+        error,
+      );
+      // Pertimbangkan melempar InternalServerErrorException jika perlu
+      throw new InternalServerErrorException(
+        'Gagal mengambil data jabatan aktif.',
+      );
+    }
+  }
   // Jika benar-benar ingin hard delete (tidak disarankan untuk data historis)
   // async hardRemove(id: string) {
   //   const prismaTenant = await this.prisma.getTenantClient();
