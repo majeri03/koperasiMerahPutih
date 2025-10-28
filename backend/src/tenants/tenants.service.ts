@@ -411,6 +411,7 @@ export class TenantsService {
         "gender" TEXT NOT NULL CHECK ("gender" IN ('MALE', 'FEMALE')),
         "occupation" TEXT NOT NULL,
         "address" TEXT NOT NULL,
+        "phone_number" TEXT NULL,
         "join_date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "status" TEXT NOT NULL DEFAULT 'ACTIVE',
         "fingerprint_url" TEXT,

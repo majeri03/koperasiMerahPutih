@@ -204,6 +204,7 @@ model Member {
   nik          String   @unique
   placeOfBirth String   @map("place_of_birth")
   dateOfBirth  DateTime @map("date_of_birth")
+  phoneNumber  String?  @map("phone_number")
   gender       Gender // Kita gunakan lagi Enum Gender yang sudah ada
   occupation   String // Pekerjaan
   address      String

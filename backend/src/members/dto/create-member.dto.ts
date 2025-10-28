@@ -55,6 +55,15 @@ export class CreateMemberDto {
   fingerprintUrl?: string;
 
   @ApiProperty({
+    example: '081234567890',
+    description: 'Nomor telepon anggota (opsional)',
+    required: false,
+  })
+  @IsNumberString({}, { message: 'Nomor telepon harus berupa string angka.' })
+  @IsOptional()
+  phoneNumber?: string;
+
+  @ApiProperty({
     example: 'https://example.com/signature.jpg',
     required: false,
   })

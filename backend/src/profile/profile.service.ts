@@ -62,7 +62,7 @@ export class ProfileService {
     updateDto: UpdateMyProfileDto,
   ): Promise<Member> {
     const prismaTenant: PrismaClient = await this.prisma.getTenantClient();
-    const { fullName, ...memberData } = updateDto;
+    const { fullName, phoneNumber, ...memberData } = updateDto;
 
     // Kita gunakan $transaction untuk menjamin konsistensi
     const updatedMember = await prismaTenant.$transaction(async (tx) => {
@@ -73,6 +73,9 @@ export class ProfileService {
         data: {
           ...memberData, // address, occupation
           ...(fullName && { fullName }), // update fullName jika ada
+          ...(phoneNumber !== undefined && {
+            phoneNumber: phoneNumber || null,
+          }),
         },
       });
 

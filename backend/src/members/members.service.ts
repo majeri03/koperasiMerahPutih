@@ -10,9 +10,11 @@ export class MembersService {
     const prismaTenant = await this.prisma.getTenantClient();
 
     const memberNumber = `AGT-${Date.now()}`;
-
+    const { phoneNumber, ...restData } = createMemberDto;
     const newMember = await prismaTenant.member.create({
       data: {
+        ...restData,
+        phoneNumber: phoneNumber || null,
         ...createMemberDto,
         dateOfBirth: new Date(createMemberDto.dateOfBirth),
         memberNumber,
