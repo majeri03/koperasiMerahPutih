@@ -1,6 +1,11 @@
 // src/profile/dto/update-my-profile.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsNumberString,
+} from 'class-validator';
 
 /**
  * DTO ini HANYA berisi field yang boleh diubah sendiri oleh pengguna.
@@ -38,9 +43,12 @@ export class UpdateMyProfileDto {
   @IsOptional()
   address?: string;
 
-  // Kita bisa tambahkan No. HP di sini jika kolomnya ada di tabel Members.
-  // Berdasarkan DTO pendaftaran,
-  // No. HP (phoneNumber) ada. Namun, di CreateMemberDto tidak ada.
-  // Asumsi: Kita harus menambahkan `phoneNumber` ke tabel Members nanti.
-  // Untuk saat ini, kita biarkan 3 field ini dulu.
+  @ApiProperty({
+    example: '081234567891',
+    description: 'Nomor telepon pengguna (opsional)',
+    required: false,
+  })
+  @IsNumberString({}, { message: 'Nomor telepon harus berupa string angka.' }) // Validasi angka
+  @IsOptional() // Opsional saat update
+  phoneNumber?: string;
 }

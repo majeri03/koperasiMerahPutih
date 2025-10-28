@@ -316,7 +316,8 @@ export class MemberRegistrationsService {
             placeOfBirth: registration.placeOfBirth, // Ambil dari registrasi
             dateOfBirth: new Date(registration.dateOfBirth), // Konversi ke Date
             occupation: registration.occupation, // Ambil dari registrasi
-            address: registration.address, // Ambil dari registrasi
+            address: registration.address,
+            phoneNumber: registration.phoneNumber,
             status: 'ACTIVE',
             // joinDate: default now()
             // fingerprintUrl: registration.fingerprintUrl, // Jika ada
