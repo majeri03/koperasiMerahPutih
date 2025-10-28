@@ -29,6 +29,17 @@ async function bootstrap() {
     .setDescription('Dokumentasi API untuk Sistem Koperasi Merah Putih')
     .setVersion('1.0')
     .addBearerAuth()
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'SuperAdminJWT',
+        description: 'Enter Super Admin JWT token',
+        in: 'header',
+      },
+      'superadmin-jwt',
+    )
     .addTag('Tenants')
     .addTag('Webhooks')
     .addTag('Authentication')

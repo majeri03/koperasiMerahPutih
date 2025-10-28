@@ -39,6 +39,7 @@ import { ArticlesModule } from './articles/articles.module';
 import { ProductCategoriesModule } from './product-categories/product-categories.module';
 import { ProductsModule } from './products/products.module';
 import { GalleryModule } from './gallery/gallery.module';
+import { SuperAdminAuthModule } from './admin/super-admin-auth/super-admin-auth.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -75,6 +76,7 @@ import { GalleryModule } from './gallery/gallery.module';
     ProductCategoriesModule,
     ProductsModule,
     GalleryModule,
+    SuperAdminAuthModule,
   ],
   controllers: [AppController, SimpananController],
   providers: [AppService, SimpananService, EmailService],

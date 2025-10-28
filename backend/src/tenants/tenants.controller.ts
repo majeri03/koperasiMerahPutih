@@ -11,10 +11,15 @@ import {
 } from '@nestjs/common';
 import { TenantsService } from './tenants.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
-import { SuperAdminGuard } from '../admin/super-admin/super-admin.guard';
+// import { SuperAdminGuard } from '../admin/super-admin/super-admin.guard';
 import { RejectTenantDto } from './dto/reject-tenant.dto'; // <-- Import DTO Baru
 import { ApiBody, ApiOperation, ApiParam } from '@nestjs/swagger';
-@UseGuards(SuperAdminGuard)
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { CombinedSuperAdminGuard } from '../admin/super-admin/super-admin.guard';
+
+// @UseGuards(SuperAdminGuard)
+@UseGuards(CombinedSuperAdminGuard())
+@ApiBearerAuth('superadmin-jwt')
 @Controller('tenants')
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
