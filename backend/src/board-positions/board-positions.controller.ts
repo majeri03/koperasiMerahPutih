@@ -47,6 +47,18 @@ export class BoardPositionsController {
     return this.boardPositionsService.findAll();
   }
 
+  @Get('me') // Endpoint baru: /board-positions/me
+  @Roles(Role.Pengurus) // Hanya bisa diakses oleh Pengurus
+  @ApiOperation({
+    summary: 'Mendapatkan jabatan pengurus aktif milik pengguna yang login',
+  })
+  @ApiResponse({ status: 200, description: 'Jabatan aktif berhasil diambil.' })
+  @ApiResponse({ status: 403, description: 'Akses ditolak (bukan Pengurus).' })
+  findMyActivePositions(@GetUser() user: JwtPayloadDto) {
+    // Panggil service dengan userId (yang sama dengan memberId)
+    return this.boardPositionsService.findMyActivePositions(user.userId);
+  }
+
   @Get(':id')
   @Roles(Role.Pengurus, Role.Anggota) // Pengurus & Anggota boleh read one
   @ApiOperation({
@@ -76,16 +88,5 @@ export class BoardPositionsController {
   remove(@Param('id') id: string) {
     // Anda bisa menambahkan @Body() jika ingin menerima alasan pemberhentian dari request
     return this.boardPositionsService.remove(id);
-  }
-  @Get('me') // Endpoint baru: /board-positions/me
-  @Roles(Role.Pengurus) // Hanya bisa diakses oleh Pengurus
-  @ApiOperation({
-    summary: 'Mendapatkan jabatan pengurus aktif milik pengguna yang login',
-  })
-  @ApiResponse({ status: 200, description: 'Jabatan aktif berhasil diambil.' })
-  @ApiResponse({ status: 403, description: 'Akses ditolak (bukan Pengurus).' })
-  findMyActivePositions(@GetUser() user: JwtPayloadDto) {
-    // Panggil service dengan userId (yang sama dengan memberId)
-    return this.boardPositionsService.findMyActivePositions(user.userId);
   }
 }
