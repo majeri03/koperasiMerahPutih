@@ -13,6 +13,7 @@ import clsx from "clsx";
 // Definisikan link navigasi untuk Super Admin
 const navLinks = [
   { href: "/superadmin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/superadmin/persetujuan-koperasi", label: "Persetujuan Koperasi", icon: Building },
   { href: "/superadmin/tenants", label: "Manajemen Koperasi", icon: Building },
   { href: "/superadmin/berita", label: "Manajemen Berita", icon: Newspaper },
   { href: "/superadmin/galeri", label: "Manajemen Galeri", icon: ImageIcon },
