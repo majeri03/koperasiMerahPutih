@@ -36,6 +36,25 @@ model Tenant {
   @@map("tenants")
 }
 
+model SuperAdmin {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  hashedRefreshToken String? @map("hashed_refresh_token")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("super_admins")
+}
+
+model PlatformSetting {
+  key       String   @id 
+  value     String? 
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_settings")
+}
+
 // =============================================
 // MODEL UNTUK SKEMA TENANT (USERS, ROLES, ETC.)
 // =============================================
