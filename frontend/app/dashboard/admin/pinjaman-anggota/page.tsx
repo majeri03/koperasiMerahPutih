@@ -1,7 +1,7 @@
 // Lokasi: frontend/app/dashboard/admin/pinjaman-anggota/page.tsx
 "use client";
 
-import { useState, useMemo, FormEvent, ChangeEvent, useEffect } from "react";
+import { useState, useMemo, FormEvent, ChangeEvent, useEffect, useRef } from "react";
 import AdminPageHeader from "@/components/AdminPageHeader";
 import Button from "@/components/Button";
 import { PlusCircle, Search, HandCoins, CheckCircle, Clock, X, Send, ChevronDown, MoreHorizontal, CheckCircle2, Hourglass } from "lucide-react";
@@ -10,28 +10,7 @@ import clsx from "clsx";
 // Import API service
 import { loanApi, memberApi, type Member } from "@/lib/apiService";
 
-// Define types
-type LoanBackend = {
-  id: string;
-  loanNumber: string;
-  memberId: string;
-  loanAmount: number;
-  interestRate: number;
-  loanDate: string;
-  termMonths: number;
-  dueDate: string;
-  purpose?: string;
-  agreementNumber?: string;
-  status: string;
-  paidOffDate?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  member?: {
-    id: string;
-    fullName: string;
-    occupation: string;
-  };
-};
+// Define types (frontend representations are below)
 
 // --- Tipe Data ---
 type Pinjaman = {
@@ -58,6 +37,7 @@ type Pinjaman = {
 // --- Tipe untuk data formulir Pinjaman ---
 type NewPinjamanData = {
     memberId: string;  // Updated to match backend
+    anggotaName?: string; // Display name for optimistic UI
     loanAmount: number;  // Updated to match backend
     interestRate: number;  // Updated to match backend
     loanDate: string;  // Updated to match backend
@@ -93,35 +73,48 @@ const CatatPinjamanModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onCl
     const [anggotaTerpilih, setAnggotaTerpilih] = useState<Member | null>(null);
     const [tidakDitemukan, setTidakDitemukan] = useState(false);
     const [loadingAnggota, setLoadingAnggota] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    const anggotaFieldRef = useRef<HTMLDivElement | null>(null);
+    const anggotaInputRef = useRef<HTMLInputElement | null>(null);
 
     // EFEK UNTUK PENCARIAN DENGAN DEBOUNCING
     useEffect(() => {
-        if (!namaAnggota || anggotaTerpilih) {
+        if (!namaAnggota.trim() || anggotaTerpilih) {
             setHasilPencarian([]);
             setTidakDitemukan(false);
+            setIsDropdownOpen(false);
             return;
         }
+        setIsDropdownOpen(true);
         setLoadingAnggota(true);
-        const handler = setTimeout(() => {
-            const fetchAnggota = async () => {
-                try {
-                    const members = await memberApi.getAllMembers();
-                    const hasil = members.filter((member) =>
-                        member.fullName.toLowerCase().includes(namaAnggota.toLowerCase())
-                    );
-                    setHasilPencarian(hasil);
-                    setTidakDitemukan(hasil.length === 0 && namaAnggota !== '');
-                } catch (error) {
-                    console.error('Gagal mengambil data anggota:', error);
-                    setTidakDitemukan(true);
-                } finally {
-                    setLoadingAnggota(false);
-                }
-            };
-            fetchAnggota();
+        const q = namaAnggota.toLowerCase();
+        const handler = setTimeout(async () => {
+            try {
+                const members = await memberApi.getAllMembers();
+                const hasil = members.filter((m) => m.fullName.toLowerCase().includes(q));
+                setHasilPencarian(hasil);
+                setTidakDitemukan(hasil.length === 0 && q.length > 0);
+            } catch (error) {
+                console.error('Gagal mengambil data anggota:', error);
+                setTidakDitemukan(true);
+            } finally {
+                setLoadingAnggota(false);
+            }
         }, 300);
         return () => clearTimeout(handler);
     }, [namaAnggota, anggotaTerpilih]);
+
+    // Tutup dropdown ketika klik di luar field anggota
+    useEffect(() => {
+        const onClickOutside = (e: MouseEvent) => {
+            if (anggotaFieldRef.current && !anggotaFieldRef.current.contains(e.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', onClickOutside);
+        return () => document.removeEventListener('mousedown', onClickOutside);
+    }, []);
 
     // Fungsi untuk menangani perubahan input form biasa
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -138,6 +131,8 @@ const CatatPinjamanModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onCl
         const nama = e.target.value;
         setNamaAnggota(nama);
         setAnggotaTerpilih(null);
+        setTidakDitemukan(false);
+        setIsDropdownOpen(!!nama);
     };
 
     // Fungsi saat user memilih anggota dari dropdown
@@ -145,6 +140,8 @@ const CatatPinjamanModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onCl
         setAnggotaTerpilih(anggota);
         setNamaAnggota(anggota.fullName);
         setHasilPencarian([]);
+        setIsDropdownOpen(false);
+        if (anggotaInputRef.current) anggotaInputRef.current.blur();
     };
     
     // Fungsi saat form disubmit
@@ -156,6 +153,7 @@ const CatatPinjamanModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onCl
             loanDate: formData.loanDate,
             purpose: formData.purpose,
             memberId: anggotaTerpilih.id,
+            anggotaName: anggotaTerpilih.fullName,
             loanAmount: Number(formData.loanAmount) || 0,
             termMonths: Number(formData.termMonths) || 0,
             interestRate: Number(formData.interestRate) || 0,
@@ -194,25 +192,25 @@ const CatatPinjamanModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onCl
                     </div>
                     <div className="p-6 space-y-4 overflow-y-auto">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="relative">
-                                <label htmlFor="memberId" className="block text-sm font-medium text-gray-700">Anggota*</label>
+                            <div className="relative" ref={anggotaFieldRef}>
+                                <label htmlFor="anggotaSearch" className="block text-sm font-medium text-gray-700">Anggota*</label>
                                 <input
                                     type="text"
-                                    id="memberId"
-                                    name="memberId"
-                                    required
+                                    id="anggotaSearch"
+                                    name="anggotaSearch"
                                     placeholder="Ketik untuk mencari nama anggota..."
                                     value={namaAnggota}
                                     onChange={handleCariAnggota}
                                     className="mt-1 w-full p-2 border rounded-lg"
                                     autoComplete="off"
+                                    ref={anggotaInputRef}
                                 />
-                                {loadingAnggota && (
+                                {isDropdownOpen && loadingAnggota && (
                                     <div className="absolute z-10 w-full bg-white border rounded-lg mt-1 shadow-lg p-2">
                                         <p className="text-sm text-gray-500">Memuat...</p>
                                     </div>
                                 )}
-                                {hasilPencarian.length > 0 && !loadingAnggota && (
+                                {isDropdownOpen && hasilPencarian.length > 0 && !loadingAnggota && (
                                     <div className="absolute z-10 w-full bg-white border rounded-lg mt-1 shadow-lg max-h-40 overflow-y-auto">
                                         {hasilPencarian.map(anggota => (
                                             <div
@@ -225,7 +223,7 @@ const CatatPinjamanModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onCl
                                         ))}
                                     </div>
                                 )}
-                                {tidakDitemukan && !loadingAnggota && (
+                                {isDropdownOpen && tidakDitemukan && !loadingAnggota && (
                                     <p className="text-sm text-red-600 mt-1">Anggota tidak ditemukan.</p>
                                 )}
                             </div>
@@ -442,12 +440,18 @@ export default function PinjamanAnggotaPage() {
     useEffect(() => {
         const fetchPinjaman = async () => {
             try {
-                const loans: LoanBackend[] = await loanApi.getAllLoans();
+                const [loans, members] = await Promise.all([
+                    loanApi.getAllLoans(),
+                    memberApi.getAllMembers(),
+                ]);
+
+                const memberMap = new Map<string, { name: string; occupation: string }>();
+                members.forEach(m => memberMap.set(m.id, { name: m.fullName, occupation: m.occupation }));
+
                 // Transform backend data to match frontend format
                 const transformedData: Pinjaman[] = loans.map((loan) => {
-                    // Convert backend status to frontend status
                     const frontendStatus: 'Aktif' | 'Lunas' = loan.status === 'PAID_OFF' ? 'Lunas' : 'Aktif';
-                    
+                    const fallback = memberMap.get(loan.memberId);
                     return {
                         id: loan.id,
                         loanNumber: loan.loanNumber,
@@ -455,14 +459,14 @@ export default function PinjamanAnggotaPage() {
                         tanggalPinjam: loan.loanDate,
                         anggota: {
                             id: loan.memberId,
-                            nama: loan.member?.fullName || 'Anggota Tidak Dikenal'
+                            nama: loan.member?.fullName || fallback?.name || 'Anggota Tidak Dikenal'
                         },
                         jumlahPinjaman: loan.loanAmount,
                         jangkaWaktu: loan.termMonths,
                         bunga: loan.interestRate,
                         status: frontendStatus,
                         tanggalLunas: loan.paidOffDate || null,
-                        pekerjaan: loan.member?.occupation,
+                        pekerjaan: loan.member?.occupation || fallback?.occupation,
                         keperluan: loan.purpose,
                         jaminan: loan.agreementNumber ? loan.agreementNumber : '-'
                     };
@@ -620,7 +624,7 @@ export default function PinjamanAnggotaPage() {
                 tanggalPinjam: data.loanDate,
                 anggota: {
                     id: newLoan.memberId,
-                    nama: newLoan.member?.fullName || 'Anggota Tidak Dikenal'
+                    nama: newLoan.member?.fullName || data.anggotaName || 'Anggota Tidak Dikenal'
                 },
                 jumlahPinjaman: data.loanAmount,
                 jangkaWaktu: data.termMonths,

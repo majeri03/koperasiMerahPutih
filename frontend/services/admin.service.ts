@@ -2,7 +2,6 @@
 import { api, parseApiError } from '@/lib/api';
 import { MemberRegistration } from '@/types/api.types'; // Asumsi Anda punya tipe ini
 import { Gender } from '@/types/enums';
-import { ApiErrorResponse } from '@/types/api.types';
 
 export interface TenantInfo {
   cooperativeName: string;
@@ -235,10 +234,18 @@ export const adminService = {
    * Mengambil semua data pengurus (board members).
    * Endpoint: GET /board-positions
    */
-  getAllBoardMembers: (): Promise<BoardMember[]> => {
-    // Pastikan endpoint '/board-positions' ini BENAR
-    return handleRequest(api.get<BoardMember[]>('/board-positions'));
-  },
+  getAllBoardMembers: (): Promise<BoardMember[]> => {
+    // Pastikan endpoint '/board-positions' ini BENAR
+    return handleRequest(api.get<BoardMember[]>('/board-positions'));
+  },
+
+  /**
+   * Mengambil jabatan pengurus aktif milik pengguna yang sedang login.
+   * Endpoint: GET /board-positions/me
+   */
+  getMyActiveBoardPositions: (): Promise<BoardMember[]> => {
+    return handleRequest(api.get<BoardMember[]>('/board-positions/me'));
+  },
 
   /**
    * Menambah pengurus baru.

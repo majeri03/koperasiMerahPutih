@@ -91,23 +91,36 @@ const TransaksiSimpananModal = ({
     const [anggotaTerpilih, setAnggotaTerpilih] = useState<Member | null>(null);
     const [tidakDitemukan, setTidakDitemukan] = useState(false);
     const [loadingAnggota, setLoadingAnggota] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    // Refs untuk handle klik di luar dan blur input
+    const anggotaFieldRef = useRef<HTMLDivElement | null>(null);
+    const anggotaInputRef = useRef<HTMLInputElement | null>(null);
 
     // EFEK UNTUK PENCARIAN DENGAN DEBOUNCING
     useEffect(() => {
-        if (!namaAnggota || anggotaTerpilih) {
+        // Tutup dropdown bila tidak ada teks atau sudah memilih anggota
+        if (!namaAnggota.trim() || anggotaTerpilih) {
             setHasilPencarian([]);
             setTidakDitemukan(false);
+            setIsDropdownOpen(false);
             return;
         }
+
+        setIsDropdownOpen(true);
         setLoadingAnggota(true);
+
+        // Simpan query saat ini untuk mencegah race-condition
+        const currentQuery = namaAnggota.toLowerCase();
         const handler = setTimeout(async () => {
             try {
                 const members = await memberApi.getAllMembers();
                 const hasil = members.filter((member) =>
-                    member.fullName.toLowerCase().includes(namaAnggota.toLowerCase())
+                    member.fullName.toLowerCase().includes(currentQuery)
                 );
                 setHasilPencarian(hasil);
-                setTidakDitemukan(hasil.length === 0 && namaAnggota !== '');
+                // Tampilkan pesan tidak ditemukan hanya setelah debounce selesai dan tidak loading
+                setTidakDitemukan(hasil.length === 0 && currentQuery.length > 0);
             } catch (error) {
                 console.error('Gagal mengambil data anggota:', error);
                 setTidakDitemukan(true);
@@ -117,6 +130,17 @@ const TransaksiSimpananModal = ({
         }, 300);
         return () => clearTimeout(handler);
     }, [namaAnggota, anggotaTerpilih]);
+
+    // Tutup dropdown ketika klik di luar field anggota
+    useEffect(() => {
+        const onClickOutside = (e: MouseEvent) => {
+            if (anggotaFieldRef.current && !anggotaFieldRef.current.contains(e.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', onClickOutside);
+        return () => document.removeEventListener('mousedown', onClickOutside);
+    }, []);
 
     // Reset form ketika modal dibuka atau tipe berubah
     useEffect(() => {
@@ -155,6 +179,8 @@ const TransaksiSimpananModal = ({
         const nama = e.target.value;
         setNamaAnggota(nama);
         setAnggotaTerpilih(null);
+        setTidakDitemukan(false); // reset pesan ketika user mengetik ulang
+        setIsDropdownOpen(!!nama);
     };
 
     // Fungsi saat user memilih anggota dari dropdown
@@ -163,6 +189,9 @@ const TransaksiSimpananModal = ({
         setNamaAnggota(anggota.fullName);
         setFormData(prev => ({ ...prev, memberId: anggota.id, anggotaName: anggota.fullName }));
         setHasilPencarian([]);
+        setIsDropdownOpen(false);
+        // Blur input agar dropdown native lain tidak memicu pencarian lagi
+        if (anggotaInputRef.current) anggotaInputRef.current.blur();
     };
 
     const handleSubmit = async (e: FormEvent) => {
@@ -199,25 +228,25 @@ const TransaksiSimpananModal = ({
                         <button type="button" onClick={onClose} className="text-gray-500 hover:text-gray-800"><X size={24} /></button>
                     </div>
                     <div className="p-6 space-y-4">
-                        <div className="relative">
-                            <label htmlFor="memberId" className="block text-sm font-medium text-gray-700">Anggota*</label>
+                        <div className="relative" ref={anggotaFieldRef}>
+                            <label htmlFor="anggotaSearch" className="block text-sm font-medium text-gray-700">Anggota*</label>
                             <input
                                 type="text"
-                                id="memberId"
-                                name="memberId"
-                                required
+                                id="anggotaSearch"
+                                name="anggotaSearch"
                                 placeholder="Cari nama anggota..."
                                 value={namaAnggota}
                                 onChange={handleCariAnggota}
                                 className="mt-1 w-full p-2 border rounded-lg"
                                 autoComplete="off"
+                                ref={anggotaInputRef}
                             />
-                            {loadingAnggota && (
+                            {isDropdownOpen && loadingAnggota && (
                                 <div className="absolute z-10 w-full bg-white border rounded-lg mt-1 shadow-lg p-2">
                                     <p className="text-sm text-gray-500">Memuat...</p>
                                 </div>
                             )}
-                            {hasilPencarian.length > 0 && !loadingAnggota && (
+                            {isDropdownOpen && hasilPencarian.length > 0 && !loadingAnggota && (
                                 <div className="absolute z-10 w-full bg-white border rounded-lg mt-1 shadow-lg max-h-40 overflow-y-auto">
                                     {hasilPencarian.map(anggota => (
                                         <div
@@ -230,7 +259,7 @@ const TransaksiSimpananModal = ({
                                     ))}
                                 </div>
                             )}
-                            {tidakDitemukan && !loadingAnggota && (
+                            {isDropdownOpen && tidakDitemukan && !loadingAnggota && (
                                 <p className="text-sm text-red-600 mt-1">Anggota tidak ditemukan.</p>
                             )}
                         </div>

@@ -30,6 +30,7 @@ type Props = {
   isSidebarOpen: boolean;
   toggleSidebar: () => void;
   userData: JwtPayload | null;
+  isBendahara?: boolean;
 };
 
 /* =========================
@@ -129,8 +130,12 @@ export default function AdminSidebar({
   isSidebarOpen,
   toggleSidebar,
   userData,
+  isBendahara = false,
 }: Props) {
   const pathname = usePathname();
+  const filteredBukuGroups = isBendahara
+    ? []
+    : bukuKoperasiGroups.filter((g) => g.title !== 'Keuangan');
 
   const handleLogout = () => {
     console.log("Logging out (Admin)...");
@@ -161,7 +166,7 @@ export default function AdminSidebar({
         )}
       >
         {/* Header (Tidak berubah, tinggi otomatis) */}
-        <div className="p-5 flex items-center justify-between border-b border-white/10 flex-shrink-0"> {/* Tambah flex-shrink-0 */}
+        <div className="p-5 flex items-center justify-between border-b border-white/10 shrink-0"> {/* Tambah flex-shrink-0 */}
           <div>
             <h2 className="text-xl font-bold">Panel Pengurus</h2>
             <span className="text-sm text-red-200">
@@ -180,6 +185,7 @@ export default function AdminSidebar({
         {/* --- Navigasi (Ambil sisa ruang & bisa scroll) --- */}
         <nav className="flex-1 px-4 py-4 overflow-y-auto"> {/* <-- Tambah flex-1 dan overflow-y-auto */}
           {/* Buku Administrasi */}
+          {!isBendahara && (
           <div className="space-y-4">
             <div className="px-3 flex items-center gap-2">
               <BookMarked className="h-5 w-5 text-red-200" />
@@ -187,7 +193,7 @@ export default function AdminSidebar({
                 Buku Administrasi
               </h3>
             </div>
-            {bukuKoperasiGroups.map((group) => (
+            {filteredBukuGroups.map((group) => (
               <div key={group.title}>
                 <h4 className="px-3 mb-2 text-xs font-semibold uppercase text-red-200">
                   {group.title}
@@ -205,10 +211,12 @@ export default function AdminSidebar({
               </div>
             ))}
           </div>
+          )}
 
-          <hr className="my-6 border-white/10" />
+          {!isBendahara && (<hr className="my-6 border-white/10" />)}
 
           {/* Aplikasi & Sistem */}
+          {!isBendahara && (
           <div className="space-y-4">
             <div className="px-3 flex items-center gap-2">
               <Globe className="h-5 w-5 text-red-200" />
@@ -234,11 +242,37 @@ export default function AdminSidebar({
               </div>
             ))}
           </div>
+          )}
+
+          {/* Keuangan khusus Bendahara */}
+          {isBendahara && (
+          <div className="space-y-3 mt-2">
+            <div className="px-3 flex items-center gap-2">
+              <BookMarked className="h-5 w-5 text-red-200" />
+              <h3 className="text-sm font-bold uppercase text-red-100 tracking-wider">Keuangan</h3>
+            </div>
+            <div>
+              <h4 className="px-3 mb-2 text-xs font-semibold uppercase text-red-200">Menu</h4>
+              <div className="space-y-1">
+                <NavLink
+                  item={{ href: "/dashboard/admin/simpanan-anggota", label: "Simpanan Anggota", icon: Landmark }}
+                  isActive={pathname?.startsWith("/dashboard/admin/simpanan-anggota")}
+                  onClick={handleItemClick}
+                />
+                <NavLink
+                  item={{ href: "/dashboard/admin/pinjaman-anggota", label: "Pinjaman Anggota", icon: HandCoins }}
+                  isActive={pathname?.startsWith("/dashboard/admin/pinjaman-anggota")}
+                  onClick={handleItemClick}
+                />
+              </div>
+            </div>
+          </div>
+          )}
         </nav>
         {/* --- Selesai bagian Navigasi --- */}
 
         {/* Footer (Tidak berubah, tinggi otomatis) */}
-        <div className="p-4 border-t border-white/10 flex-shrink-0"> {/* Tambah flex-shrink-0 */}
+        <div className="p-4 border-t border-white/10 shrink-0"> {/* Tambah flex-shrink-0 */}
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-100 hover:bg-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
