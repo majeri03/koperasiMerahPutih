@@ -1,7 +1,7 @@
 // frontend/app/dashboard/admin/persetujuan-anggota/page.tsx
 "use client";
 
-import { useEffect, useState, useMemo, ChangeEvent, FormEvent } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { adminService, PendingRegistration } from '@/services/admin.service';
 import AdminPageHeader from '@/components/AdminPageHeader';
@@ -107,7 +107,7 @@ const TolakRegistrasiModal = ({
   }, [registration]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/50 z-60 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
         <div className="p-5 border-b flex justify-between items-center">
           <h2 className="text-lg font-bold text-gray-800">Tolak Pendaftaran: {registration.fullName}</h2>
@@ -165,6 +165,83 @@ const StatCard = ({ title, value, icon: Icon, color }: { title: string, value: n
 );
 
 // ===================================================================
+// --- KOMPONEN SKELETON LOADING ---
+// ===================================================================
+const Skeleton = ({ className = "" }: { className?: string }) => (
+  <div className={clsx("animate-pulse bg-gray-200 rounded-md", className)} />
+);
+
+const PersetujuanAnggotaSkeleton = () => (
+  <div>
+    <div className="mb-8">
+      <Skeleton className="h-8 w-64" />
+      <Skeleton className="h-4 w-96 mt-2" />
+    </div>
+
+    {/* Skeleton Stat Cards */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="bg-white p-4 rounded-lg shadow border border-gray-100 flex items-center gap-4">
+        <Skeleton className="p-3 rounded-full w-12 h-12" />
+        <div>
+          <Skeleton className="h-4 w-32 mb-2" />
+          <Skeleton className="h-7 w-16" />
+        </div>
+      </div>
+      <div className="bg-white p-4 rounded-lg shadow border border-gray-100 flex items-center gap-4">
+        <Skeleton className="p-3 rounded-full w-12 h-12" />
+        <div>
+          <Skeleton className="h-4 w-32 mb-2" />
+          <Skeleton className="h-7 w-16" />
+        </div>
+      </div>
+      <div className="bg-white p-4 rounded-lg shadow border border-gray-100 flex items-center gap-4">
+        <Skeleton className="p-3 rounded-full w-12 h-12" />
+        <div>
+          <Skeleton className="h-4 w-32 mb-2" />
+          <Skeleton className="h-7 w-16" />
+        </div>
+      </div>
+    </div>
+
+    <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+      <div className="p-6 border-b border-gray-200">
+        <Skeleton className="h-6 w-1/2 mx-auto text-center" />
+        <div className="mt-6 max-w-4xl mx-auto grid grid-cols-2 gap-x-12 text-sm">
+          <div className="space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-full" /></div>
+          <div className="space-y-2"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-full" /></div>
+        </div>
+      </div>
+      <div className="p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+          <Skeleton className="h-6 w-40" />
+          <div className="relative w-full md:w-auto md:max-w-xs"><Skeleton className="w-full h-10 rounded-lg" /></div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full w-full text-left">
+            <thead className="border-b bg-gray-50 text-sm text-gray-600">
+              <tr>
+                <th className="p-4 font-medium"><Skeleton className="h-4 w-32" /></th>
+                <th className="p-4 font-medium"><Skeleton className="h-4 w-24" /></th>
+                <th className="p-4 font-medium"><Skeleton className="h-4 w-20" /></th>
+                <th className="p-4 font-medium"><Skeleton className="h-4 w-24" /></th>
+                <th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {[...Array(5)].map((_, i) => (
+                <tr key={i} className="border-b text-sm hover:bg-gray-50 transition-colors duration-150">
+                  <td className="p-4"><Skeleton className="h-4 w-32" /></td><td className="p-4"><Skeleton className="h-4 w-24" /></td><td className="p-4"><Skeleton className="h-4 w-20" /></td><td className="p-4"><Skeleton className="h-4 w-24" /></td><td className="p-4 text-center"><Skeleton className="h-8 w-24 mx-auto" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// ===================================================================
 // KOMPONEN UTAMA HALAMAN
 // ===================================================================
 export default function PersetujuanAnggotaPage() {
@@ -193,8 +270,9 @@ export default function PersetujuanAnggotaPage() {
       setStats({ approvedThisMonth: 5, rejectedThisMonth: 1 });
     } catch (err) {
       const apiError = err as ApiErrorResponse;
-      setError(apiError.message);
-      toast.error(`Gagal memuat data: ${apiError.message}`);
+      const errorMessage = Array.isArray(apiError.message) ? apiError.message.join(', ') : apiError.message;
+      setError(errorMessage);
+      toast.error(`Gagal memuat data: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -225,7 +303,8 @@ export default function PersetujuanAnggotaPage() {
       loadData();
     } catch (err) {
       const apiError = err as ApiErrorResponse;
-      toast.error(`Gagal: ${apiError.message}`, { id: toastId });
+      const errorMessage = Array.isArray(apiError.message) ? apiError.message.join(', ') : apiError.message;
+      toast.error(`Gagal: ${errorMessage}`, { id: toastId });
     }
   };
 
@@ -248,126 +327,134 @@ export default function PersetujuanAnggotaPage() {
       loadData();
     } catch (err) {
       const apiError = err as ApiErrorResponse;
-      toast.error(`Gagal: ${apiError.message}`, { id: toastId });
+      const errorMessage = Array.isArray(apiError.message) ? apiError.message.join(', ') : apiError.message;
+      toast.error(`Gagal: ${errorMessage}`, { id: toastId });
     }
   };
 
   return (
     <>
       <Toaster position="top-right" />
-      <AdminPageHeader
-        title="Persetujuan Anggota Baru"
-        description="Verifikasi dan proses permohonan pendaftaran anggota baru."
-      />
+      {/* Show skeleton only on initial load when pendingList is empty */}
+      {(loading && pendingList.length === 0) ? (
+        <PersetujuanAnggotaSkeleton />
+      ) : (
+        <>
+          <AdminPageHeader
+            title="Persetujuan Anggota Baru"
+            description="Verifikasi dan proses permohonan pendaftaran anggota baru."
+          />
 
-      {/* --- BARU: Area Statistik --- */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <StatCard title="Menunggu Persetujuan" value={pendingList.length} icon={Inbox} color="yellow" />
-        <StatCard title="Disetujui Bulan Ini" value={stats.approvedThisMonth} icon={UserCheck} color="green" />
-        <StatCard title="Ditolak Bulan Ini" value={stats.rejectedThisMonth} icon={UserX} color="red" />
-      </div>
-      {/* --- Akhir Area Statistik --- */}
-
-
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100">
-        <div className="p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-            <h2 className="text-lg font-bold text-gray-700">Daftar Pendaftar</h2>
-            {/* Area Pencarian */}
-            <div className="relative w-full md:w-auto md:max-w-xs">
-              <input
-                type="text"
-                placeholder="Cari nama, NIK, email..."
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red-200"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                disabled={loading}
-              />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-            </div>
+          {/* --- BARU: Area Statistik --- */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <StatCard title="Menunggu Persetujuan" value={pendingList.length} icon={Inbox} color="yellow" />
+            <StatCard title="Disetujui Bulan Ini" value={stats.approvedThisMonth} icon={UserCheck} color="green" />
+            <StatCard title="Ditolak Bulan Ini" value={stats.rejectedThisMonth} icon={UserX} color="red" />
           </div>
+          {/* --- Akhir Area Statistik --- */}
 
-          {/* Status Loading dan Error */}
-          {loading && <p className="text-center py-8 text-gray-500">Memuat data pendaftar...</p>}
-          {error && <p className="text-center py-8 text-red-500">Error: {error}</p>}
 
-          {/* Tabel atau Empty State */}
-          {!loading && !error && (
-            <div className="overflow-x-auto">
-              {filteredList.length === 0 ? (
-                // --- BARU: Empty State Ditingkatkan ---
-                <div className="text-center py-12 px-6">
-                  <Inbox className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-lg font-semibold text-gray-800">
-                    {pendingList.length === 0 ? "Tidak Ada Pendaftaran Baru" : "Pendaftar Tidak Ditemukan"}
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {pendingList.length === 0
-                      ? "Saat ini tidak ada anggota baru yang menunggu persetujuan."
-                      : "Tidak ada pendaftar yang cocok dengan kata kunci pencarian Anda."}
-                  </p>
-                   {/* --- BARU: Tautan Cepat --- */}
-                  {pendingList.length === 0 && (
-                     <div className="mt-6">
-                       <Link href="/dashboard/admin/daftar-anggota">
-                          <Button variant="outline">
-                             Lihat Daftar Anggota Aktif
-                           </Button>
-                       </Link>
-                     </div>
-                   )}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+            <div className="p-6">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                <h2 className="text-lg font-bold text-gray-700">Daftar Pendaftar</h2>
+                {/* Area Pencarian */}
+                <div className="relative w-full md:w-auto md:max-w-xs">
+                  <input
+                    type="text"
+                    placeholder="Cari nama, NIK, email..."
+                    className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red-200"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    disabled={loading}
+                  />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 </div>
-                // --- Akhir Empty State ---
-              ) : (
-                <table className="min-w-full w-full text-left">
-                  <thead className="border-b bg-gray-50 text-sm text-gray-600">
-                    <tr>
-                      <th className="p-4 font-medium">Nama Lengkap</th>
-                      <th className="p-4 font-medium">NIK</th>
-                      <th className="p-4 font-medium">Email</th>
-                      <th className="p-4 font-medium">Tanggal Daftar</th>
-                      <th className="p-4 font-medium text-center">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {filteredList.map((req) => (
-                      <tr key={req.id} className="hover:bg-gray-50 text-sm">
-                        <td className="p-4">{req.fullName}</td>
-                        <td className="p-4 font-mono">{req.nik}</td>
-                        <td className="p-4">{req.email}</td>
-                        <td className="p-4">{new Date(req.createdAt).toLocaleDateString('id-ID')}</td>
-                        <td className="p-4 text-center space-x-1">
-                          <button
-                            onClick={() => setSelectedRegistrationDetail(req)}
-                            className="p-1.5 text-blue-600 bg-blue-100 rounded-md hover:bg-blue-200 transition"
-                            title="Lihat Detail Pendaftar"
-                          >
-                            <Eye size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleApprove(req.id)}
-                            className="p-1.5 text-green-600 bg-green-100 rounded-md hover:bg-green-200 transition"
-                            title="Setujui Pendaftaran"
-                          >
-                            <CheckCircle size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleOpenRejectModal(req.id)}
-                            className="p-1.5 text-red-600 bg-red-100 rounded-md hover:bg-red-200 transition"
-                            title="Tolak Pendaftaran"
-                          >
-                            <XCircle size={18} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              </div>
+
+              {/* Status Loading dan Error */}
+              {loading && pendingList.length > 0 && <p className="text-center py-8 text-gray-500">Memuat data pendaftar...</p>}
+              {error && <p className="text-center py-8 text-red-500">Error: {error}</p>}
+
+              {/* Tabel atau Empty State */}
+              {!loading && !error && (
+                <div className="overflow-x-auto">
+                  {filteredList.length === 0 ? (
+                    // --- BARU: Empty State Ditingkatkan ---
+                    <div className="text-center py-12 px-6">
+                      <Inbox className="mx-auto h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-lg font-semibold text-gray-800">
+                        {pendingList.length === 0 ? "Tidak Ada Pendaftaran Baru" : "Pendaftar Tidak Ditemukan"}
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        {pendingList.length === 0
+                          ? "Saat ini tidak ada anggota baru yang menunggu persetujuan."
+                          : "Tidak ada pendaftar yang cocok dengan kata kunci pencarian Anda."}
+                      </p>
+                       {/* --- BARU: Tautan Cepat --- */}
+                      {pendingList.length === 0 && (
+                         <div className="mt-6">
+                           <Link href="/dashboard/admin/daftar-anggota">
+                              <Button variant="outline">
+                                 Lihat Daftar Anggota Aktif
+                               </Button>
+                           </Link>
+                         </div>
+                       )}
+                    </div>
+                    // --- Akhir Empty State ---
+                  ) : (
+                    <table className="min-w-full w-full text-left">
+                      <thead className="border-b bg-gray-50 text-sm text-gray-600">
+                        <tr>
+                          <th className="p-4 font-medium">Nama Lengkap</th>
+                          <th className="p-4 font-medium">NIK</th>
+                          <th className="p-4 font-medium">Email</th>
+                          <th className="p-4 font-medium">Tanggal Daftar</th>
+                          <th className="p-4 font-medium text-center">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {filteredList.map((req) => (
+                          <tr key={req.id} className="hover:bg-gray-50 text-sm">
+                            <td className="p-4">{req.fullName}</td>
+                            <td className="p-4 font-mono">{req.nik}</td>
+                            <td className="p-4">{req.email}</td>
+                            <td className="p-4">{new Date(req.createdAt).toLocaleDateString('id-ID')}</td>
+                            <td className="p-4 text-center space-x-1">
+                              <button
+                                onClick={() => setSelectedRegistrationDetail(req)}
+                                className="p-1.5 text-blue-600 bg-blue-100 rounded-md hover:bg-blue-200 transition"
+                                title="Lihat Detail Pendaftar"
+                              >
+                                <Eye size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleApprove(req.id)}
+                                className="p-1.5 text-green-600 bg-green-100 rounded-md hover:bg-green-200 transition"
+                                title="Setujui Pendaftaran"
+                              >
+                                <CheckCircle size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleOpenRejectModal(req.id)}
+                                className="p-1.5 text-red-600 bg-red-100 rounded-md hover:bg-red-200 transition"
+                                title="Tolak Pendaftaran"
+                              >
+                                <XCircle size={18} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               )}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </>
+      )}
 
       {/* Tampilkan Modal Detail jika ada */}
       {selectedRegistrationDetail && (

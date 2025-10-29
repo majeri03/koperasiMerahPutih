@@ -78,7 +78,7 @@ type ActionCardProps = {
 const ActionCard = ({ href, icon, title, description, color }: ActionCardProps) => {
     const Icon = icon;
     return (
-        <Link href={href} className={`p-5 rounded-xl border bg-white hover:shadow-lg hover:border-${color}-200 transition-all flex items-center gap-4`}>
+        <Link href={href} className={`p-5 rounded-xl bg-white shadow-lg hover:shadow-xl transition-all flex items-center gap-4`}>
             <div className={`p-3 rounded-full bg-${color}-100`}>
                 <Icon className={`h-6 w-6 text-${color}-600`} />
             </div>
@@ -140,10 +140,14 @@ export default function AdminDashboardPage() {
       {/* --- KARTU AKSI CEPAT --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-white p-5 rounded-xl shadow-lg">
-            <Skeleton className="w-12 h-12 rounded-full mb-4" />
-            <Skeleton className="h-5 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-full" />
+          <div key={i} className="bg-white p-5 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-4">
+            <div className="p-3 rounded-full bg-gray-100">
+              <Skeleton className="w-6 h-6 rounded-full" />
+            </div>
+            <div>
+              <Skeleton className="h-5 w-3/4 mb-2" />
+              <Skeleton className="h-4 w-full" />
+            </div>
           </div>
         ))}
       </div>
