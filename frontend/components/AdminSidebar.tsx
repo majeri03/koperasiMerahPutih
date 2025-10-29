@@ -213,7 +213,7 @@ export default function AdminSidebar({
           </div>
           )}
 
-          <hr className="my-6 border-white/10" />
+          {!isBendahara && (<hr className="my-6 border-white/10" />)}
 
           {/* Aplikasi & Sistem */}
           {!isBendahara && (
@@ -246,7 +246,7 @@ export default function AdminSidebar({
 
           {/* Keuangan khusus Bendahara */}
           {isBendahara && (
-          <div className="space-y-4 mt-4">
+          <div className="space-y-3 mt-2">
             <div className="px-3 flex items-center gap-2">
               <BookMarked className="h-5 w-5 text-red-200" />
               <h3 className="text-sm font-bold uppercase text-red-100 tracking-wider">Keuangan</h3>

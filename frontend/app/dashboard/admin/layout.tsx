@@ -23,7 +23,6 @@ export default function AdminDashboardLayout({
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [userData, setUserData] = useState<JwtPayload | null>(null);
-  const [loading, setLoading] = useState(true);
   const [isBendahara, setIsBendahara] = useState<boolean>(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -40,7 +39,6 @@ export default function AdminDashboardLayout({
 
     const fetchProfile = async () => {
       try {
-        setLoading(true);
         const profile = await authService.getProfile();
         // --- ERROR 'Cannot find name Role' AKAN HILANG SETELAH IMPORT DIPERBAIKI ---
         if (profile.role !== Role.Pengurus && profile.role !== Role.Pengawas) {
@@ -76,7 +74,7 @@ export default function AdminDashboardLayout({
         console.error("Gagal memuat profil admin:", error.message);
         authService.logout();
       } finally {
-        setLoading(false);
+        // no-op
       }
     };
 
@@ -126,10 +124,6 @@ export default function AdminDashboardLayout({
       window.history.replaceState({}, '', url.toString());
     }
   }, [pathname]);
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Memuat dashboard admin...</div>;
-  }
 
   // --- ERROR 'Cannot find name Role' AKAN HILANG SETELAH IMPORT DIPERBAIKI ---
    if (!userData || (userData.role !== Role.Pengurus && userData.role !== Role.Pengawas)) {
