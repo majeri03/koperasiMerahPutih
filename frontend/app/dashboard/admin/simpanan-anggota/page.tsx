@@ -52,6 +52,7 @@ type SimpananTransaksi = {
 
 type NewTransaksiData = {
   memberId: string;  // Updated to match backend
+  anggotaName?: string; // Nama anggota untuk display jika backend tidak include relasi
   jenis: 'Pokok' | 'Wajib' | 'Sukarela';  // Frontend enum for use in state
   tipe: 'Setoran' | 'Penarikan';  // Frontend enum for use in state
   jumlah: number;
@@ -160,7 +161,7 @@ const TransaksiSimpananModal = ({
     const handlePilihAnggota = (anggota: Member) => {
         setAnggotaTerpilih(anggota);
         setNamaAnggota(anggota.fullName);
-        setFormData(prev => ({ ...prev, memberId: anggota.id }));
+        setFormData(prev => ({ ...prev, memberId: anggota.id, anggotaName: anggota.fullName }));
         setHasilPencarian([]);
     };
 
@@ -176,6 +177,7 @@ const TransaksiSimpananModal = ({
         const dataToSend: NewTransaksiData = {
             ...formData,
             memberId: anggotaTerpilih.id,
+            anggotaName: anggotaTerpilih.fullName,
             // Paksa jenis 'Sukarela' untuk penarikan agar lolos validasi backend
             jenis: tipe === 'Penarikan' ? 'Sukarela' : formData.jenis,
             tipe,
@@ -583,7 +585,7 @@ export default function SimpananAnggotaPage() {
                 tanggal: new Date(newTransaction.tanggal).toISOString().split('T')[0],
                 anggota: {
                     id: newTransaction.memberId,
-                    nama: newTransaction.member?.fullName || 'Anggota Tidak Dikenal'
+                    nama: newTransaction.member?.fullName || data.anggotaName || 'Anggota Tidak Dikenal'
                 },
                 jenis: newTransaction.jenis === 'POKOK' ? 'Pokok' : 
                        newTransaction.jenis === 'WAJIB' ? 'Wajib' : 'Sukarela',
