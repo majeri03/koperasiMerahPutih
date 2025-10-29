@@ -379,7 +379,7 @@ const DetailAnggotaModal = ({
           <div className="p-6 overflow-y-auto space-y-6">
             <div className="border-b pb-4">
                 <h3 className="font-semibold text-brand-red-600 mb-2">Data Pribadi</h3>
-                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">{dataPribadi.map(item => (<div key={item.label}><dt className="text-gray-500">{item.label}</dt><dd className="font-medium text-gray-800 mt-0.5 break-words">{item.value}</dd></div>))}</dl>
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">{dataPribadi.map(item => (<div key={item.label}><dt className="text-gray-500">{item.label}</dt><dd className="font-medium text-gray-800 mt-0.5 wrap-break-word">{item.value}</dd></div>))}</dl>
             </div>
             {/* Tampilkan Informasi Keanggotaan yang sudah dimodifikasi */}
             <div className="border-b pb-4">
@@ -390,7 +390,7 @@ const DetailAnggotaModal = ({
              {anggota.status === 'INACTIVE' && (
                 <div className="border-b pb-4">
                     <h3 className="font-semibold text-brand-red-600 mb-2">Informasi Berhenti</h3>
-                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">{dataBerhenti.map(item => (<div key={item.label}><dt className="text-gray-500">{item.label}</dt><dd className="font-medium text-gray-800 mt-0.5 break-words">{item.value}</dd></div>))}</dl>
+                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">{dataBerhenti.map(item => (<div key={item.label}><dt className="text-gray-500">{item.label}</dt><dd className="font-medium text-gray-800 mt-0.5 wrap-break-word">{item.value}</dd></div>))}</dl>
                 </div>
              )}
           </div>
@@ -408,7 +408,7 @@ const DetailAnggotaModal = ({
 export default function DaftarAnggotaPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [anggotaList, setAnggotaList] = useState<MemberWithRole[]>([]); // Tipe sudah sesuai
-  const [tenantInfo, setTenantInfo] = useState<TenantInfo | null>(null); // State TenantInfo tetap
+  const [tenantInfo] = useState<TenantInfo | null>(null); // State TenantInfo tetap (setTenantInfo not used)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -518,26 +518,14 @@ export default function DaftarAnggotaPage() {
               <thead className="border-b bg-gray-50 text-sm text-gray-600">
                 <tr>
                   {/* --- MODIFIKASI: Tambah Header Jabatan --- */}
-                  <th className="p-4 font-medium"><Skeleton className="h-4 w-32" /></th>
-                  <th className="p-4 font-medium"><Skeleton className="h-4 w-24" /></th>
-                  <th className="p-4 font-medium"><Skeleton className="h-4 w-20" /></th>
-                  <th className="p-4 font-medium"><Skeleton className="h-4 w-24" /></th>
-                  <th className="p-4 font-medium"><Skeleton className="h-4 w-20" /></th>{/* Jabatan */}
-                  <th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th>
-                  <th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th>
+                  <th className="p-4 font-medium"><Skeleton className="h-4 w-32" /></th><th className="p-4 font-medium"><Skeleton className="h-4 w-24" /></th><th className="p-4 font-medium"><Skeleton className="h-4 w-20" /></th><th className="p-4 font-medium"><Skeleton className="h-4 w-24" /></th><th className="p-4 font-medium"><Skeleton className="h-4 w-20" /></th>{/* Jabatan */}<th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th><th className="p-4 font-medium text-center"><Skeleton className="h-4 w-16 mx-auto" /></th>
                 </tr>
               </thead>
               <tbody>
                 {[...Array(5)].map((_, i) => (
                   <tr key={i} className="border-b text-sm">
                     {/* --- MODIFIKASI: Tambah Cell Jabatan --- */}
-                    <td className="p-4"><Skeleton className="h-4 w-32" /></td>
-                    <td className="p-4"><Skeleton className="h-4 w-24" /></td>
-                    <td className="p-4"><Skeleton className="h-4 w-20" /></td>
-                    <td className="p-4"><Skeleton className="h-4 w-24" /></td>
-                    <td className="p-4"><Skeleton className="h-4 w-20" /></td> {/* Jabatan */}
-                    <td className="p-4 text-center"><Skeleton className="h-5 w-16 mx-auto rounded-full" /></td>
-                    <td className="p-4 text-center"><Skeleton className="h-8 w-24 mx-auto" /></td>
+                    <td className="p-4"><Skeleton className="h-4 w-32" /></td><td className="p-4"><Skeleton className="h-4 w-24" /></td><td className="p-4"><Skeleton className="h-4 w-20" /></td><td className="p-4"><Skeleton className="h-4 w-24" /></td><td className="p-4"><Skeleton className="h-4 w-20" /></td> {/* Jabatan */}<td className="p-4 text-center"><Skeleton className="h-5 w-16 mx-auto rounded-full" /></td><td className="p-4 text-center"><Skeleton className="h-8 w-24 mx-auto" /></td>
                   </tr>
                 ))}
               </tbody>
@@ -620,13 +608,7 @@ export default function DaftarAnggotaPage() {
               <thead className="border-b bg-gray-50 text-sm text-gray-600">
                 <tr>
                   {/* --- MODIFIKASI: Tambah Header Jabatan --- */}
-                  <th className="p-4 font-medium">Nama Lengkap</th>
-                  <th className="p-4 font-medium">No. Anggota</th>
-                  <th className="p-4 font-medium">Jenis Kelamin</th>
-                  <th className="p-4 font-medium">Tanggal Masuk</th>
-                  <th className="p-4 font-medium">Jabatan / Peran</th> {/* Kolom Baru */}
-                  <th className="p-4 font-medium text-center">Status</th>
-                  <th className="p-4 font-medium text-center">Aksi</th>
+                  <th className="p-4 font-medium">Nama Lengkap</th><th className="p-4 font-medium">No. Anggota</th><th className="p-4 font-medium">Jenis Kelamin</th><th className="p-4 font-medium">Tanggal Masuk</th><th className="p-4 font-medium">Jabatan / Peran</th> {/* Kolom Baru */}<th className="p-4 font-medium text-center">Status</th><th className="p-4 font-medium text-center">Aksi</th>
                 </tr>
               </thead>
               <tbody>
