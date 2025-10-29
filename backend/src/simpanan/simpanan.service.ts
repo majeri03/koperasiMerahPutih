@@ -31,7 +31,9 @@ export class SimpananService {
     user: JwtPayloadDto,
   ) {
     const prismaTenant: PrismaClient = await this.prisma.getTenantClient();
-    const { memberId, jenis, tipe, jumlah, uraian, nomorBukti } = createDto;
+
+    const { memberId, jenis, tipe, jumlah, uraian, nomorBukti, tanggal } =
+      createDto;
 
     // Validasi Member
     const member = await prismaTenant.member.findUnique({
@@ -59,7 +61,7 @@ export class SimpananService {
             uraian,
             nomorBukti: finalNomorBukti,
             userId: user.userId, // Catat siapa pengurus yang input
-            // tanggal: createDto.tanggal ? new Date(createDto.tanggal) : new Date(), // Jika tanggal dikirim dari DTO
+            tanggal: tanggal ? new Date(tanggal) : new Date(), // Jika tanggal dikirim dari DTO
           },
         });
 

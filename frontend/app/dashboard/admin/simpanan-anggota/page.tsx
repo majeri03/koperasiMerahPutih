@@ -604,6 +604,7 @@ export default function SimpananAnggotaPage() {
                 tipe: tipe === 'Setoran' ? 'SETORAN' : 'PENARIKAN',  // Convert frontend to backend enum
                 jumlah: data.jumlah,
                 uraian: data.uraian,
+                tanggal: data.tanggal, // kirim tanggal pilihan user (YYYY-MM-DD)
             };
             
             const newTransaction = await simpananApi.createTransaction(transactionData);

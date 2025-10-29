@@ -76,6 +76,7 @@ export type CreateSimpananTransaksiDto = {
   jumlah: number;
   uraian: string;
   nomorBukti?: string;
+  tanggal?: string; // YYYY-MM-DD; optional to maintain backward compat
 };
 
 export type TotalSaldo = {
