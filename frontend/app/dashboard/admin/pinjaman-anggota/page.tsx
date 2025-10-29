@@ -7,9 +7,36 @@ import Button from "@/components/Button";
 import { PlusCircle, Search, HandCoins, CheckCircle, Clock, X, Send, ChevronDown, MoreHorizontal, CheckCircle2, Hourglass } from "lucide-react";
 import clsx from "clsx";
 
+// Import API service
+import { loanApi, memberApi, type Member } from "@/lib/apiService";
+
+// Define types
+type LoanBackend = {
+  id: string;
+  loanNumber: string;
+  memberId: string;
+  loanAmount: number;
+  interestRate: number;
+  loanDate: string;
+  termMonths: number;
+  dueDate: string;
+  purpose?: string;
+  agreementNumber?: string;
+  status: string;
+  paidOffDate?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  member?: {
+    id: string;
+    fullName: string;
+    occupation: string;
+  };
+};
+
 // --- Tipe Data ---
 type Pinjaman = {
     id: string;
+    loanNumber: string;
     tanggalPinjam: string;
     anggota: {
         id: string;
@@ -26,69 +53,46 @@ type Pinjaman = {
     jaminan?: string;
 };
 
-// --- Data Contoh ---
-const mockPinjaman: Pinjaman[] = [
-    { id: 'pinj001', noBukti: 'PJ-12345', tanggalPinjam: '2025-08-01', anggota: { id: 'agt001', nama: 'Alviansyah Burhani' }, pekerjaan: 'Wiraswasta', jumlahPinjaman: 5000000, jangkaWaktu: 12, bunga: 1.5, status: 'Aktif', tanggalLunas: null, keperluan: 'Modal Usaha', jaminan: 'BPKB Motor' },
-    { id: 'pinj002', noBukti: 'PJ-12346', tanggalPinjam: '2025-07-15', anggota: { id: 'agt002', nama: 'Budi Santoso' }, pekerjaan: 'Karyawan Swasta', jumlahPinjaman: 2000000, jangkaWaktu: 6, bunga: 1.5, status: 'Aktif', tanggalLunas: null, keperluan: 'Biaya Sekolah Anak', jaminan: '-' },
-    { id: 'pinj003', noBukti: 'PJ-12347', tanggalPinjam: '2025-02-10', anggota: { id: 'agt003', nama: 'Citra Lestari' }, pekerjaan: 'PNS', jumlahPinjaman: 3000000, jangkaWaktu: 10, bunga: 1.5, status: 'Lunas', tanggalLunas: '2025-08-10', keperluan: 'Renovasi Rumah', jaminan: 'Sertifikat Rumah' },
-    { id: 'pinj004', noBukti: 'PJ-12348', tanggalPinjam: '2025-09-05', anggota: { id: 'agt002', nama: 'Budi Santoso' }, pekerjaan: 'Karyawan Swasta', jumlahPinjaman: 1500000, jangkaWaktu: 12, bunga: 1.5, status: 'Aktif', tanggalLunas: null, keperluan: 'Pembelian Elektronik', jaminan: '-' },
-];
 
-const mockTotalPinjaman = {
-    beredar: 8500000,
-    lunasBulanIni: 1,
-    akanJatuhTempo: 2,
-};
-
-// --- DATABASE ANGGOTA (SIMULASI) ---
-const mockAnggotaDB = [
-    { id: 'agt001', nama: 'Alviansyah Burhani', pekerjaan: 'Wiraswasta' },
-    { id: 'agt002', nama: 'Budi Santoso', pekerjaan: 'Karyawan Swasta' },
-    { id: 'agt003', nama: 'Citra Lestari', pekerjaan: 'PNS' },
-    { id: 'agt004', nama: 'Dewi Anggraini', pekerjaan: 'Dokter' },
-    { id: 'agt005', nama: 'Eko Prasetyo', pekerjaan: 'Guru' },
-];
 
 // --- Tipe untuk data formulir Pinjaman ---
 type NewPinjamanData = {
-    noBukti: string;
-    anggotaId: string;
-    pekerjaan: string;
-    jumlahPinjaman: number;
-    jangkaWaktu: number;
-    bunga: number;
-    tanggalPinjam: string;
-    keperluan: string;
-    jaminan: string;
+    memberId: string;  // Updated to match backend
+    loanAmount: number;  // Updated to match backend
+    interestRate: number;  // Updated to match backend
+    loanDate: string;  // Updated to match backend
+    termMonths: number;  // Updated to match backend
+    purpose?: string;  // Updated to match backend
+    agreementNumber?: string;  // Updated to match backend
 };
 
 // ===================================================================
 // KOMPONEN MODAL CATAT PINJAMAN BARU
 // ===================================================================
 // Tipe untuk state formData, mengizinkan string kosong untuk angka
-type FormDataState = Omit<NewPinjamanData, 'anggotaId' | 'pekerjaan'> & {
-    jumlahPinjaman: number | '';
-    jangkaWaktu: number | '';
-    bunga: number | '';
+type FormDataState = Omit<NewPinjamanData, 'memberId'> & {
+    loanAmount: number | '';
+    termMonths: number | '';
+    interestRate: number | '';
 };
 
 const CatatPinjamanModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose: () => void; onSave: (data: NewPinjamanData) => void; }) => {
     // STATE UNTUK FORM UTAMA
     const [formData, setFormData] = useState<FormDataState>({
-        noBukti: `PJ-${Date.now().toString().slice(-6)}`,
-        jumlahPinjaman: 0,
-        jangkaWaktu: 12,
-        bunga: 1.5,
-        tanggalPinjam: new Date().toISOString().split('T')[0],
-        keperluan: '',
-        jaminan: '',
+        agreementNumber: `PJ-${Date.now().toString().slice(-6)}`,
+        loanAmount: 0,
+        termMonths: 12,
+        interestRate: 1.5,
+        loanDate: new Date().toISOString().split('T')[0],
+        purpose: '',
     });
 
     // STATE BARU UNTUK LOGIKA PENCARIAN ANGGOTA
     const [namaAnggota, setNamaAnggota] = useState(''); // Teks yang diketik pengguna
-    const [hasilPencarian, setHasilPencarian] = useState<typeof mockAnggotaDB>([]);
-    const [anggotaTerpilih, setAnggotaTerpilih] = useState<{ id: string; nama: string; pekerjaan: string } | null>(null);
+    const [hasilPencarian, setHasilPencarian] = useState<Member[]>([]);
+    const [anggotaTerpilih, setAnggotaTerpilih] = useState<Member | null>(null);
     const [tidakDitemukan, setTidakDitemukan] = useState(false);
+    const [loadingAnggota, setLoadingAnggota] = useState(false);
 
     // EFEK UNTUK PENCARIAN DENGAN DEBOUNCING
     useEffect(() => {
@@ -97,12 +101,24 @@ const CatatPinjamanModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onCl
             setTidakDitemukan(false);
             return;
         }
+        setLoadingAnggota(true);
         const handler = setTimeout(() => {
-            const hasil = mockAnggotaDB.filter(anggota =>
-                anggota.nama.toLowerCase().includes(namaAnggota.toLowerCase())
-            );
-            setHasilPencarian(hasil);
-            setTidakDitemukan(hasil.length === 0 && namaAnggota !== '');
+            const fetchAnggota = async () => {
+                try {
+                    const members = await memberApi.getAllMembers();
+                    const hasil = members.filter((member) =>
+                        member.fullName.toLowerCase().includes(namaAnggota.toLowerCase())
+                    );
+                    setHasilPencarian(hasil);
+                    setTidakDitemukan(hasil.length === 0 && namaAnggota !== '');
+                } catch (error) {
+                    console.error('Gagal mengambil data anggota:', error);
+                    setTidakDitemukan(true);
+                } finally {
+                    setLoadingAnggota(false);
+                }
+            };
+            fetchAnggota();
         }, 300);
         return () => clearTimeout(handler);
     }, [namaAnggota, anggotaTerpilih]);
@@ -125,9 +141,9 @@ const CatatPinjamanModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onCl
     };
 
     // Fungsi saat user memilih anggota dari dropdown
-    const handlePilihAnggota = (anggota: { id: string; nama: string; pekerjaan: string }) => {
+    const handlePilihAnggota = (anggota: Member) => {
         setAnggotaTerpilih(anggota);
-        setNamaAnggota(anggota.nama);
+        setNamaAnggota(anggota.fullName);
         setHasilPencarian([]);
     };
     
@@ -136,15 +152,13 @@ const CatatPinjamanModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onCl
         e.preventDefault();
         if (!anggotaTerpilih) return;
         const dataFinal: NewPinjamanData = {
-            noBukti: formData.noBukti,
-            tanggalPinjam: formData.tanggalPinjam,
-            keperluan: formData.keperluan,
-            jaminan: formData.jaminan,
-            anggotaId: anggotaTerpilih.id,
-            pekerjaan: anggotaTerpilih.pekerjaan,
-            jumlahPinjaman: Number(formData.jumlahPinjaman) || 0,
-            jangkaWaktu: Number(formData.jangkaWaktu) || 0,
-            bunga: Number(formData.bunga) || 0,
+            agreementNumber: formData.agreementNumber,
+            loanDate: formData.loanDate,
+            purpose: formData.purpose,
+            memberId: anggotaTerpilih.id,
+            loanAmount: Number(formData.loanAmount) || 0,
+            termMonths: Number(formData.termMonths) || 0,
+            interestRate: Number(formData.interestRate) || 0,
         };
         onSave(dataFinal);
         onClose();
@@ -154,13 +168,12 @@ const CatatPinjamanModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onCl
     useEffect(() => {
         if (isOpen) {
             setFormData({
-                noBukti: `PJ-${Date.now().toString().slice(-6)}`,
-                jumlahPinjaman: 0,
-                jangkaWaktu: 12,
-                bunga: 1.5,
-                tanggalPinjam: new Date().toISOString().split('T')[0],
-                keperluan: '',
-                jaminan: '',
+                agreementNumber: `PJ-${Date.now().toString().slice(-6)}`,
+                loanAmount: 0,
+                termMonths: 12,
+                interestRate: 1.5,
+                loanDate: new Date().toISOString().split('T')[0],
+                purpose: '',
             });
             setNamaAnggota('');
             setAnggotaTerpilih(null);
@@ -182,11 +195,11 @@ const CatatPinjamanModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onCl
                     <div className="p-6 space-y-4 overflow-y-auto">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="relative">
-                                <label htmlFor="anggotaId" className="block text-sm font-medium text-gray-700">Anggota*</label>
+                                <label htmlFor="memberId" className="block text-sm font-medium text-gray-700">Anggota*</label>
                                 <input
                                     type="text"
-                                    id="anggotaId"
-                                    name="anggotaId"
+                                    id="memberId"
+                                    name="memberId"
                                     required
                                     placeholder="Ketik untuk mencari nama anggota..."
                                     value={namaAnggota}
@@ -194,7 +207,12 @@ const CatatPinjamanModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onCl
                                     className="mt-1 w-full p-2 border rounded-lg"
                                     autoComplete="off"
                                 />
-                                {hasilPencarian.length > 0 && (
+                                {loadingAnggota && (
+                                    <div className="absolute z-10 w-full bg-white border rounded-lg mt-1 shadow-lg p-2">
+                                        <p className="text-sm text-gray-500">Memuat...</p>
+                                    </div>
+                                )}
+                                {hasilPencarian.length > 0 && !loadingAnggota && (
                                     <div className="absolute z-10 w-full bg-white border rounded-lg mt-1 shadow-lg max-h-40 overflow-y-auto">
                                         {hasilPencarian.map(anggota => (
                                             <div
@@ -202,51 +220,47 @@ const CatatPinjamanModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onCl
                                                 onClick={() => handlePilihAnggota(anggota)}
                                                 className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
                                             >
-                                                {anggota.nama}
+                                                {anggota.fullName}
                                             </div>
                                         ))}
                                     </div>
                                 )}
-                                {tidakDitemukan && (
+                                {tidakDitemukan && !loadingAnggota && (
                                     <p className="text-sm text-red-600 mt-1">Anggota tidak ditemukan.</p>
                                 )}
                             </div>
                             <div>
                                 <label htmlFor="pekerjaan" className="block text-sm font-medium text-gray-700">Pekerjaan</label>
-                                <input type="text" id="pekerjaan" name="pekerjaan" value={anggotaTerpilih?.pekerjaan || ''} readOnly className="mt-1 w-full p-2 border rounded-lg bg-gray-100" />
+                                <input type="text" id="pekerjaan" name="pekerjaan" value={anggotaTerpilih?.occupation || ''} readOnly className="mt-1 w-full p-2 border rounded-lg bg-gray-100" />
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="noBukti" className="block text-sm font-medium text-gray-700">No. Bukti</label>
-                                <input type="text" id="noBukti" name="noBukti" required value={formData.noBukti} className="mt-1 w-full p-2 border rounded-lg bg-gray-100" readOnly />
+                                <label htmlFor="agreementNumber" className="block text-sm font-medium text-gray-700">No. Bukti</label>
+                                <input type="text" id="agreementNumber" name="agreementNumber" required value={formData.agreementNumber} className="mt-1 w-full p-2 border rounded-lg bg-gray-100" readOnly />
                             </div>
                             <div>
-                                <label htmlFor="tanggalPinjam" className="block text-sm font-medium text-gray-700">Tanggal Pinjam</label>
-                                <input type="date" id="tanggalPinjam" name="tanggalPinjam" required value={formData.tanggalPinjam} onChange={handleInputChange} className="mt-1 w-full p-2 border rounded-lg" />
+                                <label htmlFor="loanDate" className="block text-sm font-medium text-gray-700">Tanggal Pinjam</label>
+                                <input type="date" id="loanDate" name="loanDate" required value={formData.loanDate} onChange={handleInputChange} className="mt-1 w-full p-2 border rounded-lg" />
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <label htmlFor="jumlahPinjaman" className="block text-sm font-medium text-gray-700">Jumlah Pinjaman (Rp)*</label>
-                                <input type="number" id="jumlahPinjaman" name="jumlahPinjaman" required value={formData.jumlahPinjaman} onChange={handleInputChange} className="mt-1 w-full p-2 border rounded-lg" />
+                                <label htmlFor="loanAmount" className="block text-sm font-medium text-gray-700">Jumlah Pinjaman (Rp)*</label>
+                                <input type="number" id="loanAmount" name="loanAmount" required value={formData.loanAmount} onChange={handleInputChange} className="mt-1 w-full p-2 border rounded-lg" />
                             </div>
                             <div>
-                                <label htmlFor="jangkaWaktu" className="block text-sm font-medium text-gray-700">Jangka Waktu (Bulan)*</label>
-                                <input type="number" id="jangkaWaktu" name="jangkaWaktu" required value={formData.jangkaWaktu} onChange={handleInputChange} className="mt-1 w-full p-2 border rounded-lg" />
+                                <label htmlFor="termMonths" className="block text-sm font-medium text-gray-700">Jangka Waktu (Bulan)*</label>
+                                <input type="number" id="termMonths" name="termMonths" required value={formData.termMonths} onChange={handleInputChange} className="mt-1 w-full p-2 border rounded-lg" />
                             </div>
                             <div>
-                                <label htmlFor="bunga" className="block text-sm font-medium text-gray-700">Jasa (% per bulan)</label>
-                                <input type="number" step="0.1" id="bunga" name="bunga" required value={formData.bunga} onChange={handleInputChange} className="mt-1 w-full p-2 border rounded-lg" />
+                                <label htmlFor="interestRate" className="block text-sm font-medium text-gray-700">Jasa (% per bulan)</label>
+                                <input type="number" step="0.1" id="interestRate" name="interestRate" required value={formData.interestRate} onChange={handleInputChange} className="mt-1 w-full p-2 border rounded-lg" />
                             </div>
                         </div>
                         <div>
-                            <label htmlFor="keperluan" className="block text-sm font-medium text-gray-700">Keperluan Pinjaman</label>
-                            <textarea id="keperluan" name="keperluan" rows={2} placeholder="Contoh: Modal usaha, biaya pendidikan..." value={formData.keperluan} onChange={handleInputChange} className="mt-1 w-full p-2 border rounded-lg" />
-                        </div>
-                        <div>
-                            <label htmlFor="jaminan" className="block text-sm font-medium text-gray-700">Jaminan</label>
-                            <input type="text" id="jaminan" name="jaminan" placeholder="Contoh: BPKB Motor, Sertifikat Rumah..." value={formData.jaminan} onChange={handleInputChange} className="mt-1 w-full p-2 border rounded-lg" />
+                            <label htmlFor="purpose" className="block text-sm font-medium text-gray-700">Keperluan Pinjaman</label>
+                            <textarea id="purpose" name="purpose" rows={2} placeholder="Contoh: Modal usaha, biaya pendidikan..." value={formData.purpose} onChange={handleInputChange} className="mt-1 w-full p-2 border rounded-lg" />
                         </div>
                     </div>
                     <div className="p-4 bg-gray-50 border-t flex justify-end gap-3 rounded-b-xl">
@@ -424,13 +438,43 @@ export default function PinjamanAnggotaPage() {
     const [selectedPinjaman, setSelectedPinjaman] = useState<Pinjaman | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // Simulate loading data
+    // Fetch data from backend
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setPinjamanList(mockPinjaman);
-            setLoading(false);
-        }, 800);
-        return () => clearTimeout(timer);
+        const fetchPinjaman = async () => {
+            try {
+                const loans: LoanBackend[] = await loanApi.getAllLoans();
+                // Transform backend data to match frontend format
+                const transformedData: Pinjaman[] = loans.map((loan) => {
+                    // Convert backend status to frontend status
+                    const frontendStatus: 'Aktif' | 'Lunas' = loan.status === 'PAID_OFF' ? 'Lunas' : 'Aktif';
+                    
+                    return {
+                        id: loan.id,
+                        loanNumber: loan.loanNumber,
+                        noBukti: loan.agreementNumber,
+                        tanggalPinjam: loan.loanDate,
+                        anggota: {
+                            id: loan.memberId,
+                            nama: loan.member?.fullName || 'Anggota Tidak Dikenal'
+                        },
+                        jumlahPinjaman: loan.loanAmount,
+                        jangkaWaktu: loan.termMonths,
+                        bunga: loan.interestRate,
+                        status: frontendStatus,
+                        tanggalLunas: loan.paidOffDate || null,
+                        pekerjaan: loan.member?.occupation,
+                        keperluan: loan.purpose,
+                        jaminan: loan.agreementNumber ? loan.agreementNumber : '-'
+                    };
+                });
+                setPinjamanList(transformedData);
+            } catch (error) {
+                console.error('Gagal mengambil data pinjaman:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchPinjaman();
     }, []);
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -553,44 +597,46 @@ export default function PinjamanAnggotaPage() {
         alert(`Simulasi: Notifikasi jatuh tempo berhasil dikirim ke anggota "${nama}".`);
     };
 
-// Di dalam komponen PinjamanAnggotaPage
+    const handleSavePinjaman = async (data: NewPinjamanData) => {
+        try {
+            // Transform frontend data to match backend format
+            const loanData = {
+                memberId: data.memberId,
+                loanAmount: data.loanAmount,
+                interestRate: data.interestRate,
+                loanDate: data.loanDate,
+                termMonths: data.termMonths,
+                purpose: data.purpose,
+                agreementNumber: data.agreementNumber,
+            };
+            
+            const newLoan = await loanApi.createLoan(loanData);
+            
+            // Transform the response to match frontend format
+            const newPinjaman: Pinjaman = {
+                id: newLoan.id,
+                loanNumber: newLoan.loanNumber,
+                noBukti: data.agreementNumber,
+                tanggalPinjam: data.loanDate,
+                anggota: {
+                    id: newLoan.memberId,
+                    nama: newLoan.member?.fullName || 'Anggota Tidak Dikenal'
+                },
+                jumlahPinjaman: data.loanAmount,
+                jangkaWaktu: data.termMonths,
+                bunga: data.interestRate,
+                status: 'Aktif',
+                tanggalLunas: null,
+                pekerjaan: newLoan.member?.occupation,
+                keperluan: data.purpose,
+                jaminan: data.agreementNumber ? data.agreementNumber : '-'
+            };
 
-// GANTI FUNGSI LAMA INI...
-// const handleSavePinjaman = (data: NewPinjamanData) => { ... };
-
-// DENGAN FUNGSI BARU YANG SUDAH DIPERBAIKI INI:
-    const handleSavePinjaman = (data: NewPinjamanData) => {
-        // 1. Cari informasi lengkap anggota dari database simulasi kita
-        const anggotaInfo = mockAnggotaDB.find(anggota => anggota.id === data.anggotaId);
-
-        // 2. Lakukan pengecekan jika anggota tidak ditemukan (untuk keamanan)
-        if (!anggotaInfo) {
-            alert("Error: Gagal menemukan data anggota. Mohon coba lagi.");
-            return;
+            setPinjamanList(prev => [newPinjaman, ...prev]);
+        } catch (error) {
+            console.error('Gagal menyimpan pinjaman:', error);
+            alert('Gagal menyimpan pinjaman. Silakan coba lagi.');
         }
-
-        // 3. Buat objek pinjaman baru dengan nama yang benar
-        const newPinjaman: Pinjaman = {
-            id: `pinj${Date.now()}`,
-            status: 'Aktif',
-            tanggalLunas: null,
-            anggota: { 
-                id: anggotaInfo.id, 
-                nama: anggotaInfo.nama // <-- SEKARANG MENGGUNAKAN NAMA YANG BENAR
-            },
-            noBukti: data.noBukti,
-            jumlahPinjaman: data.jumlahPinjaman,
-            jangkaWaktu: data.jangkaWaktu,
-            bunga: data.bunga,
-            tanggalPinjam: data.tanggalPinjam,
-            pekerjaan: data.pekerjaan,
-            keperluan: data.keperluan,
-            jaminan: data.jaminan
-        };
-
-        setPinjamanList(prev => [newPinjaman, ...prev]);
-        console.log("Data Pinjaman Baru:", newPinjaman);
-        alert(`Simulasi: Pinjaman baru untuk ${anggotaInfo.nama} berhasil disimpan.`); // Tampilkan nama di notifikasi
     };
 
     const handleLihatDetail = (pinjaman: Pinjaman) => {
@@ -621,7 +667,7 @@ export default function PinjamanAnggotaPage() {
                         <div className="p-3 bg-red-100 rounded-full"><HandCoins className="h-6 w-6 text-red-600" /></div>
                         <div>
                             <p className="text-sm text-gray-500">Total Pinjaman Beredar</p>
-                            <p className="text-xl font-bold text-gray-800">Rp {mockTotalPinjaman.beredar.toLocaleString('id-ID')}</p>
+                            <p className="text-xl font-bold text-gray-800">Rp {pinjamanList.filter(p => p.status === 'Aktif').reduce((sum, p) => sum + p.jumlahPinjaman, 0).toLocaleString('id-ID')}</p>
                         </div>
                     </div>
                 </div>
@@ -630,7 +676,7 @@ export default function PinjamanAnggotaPage() {
                         <div className="p-3 bg-green-100 rounded-full"><CheckCircle className="h-6 w-6 text-green-600" /></div>
                         <div>
                             <p className="text-sm text-gray-500">Lunas Bulan Ini</p>
-                            <p className="text-xl font-bold text-gray-800">{mockTotalPinjaman.lunasBulanIni} Pinjaman</p>
+                            <p className="text-xl font-bold text-gray-800">{pinjamanList.filter(p => p.status === 'Lunas' && p.tanggalLunas && new Date(p.tanggalLunas).getMonth() === new Date().getMonth()).length} Pinjaman</p>
                         </div>
                     </div>
                 </div>
@@ -639,7 +685,7 @@ export default function PinjamanAnggotaPage() {
                         <div className="p-3 bg-yellow-100 rounded-full"><Clock className="h-6 w-6 text-yellow-600" /></div>
                         <div>
                             <p className="text-sm text-gray-500">Akan Jatuh Tempo</p>
-                            <p className="text-xl font-bold text-gray-800">{mockTotalPinjaman.akanJatuhTempo} Pinjaman</p>
+                            <p className="text-xl font-bold text-gray-800">{pinjamanList.filter(p => p.status === 'Aktif').length} Pinjaman</p>
                         </div>
                     </div>
                 </div>
