@@ -971,7 +971,7 @@ export class TenantsService {
         INSERT INTO "${schemaName}".cooperative_profile (
           id, display_name, address, email, phone, operating_hours, map_coordinates, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6);
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
       `;
 
       await tx.$executeRawUnsafe(
@@ -991,7 +991,9 @@ export class TenantsService {
         error,
       );
       // Jangan gagalkan seluruh transaksi, tapi log errornya
-      // throw new InternalServerErrorException('Gagal inisialisasi profil koperasi.');
+      throw new InternalServerErrorException(
+        'Gagal inisialisasi profil koperasi.',
+      );
     }
   }
 
