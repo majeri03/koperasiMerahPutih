@@ -31,6 +31,7 @@ type Props = {
   toggleSidebar: () => void;
   userData: JwtPayload | null;
   isBendahara?: boolean;
+  profileReady?: boolean;
 };
 
 /* =========================
@@ -131,9 +132,10 @@ export default function AdminSidebar({
   toggleSidebar,
   userData,
   isBendahara = false,
+  profileReady = false,
 }: Props) {
   const pathname = usePathname();
-  const filteredBukuGroups = isBendahara
+  const filteredBukuGroups = (!profileReady || isBendahara)
     ? []
     : bukuKoperasiGroups.filter((g) => g.title !== 'Keuangan');
 
@@ -185,7 +187,7 @@ export default function AdminSidebar({
         {/* --- Navigasi (Ambil sisa ruang & bisa scroll) --- */}
         <nav className="flex-1 px-4 py-4 overflow-y-auto"> {/* <-- Tambah flex-1 dan overflow-y-auto */}
           {/* Buku Administrasi */}
-          {!isBendahara && (
+          {profileReady && !isBendahara && (
           <div className="space-y-4">
             <div className="px-3 flex items-center gap-2">
               <BookMarked className="h-5 w-5 text-red-200" />
@@ -213,10 +215,10 @@ export default function AdminSidebar({
           </div>
           )}
 
-          {!isBendahara && (<hr className="my-6 border-white/10" />)}
+          {profileReady && !isBendahara && (<hr className="my-6 border-white/10" />)}
 
           {/* Aplikasi & Sistem */}
-          {!isBendahara && (
+          {profileReady && !isBendahara && (
           <div className="space-y-4">
             <div className="px-3 flex items-center gap-2">
               <Globe className="h-5 w-5 text-red-200" />
@@ -241,6 +243,26 @@ export default function AdminSidebar({
                 </div>
               </div>
             ))}
+          </div>
+          )}
+
+          {/* Buku Administrasi (khusus Bendahara: hanya Dashboard di Manajemen Utama) */}
+          {isBendahara && (
+          <div className="space-y-4 mt-2">
+            <div className="px-3 flex items-center gap-2">
+              <BookMarked className="h-5 w-5 text-red-200" />
+              <h3 className="text-sm font-bold uppercase text-red-100 tracking-wider">Buku Administrasi</h3>
+            </div>
+            <div>
+              <h4 className="px-3 mb-2 text-xs font-semibold uppercase text-red-200">Manajemen Utama</h4>
+              <div className="space-y-1">
+                <NavLink
+                  item={{ href: "/dashboard/admin", label: "Dashboard", icon: LayoutGrid }}
+                  isActive={pathname === "/dashboard/admin"}
+                  onClick={handleItemClick}
+                />
+              </div>
+            </div>
           </div>
           )}
 

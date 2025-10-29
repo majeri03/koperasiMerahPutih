@@ -61,9 +61,13 @@ export class CreateSimpananTransaksiDto {
   @IsOptional()
   nomorBukti?: string;
 
-  // Tanggal bisa otomatis di backend, atau opsional dikirim dari frontend
-  // @ApiProperty({ example: '2025-10-22', description: 'Tanggal transaksi (YYYY-MM-DD)', required: false })
-  // @IsDateString()
-  // @IsOptional()
-  // tanggal?: string;
+  // Tanggal transaksi (opsional). Jika tidak diisi, backend akan memakai tanggal saat ini.
+  @ApiProperty({
+    example: '2025-10-22',
+    description: 'Tanggal transaksi (YYYY-MM-DD)',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  tanggal?: string;
 }

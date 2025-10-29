@@ -23,7 +23,15 @@ export default function AdminDashboardLayout({
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [userData, setUserData] = useState<JwtPayload | null>(null);
-  const [isBendahara, setIsBendahara] = useState<boolean>(false);
+  // Inisialisasi dari cookie agar tidak terjadi flash menu saat reload/login
+  const getCookie = (name: string): string | null => {
+    if (typeof document === 'undefined') return null;
+    const v = document.cookie.split('; ').find(r => r.startsWith(name + '='));
+    return v ? decodeURIComponent(v.split('=')[1]) : null;
+  };
+  const initialIsBendahara = (typeof document !== 'undefined' && getCookie('isBendahara') === '1') || false;
+  const [isBendahara, setIsBendahara] = useState<boolean>(initialIsBendahara);
+  const [profileReady, setProfileReady] = useState<boolean>(false);
   const router = useRouter();
   const pathname = usePathname();
   
@@ -74,7 +82,7 @@ export default function AdminDashboardLayout({
         console.error("Gagal memuat profil admin:", error.message);
         authService.logout();
       } finally {
-        // no-op
+        setProfileReady(true);
       }
     };
 
@@ -137,6 +145,7 @@ export default function AdminDashboardLayout({
         toggleSidebar={toggleSidebar}
         userData={userData} // <-- Kirim prop userData
         isBendahara={isBendahara}
+        profileReady={profileReady}
       />
       <div className="flex-1 flex flex-col">
         <AdminHeader

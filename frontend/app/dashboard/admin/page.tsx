@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, ElementType } from "react";
+import { simpananApi, loanApi, type SimpananTransaksi as SimpananTrx, type Loan } from "@/lib/apiService";
 import clsx from "clsx";
 
 // --- Tipe Data Diperbarui ---
@@ -34,13 +35,15 @@ type StatCardProps = {
   change: number;
   color: string;
   unit?: string;
+  neutralThreshold?: number; // persen yang dianggap netral
 };
 
 // --- Komponen Kartu Statistik ---
 // PERBAIKAN: Terapkan tipe StatCardProps
-const StatCard = ({ icon, title, value, change, color, unit = '' }: StatCardProps) => {
+const StatCard = ({ icon, title, value, change, color, unit = '', neutralThreshold = 1 }: StatCardProps) => {
   const IconComponent = icon;
-  const isPositive = change >= 0;
+  const isPositive = change > 0;
+  const isNeutral = Math.abs(change) < neutralThreshold;
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
@@ -54,8 +57,8 @@ const StatCard = ({ icon, title, value, change, color, unit = '' }: StatCardProp
         </div>
       </div>
       <div className="mt-4 flex items-center gap-1 text-sm">
-        <span className={`flex items-center font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-          <ArrowUpRight size={16} className={!isPositive ? 'transform rotate-180' : ''} />
+        <span className={`flex items-center font-semibold ${isNeutral ? 'text-gray-500' : (isPositive ? 'text-green-600' : 'text-red-600')}`}>
+          <ArrowUpRight size={16} className={isNeutral ? 'opacity-60' : (!isPositive ? 'transform rotate-180' : '')} />
           {Math.abs(change)}%
         </span>
         <span className="text-gray-500">vs bulan lalu</span>
@@ -96,35 +99,116 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = () => {
-      const mockData: DashboardData = {
-        namaKoperasi: "Koperasi Merah Putih",
-        stats: {
-          totalAnggota: { value: 152, change: 5 },
-          totalSimpanan: { value: 850750000, change: 12 },
-          totalPinjaman: { value: 215500000, change: -3 },
-        },
-        tugas: {
-            pendaftarBaru: 3,
-            saranBaru: 5,
-        },
-        anggotaTerbaru: [
-          { nama: "Siti Lestari", tanggalMasuk: "14 Sep 2025" },
-          { nama: "Agus Purnomo", tanggalMasuk: "11 Sep 2025" },
-          { nama: "Rina Wulandari", tanggalMasuk: "08 Sep 2025" },
-        ],
-        aktivitasTerbaru: [
+    const calcPct = (now: number, prev: number) => {
+      if (!prev || prev <= 0) return 0;
+      return Math.round(((now - prev) / prev) * 1000) / 10; // 1 decimal
+    };
+
+    const endOfPrevMonth = (d: Date) => {
+      const dt = new Date(d.getFullYear(), d.getMonth(), 0); // last day of previous month
+      dt.setHours(23, 59, 59, 999);
+      return dt;
+    };
+
+    const fetchDashboard = async () => {
+      try {
+        const now = new Date();
+
+        // ------- Simpanan -------
+        const [saldo, trx] = await Promise.all([
+          simpananApi.getTotalSaldo().catch(() => ({ saldoPokok: 0, saldoWajib: 0, saldoSukarela: 0 })),
+          simpananApi.getAllTransactions().catch(() => [] as SimpananTrx[]),
+        ]);
+        // Helper untuk menghitung saldo pada tanggal tertentu dari transaksi
+        const balanceAt = (date: Date) => (trx as SimpananTrx[]).reduce((acc, t) => {
+          const tgl = new Date(t.tanggal);
+          if (tgl <= date) {
+            const tipe = (t.tipe || '').toString().toUpperCase();
+            const sign = tipe === 'SETORAN' || tipe === 'SETORAN ' ? 1 : tipe === 'PENARIKAN' ? -1 : 0;
+            return acc + sign * (t.jumlah || 0);
+          }
+          return acc;
+        }, 0);
+
+        // Hitung saldo current dan akhir bulan lalu dari transaksi; gunakan saldo API sebagai preferensi untuk NOW jika tersedia
+        const totalSimpananNowByTrx = balanceAt(now);
+        let totalSimpananNow = (saldo.saldoPokok || 0) + (saldo.saldoWajib || 0) + (saldo.saldoSukarela || 0);
+        if (totalSimpananNow === 0) totalSimpananNow = totalSimpananNowByTrx;
+        const endPrevMonth = endOfPrevMonth(now);
+        const totalSimpananPrevByTrx = balanceAt(endPrevMonth);
+        // Delta bulan berjalan (net setoran-penarikan pada bulan ini)
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthDelta = (trx as SimpananTrx[]).reduce((acc, t) => {
+          const tgl = new Date(t.tanggal);
+          if (tgl >= monthStart && tgl <= now) {
+            const tipe = (t.tipe || '').toString().toUpperCase();
+            const sign = tipe === 'SETORAN' || tipe === 'SETORAN ' ? 1 : tipe === 'PENARIKAN' ? -1 : 0;
+            return acc + sign * (t.jumlah || 0);
+          }
+          return acc;
+        }, 0);
+        const totalSimpananPrevByDelta = totalSimpananNow - monthDelta;
+        // Pilih prev berdasarkan ketersediaan histori transaksi.
+        // Jika histori sebelum bulan ini tidak lengkap (mis. import saldo awal), prevByTrx bisa 0.
+        // Dalam kasus itu gunakan prevByDelta sebagai fallback.
+        const totalSimpananPrev = totalSimpananPrevByTrx > 0 ? totalSimpananPrevByTrx : Math.max(0, totalSimpananPrevByDelta);
+        const pctSimpanan = calcPct(totalSimpananNow, totalSimpananPrev);
+
+        // ------- Pinjaman Beredar -------
+        const loans: Loan[] = await loanApi.getAllLoans().catch(() => [] as Loan[]);
+        // Gunakan hanya tanggal untuk menentukan status aktif pada titik waktu tertentu.
+        // Jangan bergantung pada field status saat ini, karena loan yang sudah lunas bulan ini
+        // mungkin tetap aktif pada akhir bulan lalu.
+        const activeAt = (loan: Loan, date: Date) => {
+          const start = new Date(loan.loanDate);
+          const end = loan.paidOffDate ? new Date(loan.paidOffDate) : null;
+          return start <= date && (!end || end > date);
+        };
+        const endPrev = endOfPrevMonth(now);
+        const pinjamanNow = loans.reduce((sum, l) => (activeAt(l, now) ? sum + (l.loanAmount || 0) : sum), 0);
+        const pinjamanPrev = loans.reduce((sum, l) => (activeAt(l, endPrev) ? sum + (l.loanAmount || 0) : sum), 0);
+        const pctPinjaman = calcPct(pinjamanNow, pinjamanPrev);
+
+        const ds: DashboardData = {
+          namaKoperasi: "Koperasi Merah Putih",
+          stats: {
+            totalAnggota: { value: 152, change: 5 }, // tetap mock untuk sekarang
+            totalSimpanan: { value: totalSimpananNow, change: pctSimpanan },
+            totalPinjaman: { value: pinjamanNow, change: pctPinjaman },
+          },
+          tugas: { pendaftarBaru: 3, saranBaru: 5 },
+          anggotaTerbaru: [
+            { nama: "Siti Lestari", tanggalMasuk: "14 Sep 2025" },
+            { nama: "Agus Purnomo", tanggalMasuk: "11 Sep 2025" },
+            { nama: "Rina Wulandari", tanggalMasuk: "08 Sep 2025" },
+          ],
+          aktivitasTerbaru: [
             { ikon: HandCoins, teks: "Pinjaman baru untuk Budi Santoso telah dicatat.", waktu: "2 jam lalu" },
             { ikon: Landmark, teks: "Setoran sukarela dari Alviansyah Burhani diterima.", waktu: "Kemarin" },
             { ikon: BookUser, teks: "Andi Wijaya diangkat sebagai Ketua Pengurus.", waktu: "3 hari lalu" },
-        ]
-      };
-      setData(mockData);
-      setLoading(false);
+          ],
+        };
+        setData(ds);
+        setLoading(false);
+      } catch (e) {
+        console.error('Gagal memuat ringkasan dashboard:', e);
+        // Jika gagal, tetap tampilkan mock supaya dashboard tidak kosong
+        setData({
+          namaKoperasi: "Koperasi Merah Putih",
+          stats: {
+            totalAnggota: { value: 152, change: 5 },
+            totalSimpanan: { value: 0, change: 0 },
+            totalPinjaman: { value: 0, change: 0 },
+          },
+          tugas: { pendaftarBaru: 0, saranBaru: 0 },
+          anggotaTerbaru: [],
+          aktivitasTerbaru: [],
+        });
+        setLoading(false);
+      }
     };
 
-    const timer = setTimeout(fetchData, 500);
-    return () => clearTimeout(timer);
+    fetchDashboard();
   }, []);
 
   // Skeleton kecil
@@ -247,8 +331,8 @@ export default function AdminDashboardPage() {
       {/* --- KARTU STATISTIK MODERN --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard icon={Users} title="Total Anggota" value={data.stats.totalAnggota.value} change={data.stats.totalAnggota.change} color="blue" />
-        <StatCard icon={PiggyBank} title="Total Simpanan" value={data.stats.totalSimpanan.value} change={data.stats.totalSimpanan.change} color="green" unit="Rp " />
-        <StatCard icon={HandCoins} title="Pinjaman Beredar" value={data.stats.totalPinjaman.value} change={data.stats.totalPinjaman.change} color="red" unit="Rp " />
+        <StatCard icon={PiggyBank} title="Total Simpanan" value={data.stats.totalSimpanan.value} change={data.stats.totalSimpanan.change} color="green" unit="Rp " neutralThreshold={1} />
+        <StatCard icon={HandCoins} title="Pinjaman Beredar" value={data.stats.totalPinjaman.value} change={data.stats.totalPinjaman.change} color="red" unit="Rp " neutralThreshold={1} />
       </div>
 
       {/* --- LAYOUT DUA KOLOM --- */}
