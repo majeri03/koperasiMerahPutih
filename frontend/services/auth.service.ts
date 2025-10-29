@@ -53,6 +53,11 @@ export const authService = {
   logout: (): void => {
     tokenStorage.clearTokens();
     // Redirect bisa dilakukan di sini atau di komponen
+    // Bersihkan hint cookies yang digunakan middleware
+    try {
+      document.cookie = 'role=; Max-Age=0; Path=/; SameSite=Lax';
+      document.cookie = 'isBendahara=; Max-Age=0; Path=/; SameSite=Lax';
+    } catch {}
     window.location.href = '/auth/login';
   },
 };
