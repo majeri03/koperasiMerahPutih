@@ -9,7 +9,7 @@ async function bootstrap() {
 
   // --- TAMBAHKAN KEMBALI KONFIGURASI CORS DI SINI ---
   app.enableCors({
-    origin: 'http://gokiljaya.localhost:3000', // Pastikan origin frontend benar
+    origin: 'http://kerenjaya.localhost:3000', // Pastikan origin frontend benar
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type, Accept, Authorization',
     credentials: true,
@@ -18,7 +18,7 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe());
   app.enableCors({
-    origin: 'http://gokiljaya.localhost:3000', // Pastikan origin frontend benar
+    origin: 'http://kerenjaya.localhost:3000', // Pastikan origin frontend benar
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type, Accept, Authorization',
     credentials: true,
