@@ -390,6 +390,7 @@ export class TenantsService {
         -- "ktp_scan_url" TEXT,            -- Opsional
         -- "photo_url" TEXT,               -- Opsional
         "status" "${schemaName}"."RegistrationStatus" NOT NULL DEFAULT 'PENDING',
+        "signature_data" TEXT NULL,
         "processed_by_id" TEXT,
         "processed_at" TIMESTAMP(3),
         "rejection_reason" TEXT,
@@ -402,7 +403,7 @@ export class TenantsService {
     `);
     await tx.$executeRawUnsafe(`
       CREATE TABLE "${schemaName}".members (
-        "id" TEXT NOT NULL,
+        "id" TEXT NOT NULL DEFAULT gen_random_uuid(),
         "member_number" TEXT NOT NULL,
         "full_name" TEXT NOT NULL,
         "nik" TEXT NOT NULL,
@@ -414,23 +415,25 @@ export class TenantsService {
         "phone_number" TEXT NULL,
         "join_date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "status" TEXT NOT NULL DEFAULT 'ACTIVE',
-        "fingerprint_url" TEXT,
-        "signature_url" TEXT,
+        "signature_data" TEXT NULL,
         "resignation_request_date" TIMESTAMP(3),
         "termination_date" TIMESTAMP(3),
         "termination_reason" TEXT,
+        "approved_by_ketua_id" TEXT NULL, 
+        "approved_at" TIMESTAMP(3) NULL,
+        "termination_approved_by_ketua_id" TEXT NULL, 
+        "termination_approved_at" TIMESTAMP(3) NULL,
         "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updated_at" TIMESTAMP(3) NOT NULL,
 
-        CONSTRAINT "members_pkey" PRIMARY KEY ("id")
-      );
+        CONSTRAINT "members_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "members_approved_by_ketua_id_fkey" FOREIGN KEY ("approved_by_ketua_id") REFERENCES "${schemaName}"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+        CONSTRAINT "members_termination_approved_by_ketua_id_fkey" FOREIGN KEY ("termination_approved_by_ketua_id") REFERENCES "${schemaName}"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+        CONSTRAINT "members_member_number_key" UNIQUE ("member_number"),
+        CONSTRAINT "members_nik_key" UNIQUE ("nik")
+        );
     `);
-    await tx.$executeRawUnsafe(`
-      CREATE UNIQUE INDEX "members_member_number_key" ON "${schemaName}"."members"("member_number");
-    `);
-    await tx.$executeRawUnsafe(`
-      CREATE UNIQUE INDEX "members_nik_key" ON "${schemaName}"."members"("nik"); -- <--- TAMBAHKAN BARIS INI JIKA BELUM ADA
-    `);
+
     await tx.$executeRawUnsafe(`
       CREATE TYPE "${schemaName}"."JabatanPengurus" AS ENUM (
         'Ketua',

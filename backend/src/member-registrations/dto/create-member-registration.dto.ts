@@ -12,6 +12,7 @@ import {
   MinLength,
   IsAlphanumeric,
   IsDateString,
+  IsBase64,
 } from 'class-validator';
 
 export class CreateMemberRegistrationDto {
@@ -77,6 +78,15 @@ export class CreateMemberRegistrationDto {
   @IsNumberString({}, { message: 'Nomor HP harus berupa angka.' })
   @IsNotEmpty({ message: 'Nomor HP tidak boleh kosong.' })
   phoneNumber: string;
+
+  @ApiProperty({
+    example: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg...',
+    description: 'Data Tanda Tangan Digital (Base64 Encoded String)',
+  })
+  @IsString()
+  @IsBase64()
+  @IsNotEmpty({ message: 'Tanda tangan digital tidak boleh kosong.' }) // Wajib saat registrasi publik
+  signatureData: string;
 
   // === Target Koperasi (Hanya jika mendaftar via domain utama) ===
   // Hapus/komentari baris ini jika pendaftaran HANYA via subdomain

@@ -42,8 +42,14 @@ export class MemberRegistrationsService {
   async createRegistration(
     createDto: CreateMemberRegistrationDto,
   ): Promise<Omit<MemberRegistration, 'hashedPassword'>> {
-    const { email, nik, password, targetSubdomain, ...registrationData } =
-      createDto;
+    const {
+      email,
+      nik,
+      password,
+      targetSubdomain,
+      signatureData,
+      ...registrationData
+    } = createDto;
 
     // --- Logika Mendapatkan Prisma Client Target ---
     let prismaTenant: PrismaClient;
@@ -182,6 +188,7 @@ export class MemberRegistrationsService {
           email,
           nik,
           hashedPassword,
+          signatureData: signatureData || null,
           status: RegistrationStatus.PENDING,
           // dateOfBirth: registrationData.dateOfBirth ? new Date(registrationData.dateOfBirth) : undefined, // Contoh konversi tanggal
         },
@@ -240,6 +247,7 @@ export class MemberRegistrationsService {
           dateOfBirth: true,
           occupation: true,
           address: true,
+          signatureData: true,
           // ktpScanUrl: true, // Uncomment jika ada
           // photoUrl: true,   // Uncomment jika ada
           status: true,
@@ -318,6 +326,7 @@ export class MemberRegistrationsService {
             occupation: registration.occupation, // Ambil dari registrasi
             address: registration.address,
             phoneNumber: registration.phoneNumber,
+            signatureData: registration.signatureData,
             status: 'ACTIVE',
             // joinDate: default now()
             // fingerprintUrl: registration.fingerprintUrl, // Jika ada

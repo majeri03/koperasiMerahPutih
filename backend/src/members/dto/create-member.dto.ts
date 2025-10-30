@@ -6,9 +6,9 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUrl,
   IsNumberString,
   Length,
+  IsBase64,
 } from 'class-validator';
 
 export class CreateMemberDto {
@@ -47,14 +47,6 @@ export class CreateMemberDto {
   address: string;
 
   @ApiProperty({
-    example: 'https://example.com/fingerprint.jpg',
-    required: false,
-  })
-  @IsUrl()
-  @IsOptional()
-  fingerprintUrl?: string;
-
-  @ApiProperty({
     example: '081234567890',
     description: 'Nomor telepon anggota (opsional)',
     required: false,
@@ -64,10 +56,13 @@ export class CreateMemberDto {
   phoneNumber?: string;
 
   @ApiProperty({
-    example: 'https://example.com/signature.jpg',
-    required: false,
+    example:
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==',
+    description: 'Data Tanda Tangan Digital (Base64 Encoded String)',
+    required: false, // Opsional saat create manual oleh Sekretaris
   })
-  @IsUrl()
+  @IsString()
+  @IsBase64() // Aktifkan jika ingin validasi format Base64 yang ketat
   @IsOptional()
-  signatureUrl?: string;
+  signatureData?: string;
 }
