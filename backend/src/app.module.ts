@@ -41,6 +41,7 @@ import { ProductsModule } from './products/products.module';
 import { GalleryModule } from './gallery/gallery.module';
 import { SuperAdminAuthModule } from './admin/super-admin-auth/super-admin-auth.module';
 import { PlatformSettingsModule } from './admin/platform-settings/platform-settings.module';
+import { GlobalGalleryModule } from './admin/global-gallery/global-gallery.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -79,6 +80,7 @@ import { PlatformSettingsModule } from './admin/platform-settings/platform-setti
     GalleryModule,
     SuperAdminAuthModule,
     PlatformSettingsModule,
+    GlobalGalleryModule,
   ],
   controllers: [AppController, SimpananController],
   providers: [AppService, SimpananService, EmailService],
