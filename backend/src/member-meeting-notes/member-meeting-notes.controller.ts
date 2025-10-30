@@ -11,6 +11,11 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  UseInterceptors, // <-- TAMBAHKAN
+  UploadedFile, // <-- TAMBAHKAN
+  ParseFilePipe, // <-- TAMBAHKAN
+  MaxFileSizeValidator, // <-- TAMBAHKAN
+  FileTypeValidator,
 } from '@nestjs/common';
 import { MemberMeetingNotesService } from './member-meeting-notes.service';
 import { CreateMemberMeetingNoteDto } from './dto/create-member-meeting-note.dto';
@@ -21,14 +26,21 @@ import {
   ApiOperation,
   ApiParam,
   ApiTags,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth/jwt-auth.guard'; // Sesuaikan path
 import { RolesGuard } from 'src/auth/guards/roles.guard'; // Sesuaikan path
 import { Roles } from 'src/auth/decorators/roles.decorator'; // Sesuaikan path
 import { Role } from 'src/auth/enums/role.enum'; // Sesuaikan path
+import { FileInterceptor } from '@nestjs/platform-express';
 // Import GetUser dan JwtPayloadDto jika diperlukan filter Anggota nanti
 // import { GetUser } from 'src/auth/get-user.decorator';
 // import { JwtPayloadDto } from 'src/auth/dto/jwt-payload.dto';
+
+const MAX_FILE_SIZE_MB = 2;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const ALLOWED_FILE_TYPES =
+  /(pdf|jpeg|png|webp|msword|wordprocessingml|ms-excel|spreadsheetml)/;
 
 @ApiTags('Member Meeting Notes (Buku 07)') // Tag Swagger
 @ApiBearerAuth() // Membutuhkan token
@@ -83,5 +95,36 @@ export class MemberMeetingNotesController {
   @ApiParam({ name: 'id', description: 'ID Notulen (UUID)', type: String })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.memberMeetingNotesService.remove(id);
+  }
+  @Post(':id/document') // Endpoint baru: POST /member-meeting-notes/:id/document
+  @Roles(Role.Pengurus)
+  @UseInterceptors(FileInterceptor('file')) // Menangkap file dari key 'file'
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Upload/Ganti dokumen notulen (Hanya Pengurus)',
+  })
+  @ApiParam({ name: 'id', description: 'ID Notulen (UUID)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
+  updateDocument(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile(
+      // Validasi file di sini
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: MAX_FILE_SIZE_BYTES }),
+          new FileTypeValidator({ fileType: ALLOWED_FILE_TYPES }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    // Panggil service yang baru kita buat
+    return this.memberMeetingNotesService.updateDocument(id, file);
   }
 }

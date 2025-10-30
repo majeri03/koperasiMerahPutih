@@ -1,5 +1,11 @@
 // src/official-recommendation/official-recommendation.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Inject,
+  Scope,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { CreateOfficialRecommendationDto } from './dto/create-official-recommendation.dto';
 import { UpdateOfficialRecommendationDto } from './dto/update-official-recommendation.dto';
 import { RespondOfficialRecommendationDto } from './dto/respond-official-recommendation.dto'; // <-- Impor DTO Respond
@@ -10,10 +16,16 @@ import {
   PrismaClient,
 } from '@prisma/client';
 import { JwtPayloadDto } from 'src/auth/dto/jwt-payload.dto'; // <-- Impor DTO User
-
-@Injectable()
+import { UploadsService } from 'src/uploads/uploads.service'; // <-- TAMBAHKAN
+import { REQUEST } from '@nestjs/core'; // <-- TAMBAHKAN
+import type { Request } from 'express';
+@Injectable({ scope: Scope.REQUEST })
 export class OfficialRecommendationService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private uploadsService: UploadsService,
+    @Inject(REQUEST) private request: Request,
+  ) {}
 
   /**
    * Membuat (mencatat) anjuran baru dari pejabat.
@@ -185,6 +197,60 @@ export class OfficialRecommendationService {
       }
       console.error(`Gagal menghapus anjuran pejabat ${id}:`, error);
       throw new Error('Gagal menghapus data anjuran pejabat.');
+    }
+  }
+  /**
+   * (Pengurus) Mengunggah atau memperbarui file dokumen anjuran.
+   */
+  async updateDocument(
+    id: string,
+    file: Express.Multer.File,
+  ): Promise<OfficialRecommendation> {
+    const prismaTenant: PrismaClient = await this.prisma.getTenantClient();
+    const tenantId = this.request.tenantId;
+
+    if (!tenantId) {
+      throw new InternalServerErrorException(
+        'Tenant ID tidak ditemukan untuk upload dokumen anjuran.',
+      );
+    }
+
+    // 1. Pastikan anjuran pejabat ada & ambil URL lama (jika ada)
+    const currentRecommendation = await this.findOne(id);
+    const oldDocumentUrl = currentRecommendation.documentUrl;
+
+    // 2. Tentukan folder path
+    const folderPath = `tenants/${tenantId}/official-recommendations/${id}`;
+
+    try {
+      // 3. Upload file baru
+      const { url } = await this.uploadsService.uploadFile(file, folderPath);
+
+      // 4. Update URL di database
+      const updatedRecommendation =
+        await prismaTenant.officialRecommendation.update({
+          where: { id: id },
+          data: { documentUrl: url },
+        });
+
+      // 5. Hapus file lama SETELAH upload & update DB sukses
+      if (oldDocumentUrl && oldDocumentUrl !== url) {
+        await this.uploadsService.deleteFile(oldDocumentUrl).catch((err) => {
+          console.error(
+            `[OfficialRecService] Gagal hapus dokumen lama ${oldDocumentUrl} untuk ID ${id}:`,
+            err,
+          );
+          // Jangan gagalkan proses utama jika hapus file lama gagal
+        });
+      }
+
+      return updatedRecommendation;
+    } catch (error) {
+      console.error(`Gagal upload dokumen anjuran ${id}:`, error);
+      if (error instanceof NotFoundException) throw error; // Dari findOneById
+      throw new InternalServerErrorException(
+        'Gagal mengunggah dokumen anjuran.',
+      );
     }
   }
 }

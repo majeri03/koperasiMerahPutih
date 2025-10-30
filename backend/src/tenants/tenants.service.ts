@@ -747,7 +747,7 @@ export class TenantsService {
         "official_name" TEXT NOT NULL,                        -- Kolom 3
         "official_position_and_address" TEXT NOT NULL,      -- Kolom 4
         "recommendation" TEXT NOT NULL,                       -- Kolom 5
-        "official_signature_url" TEXT,                        -- Kolom 6
+        "document_url" TEXT,                        -- Kolom 6
         "response" TEXT,                                    -- Kolom 7
         "response_by_user_id" TEXT,                         -- Kolom 8
         "response_at" TIMESTAMP(3),

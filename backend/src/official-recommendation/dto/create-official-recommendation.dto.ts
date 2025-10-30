@@ -34,7 +34,7 @@ export class CreateOfficialRecommendationDto {
   })
   @IsUrl()
   @IsOptional()
-  officialSignatureUrl?: string;
+  documentUrl?: string;
 
   // Kolom 1, 2 (No Urut, Tanggal) akan di-handle database.
   // Kolom 7, 8 (Tanggapan) akan diisi via DTO lain.

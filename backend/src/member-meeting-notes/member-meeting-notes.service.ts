@@ -1,13 +1,25 @@
 // backend/src/member-meeting-notes/member-meeting-notes.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Inject, // <-- TAMBAHKAN
+  Scope, // <-- TAMBAHKAN
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { CreateMemberMeetingNoteDto } from './dto/create-member-meeting-note.dto';
 import { UpdateMemberMeetingNoteDto } from './dto/update-member-meeting-note.dto';
 import { PrismaService } from 'src/prisma/prisma.service'; // Impor PrismaService
 import { MemberMeetingNote, Prisma, PrismaClient } from '@prisma/client'; // Impor tipe
-
-@Injectable()
+import { UploadsService } from 'src/uploads/uploads.service'; // <-- TAMBAHKAN
+import { REQUEST } from '@nestjs/core'; // <-- TAMBAHKAN
+import type { Request } from 'express';
+@Injectable({ scope: Scope.REQUEST })
 export class MemberMeetingNotesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private uploadsService: UploadsService, // <-- TAMBAHKAN
+    @Inject(REQUEST) private request: Request,
+  ) {}
 
   async create(
     createDto: CreateMemberMeetingNoteDto,
@@ -114,6 +126,59 @@ export class MemberMeetingNotesService {
       }
       console.error(`Gagal menghapus notulen ${id}:`, error);
       throw new Error('Gagal menghapus data notulen rapat anggota.');
+    }
+  }
+  /**
+   * (Pengurus) Mengunggah atau memperbarui file dokumen notulen.
+   */
+  async updateDocument(
+    id: string,
+    file: Express.Multer.File,
+  ): Promise<MemberMeetingNote> {
+    const prismaTenant: PrismaClient = await this.prisma.getTenantClient();
+    const tenantId = this.request.tenantId;
+
+    if (!tenantId) {
+      throw new InternalServerErrorException(
+        'Tenant ID tidak ditemukan untuk upload dokumen notulen.',
+      );
+    }
+
+    // 1. Pastikan notulen ada & ambil URL lama (jika ada)
+    const currentNote = await this.findOne(id);
+    const oldDocumentUrl = currentNote.documentUrl;
+
+    // 2. Tentukan folder path
+    const folderPath = `tenants/${tenantId}/member-meeting-notes/${id}`;
+
+    try {
+      // 3. Upload file baru
+      const { url } = await this.uploadsService.uploadFile(file, folderPath);
+
+      // 4. Update URL di database
+      const updatedNote = await prismaTenant.memberMeetingNote.update({
+        where: { id: id },
+        data: { documentUrl: url },
+      });
+
+      // 5. Hapus file lama SETELAH upload & update DB sukses
+      if (oldDocumentUrl && oldDocumentUrl !== url) {
+        await this.uploadsService.deleteFile(oldDocumentUrl).catch((err) => {
+          console.error(
+            `[MemberMeetingNotesService] Gagal hapus dokumen lama ${oldDocumentUrl} untuk ID ${id}:`,
+            err,
+          );
+          // Jangan gagalkan proses utama jika hapus file lama gagal
+        });
+      }
+
+      return updatedNote;
+    } catch (error) {
+      console.error(`Gagal upload dokumen notulen ${id}:`, error);
+      if (error instanceof NotFoundException) throw error; // Dari findOneById
+      throw new InternalServerErrorException(
+        'Gagal mengunggah dokumen notulen.',
+      );
     }
   }
 }

@@ -11,6 +11,11 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  UseInterceptors, // <-- TAMBAHKAN
+  UploadedFile, // <-- TAMBAHKAN
+  ParseFilePipe, // <-- TAMBAHKAN
+  MaxFileSizeValidator, // <-- TAMBAHKAN
+  FileTypeValidator,
 } from '@nestjs/common';
 import { OfficialRecommendationService } from './official-recommendation.service';
 import { CreateOfficialRecommendationDto } from './dto/create-official-recommendation.dto';
@@ -22,6 +27,7 @@ import {
   ApiOperation,
   ApiParam,
   ApiTags,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -29,7 +35,11 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { GetUser } from 'src/auth/get-user.decorator';
 import { JwtPayloadDto } from 'src/auth/dto/jwt-payload.dto';
-
+import { FileInterceptor } from '@nestjs/platform-express';
+const MAX_FILE_SIZE_MB = 2;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const ALLOWED_FILE_TYPES =
+  /(pdf|jpeg|png|webp|msword|wordprocessingml|ms-excel|spreadsheetml)/;
 @ApiTags('Official Recommendations (Buku 14)') // Tag Swagger
 @ApiBearerAuth() // Semua endpoint di modul ini butuh token
 @UseGuards(JwtAuthGuard, RolesGuard) // Terapkan guard di level Controller
@@ -119,5 +129,37 @@ export class OfficialRecommendationController {
   @ApiParam({ name: 'id', description: 'ID Anjuran Pejabat (UUID)' })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.officialRecommendationService.remove(id);
+  }
+
+  @Post(':id/document') // Endpoint baru: POST /official-recommendation/:id/document
+  @Roles(Role.Pengurus)
+  @UseInterceptors(FileInterceptor('file')) // Menangkap file dari key 'file'
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Upload/Ganti dokumen anjuran (Hanya Pengurus)',
+  })
+  @ApiParam({ name: 'id', description: 'ID Anjuran Pejabat (UUID)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
+  updateDocument(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile(
+      // Validasi file di sini
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: MAX_FILE_SIZE_BYTES }),
+          new FileTypeValidator({ fileType: ALLOWED_FILE_TYPES }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    // Panggil service yang baru kita buat
+    return this.officialRecommendationService.updateDocument(id, file);
   }
 }

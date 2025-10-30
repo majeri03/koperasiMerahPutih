@@ -586,7 +586,7 @@ model OfficialRecommendation {
   officialName               String   @map("official_name") // Kolom 3: NAMA
   officialPositionAndAddress String   @map("official_position_and_address") // Kolom 4: JABATAN DAN ALAMAT
   recommendation             String   @map("recommendation") @db.Text // Kolom 5: ISI ANJURAN
-  officialSignatureUrl       String?  @map("official_signature_url") // Kolom 6: TANDA TANGAN (Pejabat)
+  documentUrl String? @map("document_url") // Kolom 6: TANDA TANGAN (Pejabat)
 
   // Kolom 7 & 8: Tanggapan Pengurus
   response         String?   @map("response") @db.Text // Kolom 7: TANGGAPAN PENGURUS
