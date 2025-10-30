@@ -1,12 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsDateString,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsUUID,
-  IsUrl,
-} from 'class-validator';
+import { IsDateString, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 export class CreateSupervisoryPositionDto {
   @ApiProperty({ example: 'Ketua Pengawas', description: 'Jabatan pengawas' })
@@ -27,20 +20,4 @@ export class CreateSupervisoryPositionDto {
   })
   @IsUUID()
   memberId: string;
-
-  @ApiProperty({
-    example: 'https://example.com/fingerprint-awas.jpg',
-    required: false,
-  })
-  @IsUrl()
-  @IsOptional()
-  fingerprintUrl?: string;
-
-  @ApiProperty({
-    example: 'https://example.com/signature-awas.jpg',
-    required: false,
-  })
-  @IsUrl()
-  @IsOptional()
-  signatureUrl?: string;
 }
