@@ -452,13 +452,14 @@ export class TenantsService {
      "tanggal_berhenti" TIMESTAMP(3),
      "alasan_berhenti" TEXT,
      "member_id" TEXT NOT NULL,
-     "fingerprint_url" TEXT,
-     "signature_url" TEXT,
+     "termination_approved_by_user_id" TEXT NULL,
+     "termination_approved_at" TIMESTAMP(3) NULL,
      "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
      "updated_at" TIMESTAMP(3) NOT NULL,
 
      CONSTRAINT "board_positions_pkey" PRIMARY KEY ("id"),
-     CONSTRAINT "board_positions_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "${schemaName}"."members"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+     CONSTRAINT "board_positions_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "${schemaName}"."members"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+     CONSTRAINT "board_positions_termination_approved_by_user_id_fkey" FOREIGN KEY ("termination_approved_by_user_id") REFERENCES "${schemaName}"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE
    );
  `);
     // Opsional: Tambahkan index jika diperlukan, misal pada member_id
