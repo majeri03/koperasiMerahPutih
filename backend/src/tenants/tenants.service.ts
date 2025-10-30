@@ -466,14 +466,12 @@ export class TenantsService {
     // await tx.$executeRawUnsafe(`CREATE INDEX "board_positions_member_id_idx" ON "${schemaName}"."board_positions"("member_id");`);
     await tx.$executeRawUnsafe(`
     CREATE TABLE "${schemaName}".supervisory_positions (
-     "id" TEXT NOT NULL,
+     "id" TEXT NOT NULL DEFAULT gen_random_uuid(),
      "jabatan" TEXT NOT NULL,
      "tanggal_diangkat" TIMESTAMP(3) NOT NULL,
      "tanggal_berhenti" TIMESTAMP(3),
      "alasan_berhenti" TEXT,
      "member_id" TEXT NOT NULL,
-     "fingerprint_url" TEXT,
-     "signature_url" TEXT,
      "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
      "updated_at" TIMESTAMP(3) NOT NULL,
 

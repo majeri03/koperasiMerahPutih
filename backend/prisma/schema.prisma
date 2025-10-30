@@ -80,19 +80,20 @@ model User {
   roleId                   Int                 @map("role_id")
   transaksiSimpananDicatat SimpananTransaksi[]
 
-  employeePengurusApprovals       Employee[]               @relation("EmployeePengurusApprovals")
-  employeeKetuaApprovals          Employee[]               @relation("EmployeeKetuaApprovals")
-  registrationsProcessed          MemberRegistration[]
-  memberSuggestionResponses       MemberSuggestion[]
-  supervisorySuggestionResponses  SupervisorySuggestion[]  @relation("SupervisorResponses")
-  officialRecommendationResponses OfficialRecommendation[] @relation("OfficialRecommendationResponses")
-  importantEventsRecorded         ImportantEvent[]         @relation("ImportantEventsRecorded")
-  passwordResetTokens             PasswordResetToken[]
-  articles                        Article[]
-  Member                          Member[]
-  approvedMembers           Member[] @relation("ApprovedByKetua")
-  approvedMemberTerminations Member[] @relation("TerminationApprovedByKetua")
-  approvedBoardPositionTerminations BoardPosition[] @relation("BoardPositionTerminatedBy")
+  employeePengurusApprovals         Employee[]               @relation("EmployeePengurusApprovals")
+  employeeKetuaApprovals            Employee[]               @relation("EmployeeKetuaApprovals")
+  registrationsProcessed            MemberRegistration[]
+  memberSuggestionResponses         MemberSuggestion[]
+  supervisorySuggestionResponses    SupervisorySuggestion[]  @relation("SupervisorResponses")
+  officialRecommendationResponses   OfficialRecommendation[] @relation("OfficialRecommendationResponses")
+  importantEventsRecorded           ImportantEvent[]         @relation("ImportantEventsRecorded")
+  passwordResetTokens               PasswordResetToken[]
+  articles                          Article[]
+  Member                            Member[]
+  approvedMembers                   Member[]                 @relation("ApprovedByKetua")
+  approvedMemberTerminations        Member[]                 @relation("TerminationApprovedByKetua")
+  approvedBoardPositionTerminations BoardPosition[]          @relation("BoardPositionTerminatedBy")
+
   @@map("users")
 }
 
@@ -180,7 +181,7 @@ model MemberRegistration {
   dateOfBirth    DateTime @map("date_of_birth")
   occupation     String
   address        String
-  signatureData String? @map("signature_data")
+  signatureData  String?  @map("signature_data")
   // (Opsional) Dokumen pendukung
   // ktpScanUrl     String?            @map("ktp_scan_url")
   // photoUrl       String?            @map("photo_url")
@@ -227,17 +228,17 @@ model Member {
   approvedByKetuaId String?   @map("approved_by_ketua_id")
   approvedAt        DateTime? @map("approved_at")
   approvedByKetua   User?     @relation("ApprovedByKetua", fields: [approvedByKetuaId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  
-  terminationApprovedByKetuaId String? @map("termination_approved_by_ketua_id")
+
+  terminationApprovedByKetuaId String?   @map("termination_approved_by_ketua_id")
   terminationApprovedAt        DateTime? @map("termination_approved_at")
   terminationApprovedByKetua   User?     @relation("TerminationApprovedByKetua", fields: [terminationApprovedByKetuaId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  user              User?     @relation(fields: [id], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user                   User?                   @relation(fields: [id], references: [id])
   boardPositions         BoardPosition[]
-  supervisoryPositions   SupervisoryPosition[]
+  supervisoryPositions   SupervisoryPosition[]   @relation("MemberPositions")
   simpananTransaksi      SimpananTransaksi[]
   simpananSaldo          SimpananSaldo?
   loans                  Loan[]
@@ -284,12 +285,8 @@ model SupervisoryPosition {
   alasanBerhenti  String?   @map("alasan_berhenti")
 
   // Relasi ke Anggota (Member)
-  member   Member @relation(fields: [memberId], references: [id])
+  member   Member @relation("MemberPositions", fields: [memberId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   memberId String @map("member_id")
-
-  // Opsional: Jika ingin menyimpan URL scan/foto
-  fingerprintUrl String? @map("fingerprint_url")
-  signatureUrl   String? @map("signature_url")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

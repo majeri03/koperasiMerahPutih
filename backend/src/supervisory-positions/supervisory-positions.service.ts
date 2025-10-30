@@ -33,7 +33,29 @@ export class SupervisoryPositionsService {
             `Anggota dengan ID ${memberId} tidak ditemukan.`,
           );
         }
-
+        const existingSupervisoryPosition =
+          await tx.supervisoryPosition.findFirst({
+            where: {
+              memberId: memberId,
+              tanggalBerhenti: null, // Cek Pengawas aktif
+            },
+          });
+        if (existingSupervisoryPosition) {
+          throw new ConflictException(
+            `Anggota ini sudah memegang jabatan Pengawas aktif (${existingSupervisoryPosition.jabatan}). Selesaikan jabatan lama terlebih dahulu.`,
+          );
+        }
+        const activeBoardPosition = await tx.boardPosition.findFirst({
+          where: {
+            memberId: memberId,
+            tanggalBerhenti: null, // Cek apakah dia Pengurus aktif
+          },
+        });
+        if (activeBoardPosition) {
+          throw new ConflictException(
+            'Anggota ini sudah memegang jabatan sebagai Pengurus aktif. Tidak boleh rangkap jabatan.',
+          );
+        }
         // 2. Validasi User (Akun Login)
         const userExists = await tx.user.findUnique({
           where: { id: memberId }, // ID User = ID Member
@@ -198,15 +220,7 @@ export class SupervisoryPositionsService {
         }
         const memberId = position.memberId;
 
-        const anggotaRole = await tx.role.findUnique({
-          where: { name: Role.Anggota },
-        });
-        if (!anggotaRole) {
-          throw new InternalServerErrorException(
-            "KRITIS: Role 'Anggota' tidak ditemukan.",
-          );
-        }
-
+        // 2. Update SupervisoryPosition (Soft Delete)
         const updatedSupervisoryPos = await tx.supervisoryPosition.update({
           where: { id },
           data: {
@@ -215,12 +229,49 @@ export class SupervisoryPositionsService {
           },
         });
 
-        await tx.user.update({
-          where: { id: memberId },
-          data: {
-            roleId: anggotaRole.id,
+        // 3. (LOGIKA BARU) Cek apakah user masih punya jabatan lain?
+        const otherBoardPositions = await tx.boardPosition.count({
+          where: {
+            memberId: memberId,
+            tanggalBerhenti: null, // Jabatan pengurus lain yang masih aktif
           },
         });
+
+        const otherSupervisoryPositions = await tx.supervisoryPosition.count({
+          where: {
+            memberId: memberId,
+            tanggalBerhenti: null, // Jabatan pengawas lain (selain yg ini) yg masih aktif
+            id: { not: id }, // Kecualikan jabatan yang baru saja di-nonaktifkan
+          },
+        });
+
+        // 4. Jika SUDAH TIDAK punya jabatan lain, demote ke Anggota
+        if (otherBoardPositions === 0 && otherSupervisoryPositions === 0) {
+          const anggotaRole = await tx.role.findUnique({
+            where: { name: Role.Anggota },
+          });
+          if (!anggotaRole) {
+            throw new InternalServerErrorException(
+              "KRITIS: Role 'Anggota' tidak ditemukan.",
+            );
+          }
+
+          // Update User Role menjadi Anggota
+          await tx.user.update({
+            where: { id: memberId },
+            data: {
+              roleId: anggotaRole.id,
+            },
+          });
+
+          console.log(
+            `[SupervisoryPositionsService] User ${memberId} didemote ke Anggota.`,
+          );
+        } else {
+          console.log(
+            `[SupervisoryPositionsService] User ${memberId} tidak didemote (masih punya ${otherBoardPositions} jabatan pengurus / ${otherSupervisoryPositions} jabatan pengawas aktif).`,
+          );
+        }
 
         return updatedSupervisoryPos;
       });
