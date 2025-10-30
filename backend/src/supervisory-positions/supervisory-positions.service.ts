@@ -33,7 +33,29 @@ export class SupervisoryPositionsService {
             `Anggota dengan ID ${memberId} tidak ditemukan.`,
           );
         }
-
+        const existingSupervisoryPosition =
+          await tx.supervisoryPosition.findFirst({
+            where: {
+              memberId: memberId,
+              tanggalBerhenti: null, // Cek Pengawas aktif
+            },
+          });
+        if (existingSupervisoryPosition) {
+          throw new ConflictException(
+            `Anggota ini sudah memegang jabatan Pengawas aktif (${existingSupervisoryPosition.jabatan}). Selesaikan jabatan lama terlebih dahulu.`,
+          );
+        }
+        const activeBoardPosition = await tx.boardPosition.findFirst({
+          where: {
+            memberId: memberId,
+            tanggalBerhenti: null, // Cek apakah dia Pengurus aktif
+          },
+        });
+        if (activeBoardPosition) {
+          throw new ConflictException(
+            'Anggota ini sudah memegang jabatan sebagai Pengurus aktif. Tidak boleh rangkap jabatan.',
+          );
+        }
         // 2. Validasi User (Akun Login)
         const userExists = await tx.user.findUnique({
           where: { id: memberId }, // ID User = ID Member

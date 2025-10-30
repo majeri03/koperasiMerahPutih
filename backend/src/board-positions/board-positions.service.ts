@@ -33,6 +33,29 @@ export class BoardPositionsService {
             `Anggota dengan ID ${memberId} tidak ditemukan.`,
           );
         }
+        const existingBoardPosition = await tx.boardPosition.findFirst({
+          where: {
+            memberId: memberId,
+            tanggalBerhenti: null, // Cek Pengurus aktif
+          },
+        });
+        if (existingBoardPosition) {
+          throw new ConflictException(
+            `Anggota ini sudah memegang jabatan Pengurus aktif (${existingBoardPosition.jabatan}). Selesaikan jabatan lama terlebih dahulu.`,
+          );
+        }
+        const activeSupervisoryPosition =
+          await tx.supervisoryPosition.findFirst({
+            where: {
+              memberId: memberId,
+              tanggalBerhenti: null, // Cek apakah dia Pengawas aktif
+            },
+          });
+        if (activeSupervisoryPosition) {
+          throw new ConflictException(
+            'Anggota ini sudah memegang jabatan sebagai Pengawas aktif. Tidak boleh rangkap jabatan.',
+          );
+        }
 
         // 2. Validasi User (Akun Login)
         // Kita asumsikan anggota HARUS punya akun User untuk jadi pengurus
