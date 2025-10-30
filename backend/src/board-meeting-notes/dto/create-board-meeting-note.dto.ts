@@ -6,7 +6,6 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUrl,
   Min,
 } from 'class-validator';
 
@@ -68,13 +67,4 @@ export class CreateBoardMeetingNoteDto {
   @IsString()
   @IsNotEmpty()
   agendaAndDecision: string;
-
-  @ApiProperty({
-    example: 'https://example.com/signature.png',
-    description: 'URL gambar tanda tangan (jika ada)',
-    required: false,
-  })
-  @IsUrl()
-  @IsOptional()
-  signatureUrl?: string;
 }

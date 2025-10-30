@@ -456,7 +456,6 @@ model BoardMeetingNote {
   leader            String
   attendees         String?
   agendaAndDecision String   @map("agenda_and_decision") @db.Text
-  signatureUrl      String?  @map("signature_url")
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
@@ -474,7 +473,7 @@ model SupervisoryMeetingNote {
   leader             String
   attendees          String?
   agendaAndDecision  String   @map("agenda_and_decision") @db.Text
-  signatureUrl       String?  @map("signature_url")
+  documentUrl        String?  @map("document_url")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

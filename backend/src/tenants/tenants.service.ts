@@ -628,7 +628,6 @@ export class TenantsService {
       "leader" TEXT NOT NULL,                      -- Kolom 6
       "attendees" TEXT,                            -- Kolom 7 (Opsional)
       "agenda_and_decision" TEXT NOT NULL,         -- Kolom 8
-      "signature_url" TEXT,                        -- Kolom 9 (Opsional)
       "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -647,7 +646,7 @@ export class TenantsService {
       "leader" TEXT NOT NULL,                     
       "attendees" TEXT,                           
       "agenda_and_decision" TEXT NOT NULL,         
-      "signature_url" TEXT,                       
+      "document_url" TEXT,                       
       "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updated_at" TIMESTAMP(3) NOT NULL,
 

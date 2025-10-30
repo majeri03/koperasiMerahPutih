@@ -71,11 +71,11 @@ export class CreateSupervisoryMeetingNoteDto {
   agendaAndDecision: string; // Kolom 8
 
   @ApiProperty({
-    example: 'https://example.com/signature-pengawas.png',
-    description: 'URL gambar tanda tangan (jika ada)',
+    example: 'https://example.com/scan-notulen-pengawas.pdf',
+    description: 'URL dokumen/scan notulen (jika ada)',
     required: false,
   })
   @IsUrl()
   @IsOptional()
-  signatureUrl?: string; // Kolom 9 (Opsional)
+  documentUrl?: string; // Kolom 9 (Opsional)
 }
