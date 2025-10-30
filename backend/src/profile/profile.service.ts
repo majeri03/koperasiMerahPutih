@@ -19,6 +19,10 @@ export class ProfileService {
     // 1. Ambil data utama (data pribadi) dari tabel Members
     const member = await prismaTenant.member.findUnique({
       where: { id: userId },
+      include: {
+        approvedByKetua: { select: { fullName: true } },
+        terminationApprovedByKetua: { select: { fullName: true } },
+      },
     });
 
     if (!member) {
@@ -62,7 +66,7 @@ export class ProfileService {
     updateDto: UpdateMyProfileDto,
   ): Promise<Member> {
     const prismaTenant: PrismaClient = await this.prisma.getTenantClient();
-    const { fullName, phoneNumber, ...memberData } = updateDto;
+    const { fullName, phoneNumber, signatureData, ...memberData } = updateDto;
 
     // Kita gunakan $transaction untuk menjamin konsistensi
     const updatedMember = await prismaTenant.$transaction(async (tx) => {
@@ -75,6 +79,9 @@ export class ProfileService {
           ...(fullName && { fullName }), // update fullName jika ada
           ...(phoneNumber !== undefined && {
             phoneNumber: phoneNumber || null,
+          }),
+          ...(signatureData !== undefined && {
+            signatureData: signatureData || null,
           }),
         },
       });

@@ -37,19 +37,19 @@ model Tenant {
 }
 
 model SuperAdmin {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  passwordHash  String    @map("password_hash")
-  hashedRefreshToken String? @map("hashed_refresh_token")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  id                 String   @id @default(uuid())
+  email              String   @unique
+  passwordHash       String   @map("password_hash")
+  hashedRefreshToken String?  @map("hashed_refresh_token")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
   @@map("super_admins")
 }
 
 model PlatformSetting {
-  key       String   @id 
-  value     String? 
+  key       String   @id
+  value     String?
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("platform_settings")
@@ -64,7 +64,6 @@ model Role {
   users User[]
 
   @@map("roles")
-  
 }
 
 model User {
@@ -77,19 +76,22 @@ model User {
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
-  role                     Role                @relation(fields: [roleId], references: [id]) 
+  role                     Role                @relation(fields: [roleId], references: [id])
   roleId                   Int                 @map("role_id")
-  transaksiSimpananDicatat SimpananTransaksi[] 
-  
-  employeePengurusApprovals Employee[] @relation("EmployeePengurusApprovals") 
-  employeeKetuaApprovals    Employee[] @relation("EmployeeKetuaApprovals")
-  registrationsProcessed MemberRegistration[]
-  memberSuggestionResponses MemberSuggestion[]
-  supervisorySuggestionResponses SupervisorySuggestion[] @relation("SupervisorResponses")
+  transaksiSimpananDicatat SimpananTransaksi[]
+
+  employeePengurusApprovals       Employee[]               @relation("EmployeePengurusApprovals")
+  employeeKetuaApprovals          Employee[]               @relation("EmployeeKetuaApprovals")
+  registrationsProcessed          MemberRegistration[]
+  memberSuggestionResponses       MemberSuggestion[]
+  supervisorySuggestionResponses  SupervisorySuggestion[]  @relation("SupervisorResponses")
   officialRecommendationResponses OfficialRecommendation[] @relation("OfficialRecommendationResponses")
-  importantEventsRecorded         ImportantEvent[] @relation("ImportantEventsRecorded")
-  passwordResetTokens PasswordResetToken[]
-  articles Article[]
+  importantEventsRecorded         ImportantEvent[]         @relation("ImportantEventsRecorded")
+  passwordResetTokens             PasswordResetToken[]
+  articles                        Article[]
+  Member                          Member[]
+  approvedMembers           Member[] @relation("ApprovedByKetua")
+  approvedMemberTerminations Member[] @relation("TerminationApprovedByKetua")
   @@map("users")
 }
 
@@ -118,34 +120,34 @@ model TenantRegistration {
   id String @id @default(uuid())
 
   // === Informasi Koperasi ===
-  cooperativeName String    @map("cooperative_name")
-  skAhuKoperasi   String?   @map("sk_ahu_koperasi") // BARU
+  cooperativeName String  @map("cooperative_name")
+  skAhuKoperasi   String? @map("sk_ahu_koperasi") // BARU
   province        String
   city            String
   district        String
   village         String
-  alamatLengkap   String    @map("alamat_lengkap") @db.Text // BARU
-  petaLokasi      String?   @map("peta_lokasi") // BARU
+  alamatLengkap   String  @map("alamat_lengkap") @db.Text // BARU
+  petaLokasi      String? @map("peta_lokasi") // BARU
 
   // === Informasi PIC (Person in Charge) ===
   // Ini adalah data yang akan dipakai untuk membuat Member pertama
-  picFullName     String    @map("pic_full_name") // Ganti dari fullName
-  picNik          String    @unique @map("pic_nik") // Ganti dari nik
-  picGender       Gender    @map("pic_gender") // Ganti dari gender
-  picPlaceOfBirth String    @map("pic_place_of_birth") // BARU
-  picDateOfBirth  DateTime  @map("pic_date_of_birth") // BARU
-  picOccupation   String    @map("pic_occupation") // BARU
-  picAddress      String    @map("pic_address") @db.Text // BARU
-  picPhoneNumber  String    @unique @map("pic_phone_number") // Ganti dari phoneNumber
-  email           String    @unique // Email Koperasi (untuk login)
-  hashedPassword  String    @map("hashed_password")
-  
+  picFullName     String   @map("pic_full_name") // Ganti dari fullName
+  picNik          String   @unique @map("pic_nik") // Ganti dari nik
+  picGender       Gender   @map("pic_gender") // Ganti dari gender
+  picPlaceOfBirth String   @map("pic_place_of_birth") // BARU
+  picDateOfBirth  DateTime @map("pic_date_of_birth") // BARU
+  picOccupation   String   @map("pic_occupation") // BARU
+  picAddress      String   @map("pic_address") @db.Text // BARU
+  picPhoneNumber  String   @unique @map("pic_phone_number") // Ganti dari phoneNumber
+  email           String   @unique // Email Koperasi (untuk login)
+  hashedPassword  String   @map("hashed_password")
+
   // === Dokumen Koperasi (URL) ===
   dokPengesahanPendirian String? @map("dok_pengesahan_pendirian") // BARU
   dokDaftarUmum          String? @map("dok_daftar_umum") // BARU
   dokAkteNotaris         String? @map("dok_akte_notaris") // BARU
   dokNpwpKoperasi        String? @map("dok_npwp_koperasi") // Ganti dari npwpDocumentUrl
-  
+
   tenant   Tenant @relation(fields: [tenantId], references: [id])
   tenantId String @unique @map("tenant_id")
 
@@ -167,17 +169,17 @@ model MemberRegistration {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Data dari form pendaftaran
-  nik            String             @unique // Unik per tenant
-  fullName       String             @map("full_name")
-  gender         Gender             // Gunakan enum Gender yang sudah ada
-  email          String             @unique // Unik per tenant
-  phoneNumber    String             @map("phone_number")
-  hashedPassword String             @map("hashed_password") 
-  placeOfBirth   String             @map("place_of_birth") 
-  dateOfBirth    DateTime           @map("date_of_birth")  
-  occupation     String                                 
+  nik            String   @unique // Unik per tenant
+  fullName       String   @map("full_name")
+  gender         Gender // Gunakan enum Gender yang sudah ada
+  email          String   @unique // Unik per tenant
+  phoneNumber    String   @map("phone_number")
+  hashedPassword String   @map("hashed_password")
+  placeOfBirth   String   @map("place_of_birth")
+  dateOfBirth    DateTime @map("date_of_birth")
+  occupation     String
   address        String
-
+  signatureData String? @map("signature_data")
   // (Opsional) Dokumen pendukung
   // ktpScanUrl     String?            @map("ktp_scan_url")
   // photoUrl       String?            @map("photo_url")
@@ -186,10 +188,10 @@ model MemberRegistration {
   status RegistrationStatus @default(PENDING)
 
   // (Opsional) Siapa yang approve/reject dan kapan
-  processedBy   User?   @relation(fields: [processedById], references: [id])
-  processedById String? @map("processed_by_id")
-  processedAt   DateTime? @map("processed_at")
-  rejectionReason String? @map("rejection_reason") // Alasan jika ditolak
+  processedBy     User?     @relation(fields: [processedById], references: [id])
+  processedById   String?   @map("processed_by_id")
+  processedAt     DateTime? @map("processed_at")
+  rejectionReason String?   @map("rejection_reason") // Alasan jika ditolak
 
   @@map("member_registrations")
 }
@@ -214,41 +216,52 @@ model Member {
   status   String   @default("ACTIVE") // Misal: ACTIVE, RESIGNED, EXPELLED
 
   // Berkas (akan menyimpan URL dari cloud storage)
-  fingerprintUrl String? @map("fingerprint_url") // Cap Ibu Jari
-  signatureUrl   String? @map("signature_url") // Tanda Tangan
+  signatureData String? @map("signature_data") // Tanda Tangan
 
   // Informasi Berhenti (opsional)
   resignationRequestDate DateTime? @map("resignation_request_date")
   terminationDate        DateTime? @map("termination_date")
   terminationReason      String?   @map("termination_reason")
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  approvedByKetuaId String?   @map("approved_by_ketua_id")
+  approvedAt        DateTime? @map("approved_at")
+  approvedByKetua   User?     @relation("ApprovedByKetua", fields: [approvedByKetuaId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  
+  terminationApprovedByKetuaId String? @map("termination_approved_by_ketua_id")
+  terminationApprovedAt        DateTime? @map("termination_approved_at")
+  terminationApprovedByKetua   User?     @relation("TerminationApprovedByKetua", fields: [terminationApprovedByKetuaId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
-  boardPositions       BoardPosition[] 
-  supervisoryPositions SupervisoryPosition[] 
-  simpananTransaksi    SimpananTransaksi[] 
-  simpananSaldo        SimpananSaldo? 
-  loans                Loan[]
-  memberSuggestions MemberSuggestion[]
+  user              User?     @relation(fields: [id], references: [id])
+  boardPositions         BoardPosition[]
+  supervisoryPositions   SupervisoryPosition[]
+  simpananTransaksi      SimpananTransaksi[]
+  simpananSaldo          SimpananSaldo?
+  loans                  Loan[]
+  memberSuggestions      MemberSuggestion[]
   supervisorySuggestions SupervisorySuggestion[] @relation("SupervisorSuggestions")
+
   @@map("members")
 }
+
 enum JabatanPengurus {
   Ketua
   Sekretaris
   Bendahara
 }
+
 // Daftar Pengurus (Modul 2)
 model BoardPosition {
-  id              String    @id @default(uuid())
+  id              String          @id @default(uuid())
   jabatan         JabatanPengurus
-  tanggalDiangkat DateTime  @map("tanggal_diangkat")
-  tanggalBerhenti DateTime? @map("tanggal_berhenti") // Opsional, null jika masih aktif
-  alasanBerhenti  String?   @map("alasan_berhenti") // Opsional
+  tanggalDiangkat DateTime        @map("tanggal_diangkat")
+  tanggalBerhenti DateTime?       @map("tanggal_berhenti") // Opsional, null jika masih aktif
+  alasanBerhenti  String?         @map("alasan_berhenti") // Opsional
 
   // Relasi ke Anggota (Member)
-  member   Member @relation(fields: [memberId], references: [id]) 
+  member   Member @relation(fields: [memberId], references: [id])
   memberId String @map("member_id")
 
   fingerprintUrl String? @map("fingerprint_url")
@@ -269,7 +282,7 @@ model SupervisoryPosition {
   alasanBerhenti  String?   @map("alasan_berhenti")
 
   // Relasi ke Anggota (Member)
-  member   Member @relation(fields: [memberId], references: [id]) 
+  member   Member @relation(fields: [memberId], references: [id])
   memberId String @map("member_id")
 
   // Opsional: Jika ingin menyimpan URL scan/foto
@@ -304,10 +317,10 @@ model SimpananTransaksi {
   tipe       TipeTransaksiSimpanan
   jumlah     Float
 
-  member   Member @relation(fields: [memberId], references: [id]) 
+  member   Member @relation(fields: [memberId], references: [id])
   memberId String @map("member_id")
 
-  dicatatOleh User?   @relation(fields: [userId], references: [id]) 
+  dicatatOleh User?   @relation(fields: [userId], references: [id])
   userId      String? @map("user_id") // ID Pengurus
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -322,7 +335,7 @@ model SimpananSaldo {
   saldoWajib    Float  @default(0) @map("saldo_wajib")
   saldoSukarela Float  @default(0) @map("saldo_sukarela")
 
-  member   Member @relation(fields: [memberId], references: [id]) 
+  member   Member @relation(fields: [memberId], references: [id])
   memberId String @unique @map("member_id") // Setiap anggota hanya punya 1 record saldo
 
   lastUpdatedAt DateTime @updatedAt @map("last_updated_at")
@@ -360,7 +373,7 @@ model Loan {
 model LoanInstallment {
   id     String @id @default(uuid())
   loanId String @map("loan_id")
-  loan   Loan   @relation(fields: [loanId], references: [id]) 
+  loan   Loan   @relation(fields: [loanId], references: [id])
 
   installmentNumber Int       @map("installment_number") // Angsuran ke-berapa
   dueDate           DateTime  @map("due_date") // Tanggal jatuh tempo angsuran ini
@@ -449,7 +462,6 @@ model BoardMeetingNote {
   updatedAt         DateTime @updatedAt @map("updated_at")
 
   @@map("board_meeting_notes")
- 
 }
 
 // Notulen Rapat Pengawas (Modul 9)
@@ -504,14 +516,14 @@ model Employee {
 
 // Buku Tamu (Modul 11)
 model GuestBook {
-  id          String   @id @default(uuid())
-  entryNumber Int      @default(autoincrement()) @map("entry_number")
-  date        DateTime @default(now()) @map("date")              
-  guestName   String   @map("guest_name")                           
-  origin      String   @map("origin")                              
-  meetWith    String?  @map("meet_with")                             
-  purpose     String   @map("purpose")                               
-  signatureUrl String? @map("signature_url")                       
+  id           String   @id @default(uuid())
+  entryNumber  Int      @default(autoincrement()) @map("entry_number")
+  date         DateTime @default(now()) @map("date")
+  guestName    String   @map("guest_name")
+  origin       String   @map("origin")
+  meetWith     String?  @map("meet_with")
+  purpose      String   @map("purpose")
+  signatureUrl String?  @map("signature_url")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -521,90 +533,89 @@ model GuestBook {
 
 // Buku Saran (Modul 12)
 model MemberSuggestion {
-  id                String   @id @default(uuid())
-  suggestionNumber  Int      @default(autoincrement()) @map("suggestion_number") 
-  date              DateTime @default(now()) @map("date")                
-  
+  id               String   @id @default(uuid())
+  suggestionNumber Int      @default(autoincrement()) @map("suggestion_number")
+  date             DateTime @default(now()) @map("date")
 
-  member            Member   @relation(fields: [memberId], references: [id])
-  memberId          String   @map("member_id")
+  member   Member @relation(fields: [memberId], references: [id])
+  memberId String @map("member_id")
 
-  suggestion        String   @map("suggestion") @db.Text                   
-  signatureUrl      String?  @map("signature_url")                         
+  suggestion   String  @map("suggestion") @db.Text
+  signatureUrl String? @map("signature_url")
 
-  response          String?  @map("response") @db.Text                      
-  responseByUser    User?    @relation(fields: [responseByUserId], references: [id])
-  responseByUserId  String?  @map("response_by_user_id")
-  responseAt        DateTime? @map("response_at")
+  response         String?   @map("response") @db.Text
+  responseByUser   User?     @relation(fields: [responseByUserId], references: [id])
+  responseByUserId String?   @map("response_by_user_id")
+  responseAt       DateTime? @map("response_at")
 
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("member_suggestions")
 }
 
 // Saran Pengawas (Modul 13)
 model SupervisorySuggestion {
-  id                String   @id @default(uuid())
-  suggestionNumber  Int      @default(autoincrement()) @map("suggestion_number") // Kolom 1: NO URUT
-  date              DateTime @default(now()) @map("date")                 // Kolom 2: TANGGAL
-  
-  // Kolom 3 & 5 (Nama & TTD Pengawas) - Relasi ke Member
-  supervisorMember   Member   @relation("SupervisorSuggestions", fields: [supervisorMemberId], references: [id])
-  supervisorMemberId String   @map("supervisor_member_id")
+  id               String   @id @default(uuid())
+  suggestionNumber Int      @default(autoincrement()) @map("suggestion_number") // Kolom 1: NO URUT
+  date             DateTime @default(now()) @map("date") // Kolom 2: TANGGAL
 
-  suggestion        String   @map("suggestion") @db.Text                   // Kolom 4: ISI SARAN
-  supervisorSignatureUrl String? @map("supervisor_signature_url")            // Kolom 5: TANDA TANGAN PENGAWAS (Opsional)
+  // Kolom 3 & 5 (Nama & TTD Pengawas) - Relasi ke Member
+  supervisorMember   Member @relation("SupervisorSuggestions", fields: [supervisorMemberId], references: [id])
+  supervisorMemberId String @map("supervisor_member_id")
+
+  suggestion             String  @map("suggestion") @db.Text // Kolom 4: ISI SARAN
+  supervisorSignatureUrl String? @map("supervisor_signature_url") // Kolom 5: TANDA TANGAN PENGAWAS (Opsional)
 
   // Kolom 6 & 7 (Tanggapan & TTD Pengurus) - Relasi ke User
-  response          String?  @map("response") @db.Text                      // Kolom 7: TANGGAPAN PENGURUS
-  responseByUser    User?    @relation("SupervisorResponses", fields: [responseByUserId], references: [id]) // Kolom 6
-  responseByUserId  String?  @map("response_by_user_id")
-  responseAt        DateTime? @map("response_at")
+  response         String?   @map("response") @db.Text // Kolom 7: TANGGAPAN PENGURUS
+  responseByUser   User?     @relation("SupervisorResponses", fields: [responseByUserId], references: [id]) // Kolom 6
+  responseByUserId String?   @map("response_by_user_id")
+  responseAt       DateTime? @map("response_at")
 
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("supervisory_suggestions")
 }
 
 // Buku Anjuran Pejabat (Modul 14)
 model OfficialRecommendation {
-  id                String   @id @default(uuid())
-  entryNumber       Int      @default(autoincrement()) @map("entry_number") // Kolom 1: NO URUT
-  date              DateTime @default(now()) @map("date")                 // Kolom 2: TANGGAL
-  officialName      String   @map("official_name")                        // Kolom 3: NAMA
-  officialPositionAndAddress String @map("official_position_and_address") // Kolom 4: JABATAN DAN ALAMAT
-  recommendation    String   @map("recommendation") @db.Text            // Kolom 5: ISI ANJURAN
-  officialSignatureUrl String? @map("official_signature_url")             // Kolom 6: TANDA TANGAN (Pejabat)
+  id                         String   @id @default(uuid())
+  entryNumber                Int      @default(autoincrement()) @map("entry_number") // Kolom 1: NO URUT
+  date                       DateTime @default(now()) @map("date") // Kolom 2: TANGGAL
+  officialName               String   @map("official_name") // Kolom 3: NAMA
+  officialPositionAndAddress String   @map("official_position_and_address") // Kolom 4: JABATAN DAN ALAMAT
+  recommendation             String   @map("recommendation") @db.Text // Kolom 5: ISI ANJURAN
+  officialSignatureUrl       String?  @map("official_signature_url") // Kolom 6: TANDA TANGAN (Pejabat)
 
   // Kolom 7 & 8: Tanggapan Pengurus
-  response          String?  @map("response") @db.Text                      // Kolom 7: TANGGAPAN PENGURUS
-  responseByUser    User?    @relation("OfficialRecommendationResponses", fields: [responseByUserId], references: [id]) // Kolom 8: TANDA TANGAN PENGURUS
-  responseByUserId  String?  @map("response_by_user_id")
-  responseAt        DateTime? @map("response_at")
+  response         String?   @map("response") @db.Text // Kolom 7: TANGGAPAN PENGURUS
+  responseByUser   User?     @relation("OfficialRecommendationResponses", fields: [responseByUserId], references: [id]) // Kolom 8: TANDA TANGAN PENGURUS
+  responseByUserId String?   @map("response_by_user_id")
+  responseAt       DateTime? @map("response_at")
 
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("official_recommendations")
 }
 
 // Buku Catatan Kejadia Penting (Modul 15)
 model ImportantEvent {
-  id                String   @id @default(uuid())
-  entryNumber       Int      @default(autoincrement()) @map("entry_number") // Kolom 1: NO URUT
-  date              DateTime @default(now()) @map("date")                 // Kolom 2: TANGGAL
-  description       String   @map("description") @db.Text                  // Kolom 3: URAIAN KEJADIAN
-  resolution        String?  @map("resolution") @db.Text                   // Kolom 4: PENYELESAIAN (Opsional)
-  causeAndNotes     String?  @map("cause_and_notes") @db.Text            // Kolom 5: SEBAB & KETERANGAN (Opsional)
+  id            String   @id @default(uuid())
+  entryNumber   Int      @default(autoincrement()) @map("entry_number") // Kolom 1: NO URUT
+  date          DateTime @default(now()) @map("date") // Kolom 2: TANGGAL
+  description   String   @map("description") @db.Text // Kolom 3: URAIAN KEJADIAN
+  resolution    String?  @map("resolution") @db.Text // Kolom 4: PENYELESAIAN (Opsional)
+  causeAndNotes String?  @map("cause_and_notes") @db.Text // Kolom 5: SEBAB & KETERANGAN (Opsional)
 
   // Kolom 6: TANDA TANGAN (Pengurus yang mencatat/update)
-  recordedByUser    User?    @relation("ImportantEventsRecorded", fields: [recordedByUserId], references: [id])
-  recordedByUserId  String?  @map("recorded_by_user_id")
+  recordedByUser   User?   @relation("ImportantEventsRecorded", fields: [recordedByUserId], references: [id])
+  recordedByUserId String? @map("recorded_by_user_id")
 
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("important_events")
 }
@@ -612,12 +623,12 @@ model ImportantEvent {
 // Agenda (Modul 16)
 model AgendaExpedition {
   id           String   @id @default(uuid())
-  entryNumber  Int      @default(autoincrement()) @map("entry_number") 
-  letterNumber String   @map("letter_number")                       
-  letterDate   DateTime @map("letter_date")                           
-  addressedTo  String   @map("addressed_to")                        
-  subject      String   @map("subject")                               
-  notes        String?  @map("notes")                             
+  entryNumber  Int      @default(autoincrement()) @map("entry_number")
+  letterNumber String   @map("letter_number")
+  letterDate   DateTime @map("letter_date")
+  addressedTo  String   @map("addressed_to")
+  subject      String   @map("subject")
+  notes        String?  @map("notes")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -626,21 +637,22 @@ model AgendaExpedition {
 
 //profile koperasi
 model CooperativeProfile {
-  id           String    @id @default(uuid()) // Kita gunakan uuid() agar konsisten
-  displayName  String    @map("display_name")
-  logoUrl      String?   @map("logo_url")
-  phone        String?
-  email        String?
-  website      String?
-  address      String?
-  description  String?
+  id             String   @id @default(uuid()) // Kita gunakan uuid() agar konsisten
+  displayName    String   @map("display_name")
+  logoUrl        String?  @map("logo_url")
+  phone          String?
+  email          String?
+  website        String?
+  address        String?
+  description    String?
   operatingHours String?  @map("operating_hours")
   mapCoordinates String?  @map("map_coordinates")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at") // Otomatis update timestamp
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at") // Otomatis update timestamp
 
   @@map("cooperative_profile")
 }
+
 // Contact message
 model ContactMessage {
   id          String   @id @default(uuid())
@@ -652,6 +664,7 @@ model ContactMessage {
 
   @@map("contact_messages")
 }
+
 // =========================
 // Manajemen katalog website
 //==========================
@@ -662,65 +675,66 @@ enum ArticleStatus {
   PUBLISHED
   ARCHIVED
 }
-model Article {
-  id          String         @id @default(uuid())
-  title       String
-  slug        String         @unique // Slug unik untuk URL
-  content     String         @db.Text // Gunakan tipe Text untuk konten panjang
-  excerpt     String?        // Ringkasan (opsional)
-  imageUrl    String?        @map("image_url") // URL Gambar Unggulan (opsional)
-  sourceLink  String?        @map("source_link") // Link Sumber Berita (opsional)
-  status      ArticleStatus  @default(DRAFT) // Status default saat dibuat
-  publishedAt DateTime?      @map("published_at") // Kapan dipublikasikan
-  authorId    String         @map("author_id") // ID User Pengurus
-  createdAt   DateTime       @default(now()) @map("created_at")
-  updatedAt   DateTime       @updatedAt @map("updated_at")
 
-  author      User           @relation(fields: [authorId], references: [id])
+model Article {
+  id          String        @id @default(uuid())
+  title       String
+  slug        String        @unique // Slug unik untuk URL
+  content     String        @db.Text // Gunakan tipe Text untuk konten panjang
+  excerpt     String? // Ringkasan (opsional)
+  imageUrl    String?       @map("image_url") // URL Gambar Unggulan (opsional)
+  sourceLink  String?       @map("source_link") // Link Sumber Berita (opsional)
+  status      ArticleStatus @default(DRAFT) // Status default saat dibuat
+  publishedAt DateTime?     @map("published_at") // Kapan dipublikasikan
+  authorId    String        @map("author_id") // ID User Pengurus
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  author User @relation(fields: [authorId], references: [id])
 
   @@map("articles") // Nama tabel di database
 }
 
 // catalog product
 model ProductCategory {
-  id        String    @id @default(uuid())
-  name      String    @unique 
-  slug      String    @unique 
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  products  Product[]
+  products Product[]
 
   @@map("product_categories")
 }
 
 model Product {
-  id           String    @id @default(uuid())
-  name         String
-  slug         String    @unique 
-  description  String?   @db.Text
-  price        Int
-  unit         String?   
-  sku          String?   @unique
-  imageUrl     String?   @map("image_url")
-  isAvailable  Boolean   @default(true) @map("is_available") 
-  categoryId   String    @map("category_id") 
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  price       Int
+  unit        String?
+  sku         String?  @unique
+  imageUrl    String?  @map("image_url")
+  isAvailable Boolean  @default(true) @map("is_available")
+  categoryId  String   @map("category_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  category     ProductCategory @relation(fields: [categoryId], references: [id])
+  category ProductCategory @relation(fields: [categoryId], references: [id])
 
   @@map("products")
 }
 
 // Galeri
 model GalleryItem {
-  id          String    @id @default(uuid())
-  imageUrl    String    @map("image_url") 
-  description String?   @db.Text 
-  order       Int?      
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  id          String   @id @default(uuid())
+  imageUrl    String   @map("image_url")
+  description String?  @db.Text
+  order       Int?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("gallery_items")
 }
