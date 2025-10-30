@@ -3,6 +3,7 @@ import {
   NotFoundException,
   InternalServerErrorException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateBoardPositionDto } from './dto/create-board-position.dto';
@@ -108,8 +109,10 @@ export class BoardPositionsService {
             gender: true,
             placeOfBirth: true,
             dateOfBirth: true,
+            signatureData: true,
           },
         },
+        terminationApprovedByUser: { select: { fullName: true } },
       },
       orderBy: {
         tanggalDiangkat: 'desc', // Urutkan berdasarkan tanggal diangkat
@@ -121,7 +124,10 @@ export class BoardPositionsService {
     const prismaTenant = await this.prisma.getTenantClient();
     const position = await prismaTenant.boardPosition.findUnique({
       where: { id },
-      include: { member: true }, // Sertakan detail anggota
+      include: {
+        member: true,
+        terminationApprovedByUser: { select: { fullName: true } },
+      },
     });
     if (!position) {
       throw new NotFoundException(
@@ -134,16 +140,26 @@ export class BoardPositionsService {
   async update(id: string, updateBoardPositionDto: UpdateBoardPositionDto) {
     const prismaTenant = await this.prisma.getTenantClient();
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { memberId, tanggalDiangkat, tanggalBerhenti, ...restData } =
+        updateBoardPositionDto;
+
       return await prismaTenant.boardPosition.update({
         where: { id },
         data: {
-          ...updateBoardPositionDto,
-          // Konversi string tanggal ke Date jika ada
-          ...(updateBoardPositionDto.tanggalDiangkat && {
-            tanggalDiangkat: new Date(updateBoardPositionDto.tanggalDiangkat),
+          ...restData,
+
+          ...(tanggalDiangkat && {
+            tanggalDiangkat: new Date(tanggalDiangkat),
           }),
-          ...(updateBoardPositionDto.tanggalBerhenti && {
-            tanggalBerhenti: new Date(updateBoardPositionDto.tanggalBerhenti),
+
+          ...(tanggalBerhenti !== undefined && {
+            tanggalBerhenti: tanggalBerhenti ? new Date(tanggalBerhenti) : null,
+          }),
+
+          ...(tanggalBerhenti === null && {
+            terminationApprovedByUserId: null,
+            terminationApprovedAt: null,
           }),
         },
         include: { member: { select: { fullName: true } } },
@@ -158,7 +174,19 @@ export class BoardPositionsService {
           `Posisi Pengurus dengan ID ${id} tidak ditemukan.`,
         );
       }
-      throw err;
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2003'
+      ) {
+        console.error('Foreign key constraint violation during update:', err); // Log detail error P2003
+        throw new InternalServerErrorException(
+          'Gagal memperbarui data karena masalah relasi.',
+        );
+      }
+      console.error(`Gagal update posisi pengurus ${id}:`, err); // Log error lain
+      throw new InternalServerErrorException(
+        'Gagal memperbarui posisi pengurus.',
+      ); // Lempar error generik
     }
   }
 
@@ -167,12 +195,11 @@ export class BoardPositionsService {
     const prismaTenant = await this.prisma.getTenantClient();
 
     try {
-      // Gunakan transaksi
       const updatedPosition = await prismaTenant.$transaction(async (tx) => {
         // 1. Dapatkan posisi saat ini untuk mendapatkan memberId
         const position = await tx.boardPosition.findUnique({
           where: { id },
-          select: { memberId: true }, // Hanya ambil memberId
+          select: { memberId: true },
         });
 
         if (!position) {
@@ -182,32 +209,56 @@ export class BoardPositionsService {
         }
         const memberId = position.memberId;
 
-        // 2. Dapatkan ID Role "Anggota"
-        const anggotaRole = await tx.role.findUnique({
-          where: { name: Role.Anggota }, // Gunakan Enum Role
-        });
-        if (!anggotaRole) {
-          throw new InternalServerErrorException(
-            "KRITIS: Role 'Anggota' tidak ditemukan.",
-          );
-        }
-
-        // 3. Update BoardPosition (Soft Delete)
+        // 2. Update BoardPosition (Soft Delete)
         const updatedBoardPos = await tx.boardPosition.update({
           where: { id },
           data: {
-            tanggalBerhenti: new Date(), // Set tanggal berhenti
+            tanggalBerhenti: new Date(),
             alasanBerhenti: reason,
           },
         });
 
-        // 4. Update User Role menjadi Anggota
-        await tx.user.update({
-          where: { id: memberId },
-          data: {
-            roleId: anggotaRole.id,
+        // 3. (LOGIKA BARU) Cek apakah user masih punya jabatan lain?
+        const otherBoardPositions = await tx.boardPosition.count({
+          where: {
+            memberId: memberId,
+            tanggalBerhenti: null, // Jabatan pengurus lain yang masih aktif
           },
         });
+
+        const otherSupervisoryPositions = await tx.supervisoryPosition.count({
+          where: {
+            memberId: memberId,
+            tanggalBerhenti: null, // Jabatan pengawas lain yang masih aktif
+          },
+        });
+
+        // 4. Jika SUDAH TIDAK punya jabatan lain, demote ke Anggota
+        if (otherBoardPositions === 0 && otherSupervisoryPositions === 0) {
+          const anggotaRole = await tx.role.findUnique({
+            where: { name: Role.Anggota },
+          });
+          if (!anggotaRole) {
+            throw new InternalServerErrorException(
+              "KRITIS: Role 'Anggota' tidak ditemukan.",
+            );
+          }
+
+          // Update User Role menjadi Anggota
+          await tx.user.update({
+            where: { id: memberId },
+            data: {
+              roleId: anggotaRole.id,
+            },
+          });
+          console.log(
+            `[BoardPositionsService] User ${memberId} didemote ke Anggota.`,
+          );
+        } else {
+          console.log(
+            `[BoardPositionsService] User ${memberId} tidak didemote (masih punya ${otherBoardPositions} jabatan pengurus / ${otherSupervisoryPositions} jabatan pengawas aktif).`,
+          );
+        }
 
         return updatedBoardPos;
       });
@@ -220,7 +271,6 @@ export class BoardPositionsService {
       ) {
         throw err;
       }
-      // Tangani error Prisma P2025 jika findUnique gagal di luar dugaan
       if (
         err instanceof Prisma.PrismaClientKnownRequestError &&
         err.code === 'P2025'
@@ -233,6 +283,65 @@ export class BoardPositionsService {
       throw new InternalServerErrorException(
         'Gagal memproses pemberhentian pengurus.',
       );
+    }
+  }
+
+  /**
+   * (Ketua) Memberikan approval pada proses pemberhentian jabatan pengurus.
+   * @param id ID Posisi Jabatan (BoardPosition ID)
+   * @param ketuaUserId ID User Ketua
+   */
+  async approveTermination(
+    id: string,
+    ketuaUserId: string,
+  ): Promise<BoardPosition> {
+    const prismaTenant: PrismaClient = await this.prisma.getTenantClient();
+    try {
+      // 1. Pastikan posisi jabatan ada
+      const position = await prismaTenant.boardPosition.findUnique({
+        where: { id },
+      });
+      if (!position) {
+        throw new NotFoundException(
+          `Posisi Pengurus dengan ID ${id} tidak ditemukan.`,
+        );
+      }
+
+      // 2. Validasi: Pastikan jabatan memang sudah berhenti (punya tanggalBerhenti)
+      if (!position.tanggalBerhenti) {
+        throw new BadRequestException(
+          `Posisi Pengurus dengan ID ${id} belum diberhentikan.`,
+        );
+      }
+
+      // TODO: Tambahkan validasi apakah ketuaUserId benar-benar Ketua (jika perlu)
+
+      // 3. Update data approval
+      const approvedPosition = await prismaTenant.boardPosition.update({
+        where: { id },
+        data: {
+          terminationApprovedByUserId: ketuaUserId,
+          terminationApprovedAt: new Date(),
+        },
+        include: {
+          // Sertakan nama approver di response
+          member: { select: { fullName: true } },
+          terminationApprovedByUser: { select: { fullName: true } },
+        },
+      });
+      return approvedPosition;
+    } catch (error: unknown) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      console.error(
+        `Gagal approve terminasi jabatan ${id} oleh Ketua ${ketuaUserId}:`,
+        error,
+      );
+      throw new Error('Gagal memproses approval terminasi jabatan oleh Ketua.');
     }
   }
 

@@ -1,12 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsDateString,
-  IsNotEmpty,
-  IsOptional,
-  IsUUID,
-  IsUrl,
-  IsEnum,
-} from 'class-validator';
+import { IsDateString, IsNotEmpty, IsUUID, IsEnum } from 'class-validator';
 import { JabatanPengurus } from 'src/auth/enums/jabatan-pengurus.enum';
 export class CreateBoardPositionDto {
   @ApiProperty({
@@ -23,6 +16,7 @@ export class CreateBoardPositionDto {
     description: 'Tanggal diangkat (YYYY-MM-DD)',
   })
   @IsDateString()
+  @IsNotEmpty()
   tanggalDiangkat: string;
 
   @ApiProperty({
@@ -30,21 +24,6 @@ export class CreateBoardPositionDto {
     description: 'ID Anggota yang menjadi pengurus',
   })
   @IsUUID()
+  @IsNotEmpty()
   memberId: string;
-
-  @ApiProperty({
-    example: 'https://example.com/fingerprint.jpg',
-    required: false,
-  })
-  @IsUrl()
-  @IsOptional()
-  fingerprintUrl?: string;
-
-  @ApiProperty({
-    example: 'https://example.com/signature.jpg',
-    required: false,
-  })
-  @IsUrl()
-  @IsOptional()
-  signatureUrl?: string;
 }

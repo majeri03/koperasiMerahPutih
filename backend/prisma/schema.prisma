@@ -92,6 +92,7 @@ model User {
   Member                          Member[]
   approvedMembers           Member[] @relation("ApprovedByKetua")
   approvedMemberTerminations Member[] @relation("TerminationApprovedByKetua")
+  approvedBoardPositionTerminations BoardPosition[] @relation("BoardPositionTerminatedBy")
   @@map("users")
 }
 
@@ -264,8 +265,9 @@ model BoardPosition {
   member   Member @relation(fields: [memberId], references: [id])
   memberId String @map("member_id")
 
-  fingerprintUrl String? @map("fingerprint_url")
-  signatureUrl   String? @map("signature_url")
+  terminationApprovedByUserId String?   @map("termination_approved_by_user_id")
+  terminationApprovedAt       DateTime? @map("termination_approved_at")
+  terminationApprovedByUser   User?     @relation("BoardPositionTerminatedBy", fields: [terminationApprovedByUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
