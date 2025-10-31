@@ -26,16 +26,19 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth/jwt-auth.guard'; // Sesuaikan pa
 import { RolesGuard } from 'src/auth/guards/roles.guard'; // Sesuaikan path
 import { Roles } from 'src/auth/decorators/roles.decorator'; // Sesuaikan path
 import { Role } from 'src/auth/enums/role.enum'; // Sesuaikan path
-
+import { JabatanGuard } from 'src/auth/guards/jabatan.guard';
+import { JabatanPengurus } from 'src/auth/enums/jabatan-pengurus.enum';
+import { Jabatan } from 'src/auth/decorators/jabatan.decorator';
 @ApiTags('Inventory (Buku 06)') // Tag Swagger
 @ApiBearerAuth() // Membutuhkan token
-@UseGuards(JwtAuthGuard, RolesGuard) // Terapkan guard auth & roles
+@UseGuards(JwtAuthGuard, RolesGuard, JabatanGuard) // Terapkan guard auth & roles
 @Controller('inventory')
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
 
   @Post()
-  @Roles(Role.Pengurus) // Hanya Pengurus (Sekretaris sesuai PDF)
+  @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Sekretaris)
   @ApiOperation({ summary: 'Membuat data item inventaris baru' })
   @ApiBody({ type: CreateInventoryDto })
   create(@Body() createInventoryDto: CreateInventoryDto) {
@@ -46,7 +49,7 @@ export class InventoryController {
   @Get()
   // Pengurus bisa lihat semua. Anggota & Tamu? Sesuai PDF, Tamu bisa lihat read-only* via landing page.
   // Untuk API internal, kita batasi ke Pengurus dulu, atau perlu filter role.
-  @Roles(Role.Pengurus) // Sementara batasi ke Pengurus untuk API internal
+  @Roles(Role.Pengurus, Role.Anggota, Role.Pengawas) // Sementara batasi ke Pengurus untuk API internal
   @ApiOperation({
     summary: 'Mendapatkan daftar semua item inventaris (Pengurus)',
   })
@@ -56,6 +59,7 @@ export class InventoryController {
 
   @Get(':id')
   @Roles(Role.Pengurus) // Sementara batasi ke Pengurus untuk API internal
+  @Jabatan(JabatanPengurus.Sekretaris)
   @ApiOperation({
     summary: 'Mendapatkan detail satu item inventaris berdasarkan ID',
   })
@@ -70,6 +74,7 @@ export class InventoryController {
 
   @Patch(':id')
   @Roles(Role.Pengurus) // Hanya Pengurus (Sekretaris)
+  @Jabatan(JabatanPengurus.Sekretaris)
   @ApiOperation({ summary: 'Memperbarui data item inventaris' })
   @ApiParam({
     name: 'id',
@@ -87,6 +92,7 @@ export class InventoryController {
 
   @Delete(':id')
   @Roles(Role.Pengurus) // Hanya Pengurus (Sekretaris)
+  @Jabatan(JabatanPengurus.Sekretaris)
   @HttpCode(HttpStatus.NO_CONTENT) // Status 204 jika berhasil hapus
   @ApiOperation({ summary: 'Menghapus data item inventaris' })
   @ApiParam({

@@ -33,6 +33,9 @@ import { RolesGuard } from 'src/auth/guards/roles.guard'; // Sesuaikan path
 import { Roles } from 'src/auth/decorators/roles.decorator'; // Sesuaikan path
 import { Role } from 'src/auth/enums/role.enum'; // Sesuaikan path
 import { FileInterceptor } from '@nestjs/platform-express';
+import { JabatanGuard } from 'src/auth/guards/jabatan.guard';
+import { JabatanPengurus } from 'src/auth/enums/jabatan-pengurus.enum';
+import { Jabatan } from 'src/auth/decorators/jabatan.decorator';
 // Import GetUser dan JwtPayloadDto jika diperlukan filter Anggota nanti
 // import { GetUser } from 'src/auth/get-user.decorator';
 // import { JwtPayloadDto } from 'src/auth/dto/jwt-payload.dto';
@@ -44,7 +47,7 @@ const ALLOWED_FILE_TYPES =
 
 @ApiTags('Member Meeting Notes (Buku 07)') // Tag Swagger
 @ApiBearerAuth() // Membutuhkan token
-@UseGuards(JwtAuthGuard, RolesGuard) // Terapkan guard auth & roles
+@UseGuards(JwtAuthGuard, RolesGuard, JabatanGuard) // Terapkan guard auth & roles
 @Controller('member-meeting-notes')
 export class MemberMeetingNotesController {
   constructor(
@@ -53,6 +56,7 @@ export class MemberMeetingNotesController {
 
   @Post()
   @Roles(Role.Pengurus) // Hanya Pengurus (Sekretaris sesuai PDF)
+  @Jabatan(JabatanPengurus.Sekretaris)
   @ApiOperation({ summary: 'Membuat notulen rapat anggota baru' })
   @ApiBody({ type: CreateMemberMeetingNoteDto })
   create(@Body() createDto: CreateMemberMeetingNoteDto) {
@@ -60,7 +64,7 @@ export class MemberMeetingNotesController {
   }
 
   @Get()
-  @Roles(Role.Pengurus, Role.Anggota) // Pengurus dan Anggota boleh lihat daftar
+  @Roles(Role.Pengurus, Role.Anggota, Role.Pengawas) // Pengurus dan Anggota boleh lihat daftar
   @ApiOperation({ summary: 'Mendapatkan daftar semua notulen rapat anggota' })
   // Jika Anggota hanya boleh lihat notulen tertentu, perlu logic tambahan + GetUser
   findAll() {
@@ -77,7 +81,8 @@ export class MemberMeetingNotesController {
   }
 
   @Patch(':id')
-  @Roles(Role.Pengurus) // Hanya Pengurus (Sekretaris)
+  @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Sekretaris)
   @ApiOperation({ summary: 'Memperbarui data notulen rapat anggota' })
   @ApiParam({ name: 'id', description: 'ID Notulen (UUID)', type: String })
   @ApiBody({ type: UpdateMemberMeetingNoteDto })
@@ -90,6 +95,7 @@ export class MemberMeetingNotesController {
 
   @Delete(':id')
   @Roles(Role.Pengurus) // Hanya Pengurus (Sekretaris)
+  @Jabatan(JabatanPengurus.Sekretaris)
   @HttpCode(HttpStatus.NO_CONTENT) // Status 204
   @ApiOperation({ summary: 'Menghapus data notulen rapat anggota' })
   @ApiParam({ name: 'id', description: 'ID Notulen (UUID)', type: String })
@@ -98,6 +104,7 @@ export class MemberMeetingNotesController {
   }
   @Post(':id/document') // Endpoint baru: POST /member-meeting-notes/:id/document
   @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Sekretaris)
   @UseInterceptors(FileInterceptor('file')) // Menangkap file dari key 'file'
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

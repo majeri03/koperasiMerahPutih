@@ -43,7 +43,7 @@ export class SupervisoryPositionsController {
   }
 
   @Get()
-  @Roles(Role.Pengurus, Role.Anggota) // Pengurus & Anggota boleh lihat semua
+  @Roles(Role.Pengurus, Role.Anggota, Role.Pengawas) // Pengurus & Anggota boleh lihat semua
   @ApiOperation({ summary: 'Mendapatkan semua data posisi pengawas' })
   findAll() {
     // Panggil service untuk mendapatkan semua data

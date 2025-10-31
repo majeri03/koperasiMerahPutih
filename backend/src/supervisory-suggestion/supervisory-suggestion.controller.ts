@@ -33,7 +33,6 @@ import { JwtPayloadDto } from 'src/auth/dto/jwt-payload.dto';
 @ApiTags('Supervisory Suggestions (Buku 13)') // Tag Swagger
 @ApiBearerAuth() // Semua endpoint di modul ini butuh token
 @UseGuards(JwtAuthGuard, RolesGuard) // Terapkan guard di level Controller
-@Roles(Role.Pengurus) // <-- HANYA Pengurus yang bisa akses SEMUA endpoint
 @Controller('supervisory-suggestion')
 export class SupervisorySuggestionController {
   constructor(
@@ -44,6 +43,7 @@ export class SupervisorySuggestionController {
    * Endpoint HANYA untuk Pengurus (mencatat saran).
    */
   @Post()
+  @Roles(Role.Pengurus, Role.Pengawas)
   @ApiOperation({ summary: 'Mencatat saran pengawas baru (Pengurus)' })
   @ApiBody({ type: CreateSupervisorySuggestionDto })
   create(@Body() createDto: CreateSupervisorySuggestionDto) {
@@ -54,6 +54,7 @@ export class SupervisorySuggestionController {
    * Endpoint HANYA untuk Pengurus (melihat semua saran).
    */
   @Get()
+  @Roles(Role.Pengurus, Role.Pengawas)
   @ApiOperation({
     summary: 'Mendapatkan semua saran pengawas (Pengurus)',
   })
@@ -65,6 +66,7 @@ export class SupervisorySuggestionController {
    * Endpoint HANYA untuk Pengurus (melihat detail saran).
    */
   @Get(':id')
+  @Roles(Role.Pengurus, Role.Pengawas)
   @ApiOperation({
     summary: 'Mendapatkan detail satu saran pengawas (Pengurus)',
   })
@@ -77,6 +79,7 @@ export class SupervisorySuggestionController {
    * Endpoint HANYA untuk Pengurus (memberi tanggapan).
    */
   @Post(':id/respond') // Gunakan POST untuk aksi
+  @Roles(Role.Pengurus)
   @ApiOperation({ summary: 'Menambahkan tanggapan pengurus (Pengurus)' })
   @ApiParam({ name: 'id', description: 'ID Saran Pengawas (UUID)' })
   @ApiBody({ type: RespondSupervisorySuggestionDto }) // Gunakan DTO Respond
@@ -92,6 +95,7 @@ export class SupervisorySuggestionController {
    * Endpoint HANYA untuk Pengurus (mengubah saran asli).
    */
   @Patch(':id')
+  @Roles(Role.Pengurus)
   @ApiOperation({ summary: 'Memperbarui isi saran pengawas (Pengurus)' })
   @ApiParam({ name: 'id', description: 'ID Saran Pengawas (UUID)' })
   @ApiBody({ type: UpdateSupervisorySuggestionDto })
@@ -106,6 +110,7 @@ export class SupervisorySuggestionController {
    * Endpoint HANYA untuk Pengurus (menghapus saran).
    */
   @Delete(':id')
+  @Roles(Role.Pengurus)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Menghapus saran pengawas (Pengurus)' })
   @ApiParam({ name: 'id', description: 'ID Saran Pengawas (UUID)' })

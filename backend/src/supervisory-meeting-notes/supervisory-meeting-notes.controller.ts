@@ -33,7 +33,9 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { FileInterceptor } from '@nestjs/platform-express';
-
+import { JabatanGuard } from 'src/auth/guards/jabatan.guard';
+import { JabatanPengurus } from 'src/auth/enums/jabatan-pengurus.enum';
+import { Jabatan } from 'src/auth/decorators/jabatan.decorator';
 const MAX_FILE_SIZE_MB = 2;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 // Regex yang sudah benar (menggunakan MIME type keywords)
@@ -41,7 +43,7 @@ const ALLOWED_FILE_TYPES =
   /(pdf|jpeg|png|webp|msword|wordprocessingml|ms-excel|spreadsheetml)/;
 @ApiTags('Supervisory Meeting Notes (Buku 09)') // Tag Swagger baru
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, JabatanGuard)
 @Controller('supervisory-meeting-notes') // Path URL baru
 export class SupervisoryMeetingNotesController {
   constructor(
@@ -51,6 +53,8 @@ export class SupervisoryMeetingNotesController {
 
   @Post()
   @Roles(Role.Pengurus) // Akses dibatasi untuk Pengurus
+  @Jabatan(JabatanPengurus.Ketua)
+  @Jabatan(JabatanPengurus.Sekretaris)
   @ApiOperation({ summary: 'Membuat notulen rapat pengawas baru' })
   @ApiBody({ type: CreateSupervisoryMeetingNoteDto }) // Gunakan DTO yang benar
   create(@Body() createDto: CreateSupervisoryMeetingNoteDto) {
@@ -59,14 +63,14 @@ export class SupervisoryMeetingNotesController {
   }
 
   @Get()
-  @Roles(Role.Pengurus) // Hanya Pengurus boleh lihat
+  @Roles(Role.Pengurus, Role.Pengawas) // Hanya Pengurus boleh lihat
   @ApiOperation({ summary: 'Mendapatkan daftar semua notulen rapat pengawas' })
   findAll() {
     return this.supervisoryMeetingNotesService.findAll();
   }
 
   @Get(':id')
-  @Roles(Role.Pengurus) // Hanya Pengurus boleh lihat detail
+  @Roles(Role.Pengurus, Role.Pengawas) // Hanya Pengurus boleh lihat detail
   @ApiOperation({ summary: 'Mendapatkan detail satu notulen rapat pengawas' })
   @ApiParam({ name: 'id', description: 'ID Notulen (UUID)', type: String })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
@@ -75,6 +79,8 @@ export class SupervisoryMeetingNotesController {
 
   @Patch(':id')
   @Roles(Role.Pengurus) // Hanya Pengurus
+  @Jabatan(JabatanPengurus.Ketua)
+  @Jabatan(JabatanPengurus.Sekretaris)
   @ApiOperation({ summary: 'Memperbarui data notulen rapat pengawas' })
   @ApiParam({ name: 'id', description: 'ID Notulen (UUID)', type: String })
   @ApiBody({ type: UpdateSupervisoryMeetingNoteDto }) // Gunakan DTO yang benar
@@ -86,6 +92,8 @@ export class SupervisoryMeetingNotesController {
   }
 
   @Delete(':id')
+  @Jabatan(JabatanPengurus.Ketua)
+  @Jabatan(JabatanPengurus.Sekretaris)
   @Roles(Role.Pengurus) // Hanya Pengurus
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Menghapus data notulen rapat pengawas' })
@@ -96,6 +104,8 @@ export class SupervisoryMeetingNotesController {
 
   @Post(':id/document') // Endpoint baru: POST /supervisory-meeting-notes/:id/document
   @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Ketua)
+  @Jabatan(JabatanPengurus.Sekretaris)
   @UseInterceptors(FileInterceptor('file')) // Menangkap file dari key 'file'
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

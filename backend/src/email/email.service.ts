@@ -168,4 +168,38 @@ export class EmailService {
       <p>Pengurus ${cooperativeName}</p>
     `;
   }
+
+  /**
+   * Membuat HTML untuk notifikasi akun yang dibuat manual oleh Admin.
+   * @param memberName Nama anggota
+   * @param cooperativeName Nama koperasi
+   * @param subdomain Subdomain (tenantId) untuk link login
+   * @param loginEmail Email yang didaftarkan
+   * @param loginPassword Password plaintext yang baru dibuat
+   */
+  createManualAccountHtml(
+    memberName: string,
+    cooperativeName: string,
+    subdomain: string,
+    loginEmail: string,
+    loginPassword: string, // Kita kirim password plaintext di sini
+  ): string {
+    // Dapatkan domain frontend dari config, default ke 'localhost:3000'
+    const loginUrl = `http://${subdomain}.${this.frontendDomain}`;
+
+    return `
+      <p>Halo ${memberName},</p>
+      <p>Pengurus <b>${cooperativeName}</b> telah berhasil membuatkan akun login untuk Anda di platform koperasi.</p>
+      <p>Anda sekarang dapat login ke akun Anda menggunakan detail berikut:</p>
+      
+      <p><b>Link Login:</b> <a href="${loginUrl}" target="_blank">${loginUrl}</a></p>
+      <p><b>Email:</b> ${loginEmail}</p>
+      <p><b>Password:</b> ${loginPassword}</p>
+      <br>
+      <p>Kami sangat menyarankan Anda untuk segera login dan mengubah password Anda melalui menu "Ganti Password" di profil Anda.</p>
+      <br>
+      <p>Terima kasih,</p>
+      <p>Pengurus ${cooperativeName}</p>
+    `;
+  }
 }
