@@ -56,7 +56,7 @@ export class ImportantEventController {
    * Sesuai dokumen: Anggota bisa 'Read-only'.pdf, p. 3].
    */
   @Get()
-  @Roles(Role.Pengurus, Role.Anggota) // <-- Pengurus & Anggota
+  @Roles(Role.Pengurus, Role.Anggota, Role.Pengawas) // <-- Pengurus & Anggota
   @ApiOperation({
     summary: 'Mendapatkan semua catatan kejadian penting (Pengurus & Anggota)',
   })

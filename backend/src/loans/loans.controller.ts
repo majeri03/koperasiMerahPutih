@@ -30,7 +30,9 @@ import { Role } from 'src/auth/enums/role.enum'; // Sesuaikan path
 import { IsDateString, IsNumber, Min } from 'class-validator'; // Impor yang diperlukan
 import { GetUser } from 'src/auth/get-user.decorator'; // Sesuaikan path jika perlu
 import { JwtPayloadDto } from 'src/auth/dto/jwt-payload.dto'; // Sesuaikan path jika perlu
-
+import { JabatanGuard } from 'src/auth/guards/jabatan.guard';
+import { JabatanPengurus } from 'src/auth/enums/jabatan-pengurus.enum';
+import { Jabatan } from 'src/auth/decorators/jabatan.decorator';
 // DTO sederhana untuk pembayaran angsuran
 class PayInstallmentDto {
   @ApiProperty({
@@ -48,7 +50,7 @@ class PayInstallmentDto {
 
 @ApiTags('Loans (Buku 05)')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, JabatanGuard)
 @Controller('loans')
 export class LoansController {
   constructor(private readonly loansService: LoansService) {}
@@ -56,6 +58,7 @@ export class LoansController {
   // --- Endpoint Create ---
   @Post()
   @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Bendahara)
   @ApiOperation({ summary: 'Membuat data pinjaman baru untuk anggota' })
   @ApiBody({ type: CreateLoanDto })
   create(@Body() createLoanDto: CreateLoanDto) {
@@ -64,7 +67,7 @@ export class LoansController {
 
   // --- Endpoint FindAll ---
   @Get()
-  @Roles(Role.Pengurus, Role.Anggota)
+  @Roles(Role.Pengurus, Role.Anggota, Role.Pengawas)
   @ApiOperation({
     summary: 'Mendapatkan daftar pinjaman (difilter berdasarkan peran)',
   })
@@ -90,6 +93,7 @@ export class LoansController {
   // --- Endpoint Update ---
   @Patch(':id')
   @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Bendahara)
   @ApiOperation({
     summary: 'Memperbarui data pinjaman (misal: status, tanggal lunas)',
   })
@@ -105,6 +109,7 @@ export class LoansController {
   // --- Endpoint Remove ---
   @Delete(':id')
   @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Bendahara)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Menghapus data pinjaman (hard delete)' })
   @ApiParam({ name: 'id', description: 'ID Pinjaman (UUID)', type: String })
@@ -115,6 +120,7 @@ export class LoansController {
   // --- Endpoint Pay Installment ---
   @Post('installments/:installmentId/pay')
   @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Bendahara)
   @ApiOperation({ summary: 'Mencatat pembayaran untuk satu angsuran' })
   @ApiParam({
     name: 'installmentId',

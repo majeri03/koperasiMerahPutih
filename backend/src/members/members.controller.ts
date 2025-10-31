@@ -52,7 +52,7 @@ export class MembersController {
   }
 
   @Get()
-  @Roles(Role.Pengurus, Role.Anggota) // Pengurus & Anggota
+  @Roles(Role.Pengurus, Role.Anggota, Role.Pengawas) // Pengurus & Anggota
   @ApiOperation({
     summary: '(Pengurus & Anggota) Mendapatkan daftar semua anggota',
   })
@@ -85,6 +85,7 @@ export class MembersController {
   // --- UBAH METHOD INI ---
   @Delete(':id')
   @Roles(Role.Pengurus) // Hanya Pengurus
+  @Jabatan(JabatanPengurus.Ketua)
   @HttpCode(HttpStatus.OK) // Bisa OK atau NO_CONTENT, OK jika mengembalikan data member yg diupdate
   @ApiOperation({
     summary: '(Pengurus) Menonaktifkan keanggotaan (soft delete)',

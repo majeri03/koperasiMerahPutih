@@ -60,7 +60,7 @@ export class MemberSuggestionController {
    * Sesuai dokumen: Anggota bisa 'Read'.pdf, p. 3].
    */
   @Get()
-  @Roles(Role.Pengurus, Role.Anggota) // <-- Anggota & Pengurus bisa lihat
+  @Roles(Role.Pengurus, Role.Anggota, Role.Pengawas) // <-- Anggota & Pengurus bisa lihat
   @ApiOperation({
     summary: 'Mendapatkan semua saran anggota (Anggota & Pengurus)',
   })

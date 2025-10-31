@@ -41,7 +41,8 @@ export class BoardPositionsController {
   constructor(private readonly boardPositionsService: BoardPositionsService) {}
 
   @Post()
-  @Roles(Role.Pengurus) // Hanya Pengurus boleh create
+  @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Ketua) // Hanya Pengurus boleh create
   @ApiOperation({ summary: 'Membuat data posisi pengurus baru' })
   @ApiBody({ type: CreateBoardPositionDto })
   create(@Body() createBoardPositionDto: CreateBoardPositionDto) {
