@@ -537,7 +537,6 @@ model MemberSuggestion {
   memberId String @map("member_id")
 
   suggestion   String  @map("suggestion") @db.Text
-  signatureUrl String? @map("signature_url")
 
   response         String?   @map("response") @db.Text
   responseByUser   User?     @relation(fields: [responseByUserId], references: [id])
@@ -561,7 +560,6 @@ model SupervisorySuggestion {
   supervisorMemberId String @map("supervisor_member_id")
 
   suggestion             String  @map("suggestion") @db.Text // Kolom 4: ISI SARAN
-  supervisorSignatureUrl String? @map("supervisor_signature_url") // Kolom 5: TANDA TANGAN PENGAWAS (Opsional)
 
   // Kolom 6 & 7 (Tanggapan & TTD Pengurus) - Relasi ke User
   response         String?   @map("response") @db.Text // Kolom 7: TANGGAPAN PENGURUS

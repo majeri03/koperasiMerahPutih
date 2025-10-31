@@ -704,7 +704,6 @@ export class TenantsService {
         "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,   -- Kolom 2: TANGGAL
         "member_id" TEXT NOT NULL,                                -- Kolom 3 & 4 (Relasi)
         "suggestion" TEXT NOT NULL,                               -- Kolom 5: ISI SARAN
-        "signature_url" TEXT,                                     -- Kolom 6: TANDA TANGAN (Opsional)
         "response" TEXT,                                          -- Kolom 7: TANGGAPAN PENGURUS (Opsional)
         "response_by_user_id" TEXT,                               -- Kolom 8 (Relasi ke User Pengurus)
         "response_at" TIMESTAMP(3),                               -- Tanggal ditanggapi
@@ -724,7 +723,6 @@ export class TenantsService {
         "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,   -- Kolom 2: TANGGAL
         "supervisor_member_id" TEXT NOT NULL,                     -- Kolom 3 (Relasi ke Member)
         "suggestion" TEXT NOT NULL,                               -- Kolom 4: ISI SARAN
-        "supervisor_signature_url" TEXT,                          -- Kolom 5: TANDA TANGAN (Opsional)
         "response" TEXT,                                          -- Kolom 7: TANGGAPAN PENGURUS (Opsional)
         "response_by_user_id" TEXT,                               -- Kolom 6 (Relasi ke User Pengurus)
         "response_at" TIMESTAMP(3),                               -- Tanggal ditanggapi
