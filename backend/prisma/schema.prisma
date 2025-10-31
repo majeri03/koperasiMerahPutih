@@ -494,8 +494,6 @@ model Employee {
   position       String
   notes          String?
 
-  signatureUrl String? @map("signature_url")
-
   approvedByPengurus   User?   @relation("EmployeePengurusApprovals", fields: [approvedByPengurusId], references: [id])
   approvedByPengurusId String? @map("approved_by_pengurus_id")
 

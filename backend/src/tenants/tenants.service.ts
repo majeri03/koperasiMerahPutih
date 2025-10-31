@@ -665,7 +665,6 @@ export class TenantsService {
      "hire_date" TIMESTAMP(3) NOT NULL,
      "position" TEXT NOT NULL,
      "notes" TEXT,
-     "signature_url" TEXT,
      "approved_by_pengurus_id" TEXT,
      "approved_by_ketua_id" TEXT,
      "ketua_approval_date" TIMESTAMP(3),
