@@ -7,7 +7,6 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUrl,
 } from 'class-validator';
 
 export class CreateEmployeeDto {
@@ -50,12 +49,4 @@ export class CreateEmployeeDto {
   @IsString()
   @IsOptional()
   notes?: string; // Kolom 8
-
-  @ApiProperty({
-    example: 'https://example.com/ttd-karyawan.png',
-    required: false,
-  })
-  @IsUrl()
-  @IsOptional()
-  signatureUrl?: string; // Tanda tangan KARYAWAN (Opsional)
 }
