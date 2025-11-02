@@ -6,6 +6,8 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config'; // <-- 1. Import ConfigService
 import { PrismaClient, TenantStatus } from '@prisma/client';
 async function bootstrap() {
+  const BACKEND_PORT = 3002;
+
   const app: INestApplication = await NestFactory.create(AppModule);
 
   const configService = app.get(ConfigService);
@@ -16,7 +18,10 @@ async function bootstrap() {
   );
   const protocol = frontendDomain.startsWith('localhost') ? 'http' : 'https';
 
-  const allowedOrigins = [`${protocol}://${frontendDomain}`];
+  const allowedOrigins = [
+    `${protocol}://${frontendDomain}`,
+    `http://localhost:${BACKEND_PORT}`,
+  ];
 
   const prismaPublic = new PrismaClient();
 
