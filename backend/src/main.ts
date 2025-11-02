@@ -2,27 +2,67 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
-
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config'; // <-- 1. Import ConfigService
+import { PrismaClient, TenantStatus } from '@prisma/client';
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app: INestApplication = await NestFactory.create(AppModule);
 
-  // --- TAMBAHKAN KEMBALI KONFIGURASI CORS DI SINI ---
+  const configService = app.get(ConfigService);
+
+  const frontendDomain = configService.get<string>(
+    'FRONTEND_DOMAIN',
+    'localhost:3000',
+  );
+  const protocol = frontendDomain.startsWith('localhost') ? 'http' : 'https';
+
+  const allowedOrigins = [`${protocol}://${frontendDomain}`];
+
+  const prismaPublic = new PrismaClient();
+
+  try {
+    console.log('[Bootstrap] Fetching active tenants for CORS whitelist...');
+    const activeTenants = await prismaPublic.tenant.findMany({
+      where: { status: TenantStatus.ACTIVE },
+      select: { subdomain: true },
+    });
+
+    const tenantOrigins = activeTenants.map(
+      (tenant) => `${protocol}://${tenant.subdomain}.${frontendDomain}`,
+    );
+
+    allowedOrigins.push(...tenantOrigins);
+
+    console.log('[Bootstrap] CORS Whitelist successfully built:');
+    console.log(allowedOrigins);
+  } catch (error) {
+    console.error(
+      '[Bootstrap] CRITICAL: Failed to fetch tenants for CORS. Server might not accept tenant connections.',
+      error,
+    );
+  } finally {
+    await prismaPublic.$disconnect();
+  }
+
   app.enableCors({
-    origin: 'http://kerenjaya.localhost:3000', // Pastikan origin frontend benar
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        console.warn(`[CORS] Request from origin "${origin}" BLOCKED.`);
+        callback(new Error('Origin tidak diizinkan oleh CORS'));
+      }
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type, Accept, Authorization',
     credentials: true,
   });
-  // ---------------------------------------------
 
   app.useGlobalPipes(new ValidationPipe());
-  app.enableCors({
-    origin: 'http://kerenjaya.localhost:3000', // Pastikan origin frontend benar
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: 'Content-Type, Accept, Authorization',
-    credentials: true,
-  });
+
   // Konfigurasi Swagger
   const config = new DocumentBuilder()
     .setTitle('API Koperasi Merah Putih')
