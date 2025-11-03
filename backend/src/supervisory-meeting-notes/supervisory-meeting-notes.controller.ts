@@ -53,8 +53,7 @@ export class SupervisoryMeetingNotesController {
 
   @Post()
   @Roles(Role.Pengurus) // Akses dibatasi untuk Pengurus
-  @Jabatan(JabatanPengurus.Ketua)
-  @Jabatan(JabatanPengurus.Sekretaris)
+  @Jabatan(JabatanPengurus.Ketua, JabatanPengurus.Sekretaris)
   @ApiOperation({ summary: 'Membuat notulen rapat pengawas baru' })
   @ApiBody({ type: CreateSupervisoryMeetingNoteDto }) // Gunakan DTO yang benar
   create(@Body() createDto: CreateSupervisoryMeetingNoteDto) {

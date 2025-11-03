@@ -26,10 +26,10 @@ export class JabatanGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredJabatan = this.reflector.getAllAndOverride<
-      JabatanType | undefined
+      JabatanType[] | undefined
     >(JABATAN_KEY, [context.getHandler(), context.getClass()]);
 
-    if (!requiredJabatan) {
+    if (!requiredJabatan || requiredJabatan.length === 0) {
       return true;
     }
 
@@ -51,7 +51,9 @@ export class JabatanGuard implements CanActivate {
       const activePosition = await prismaTenant.boardPosition.findFirst({
         where: {
           memberId: user.userId,
-          jabatan: requiredJabatan,
+          jabatan: {
+            in: requiredJabatan,
+          },
           tanggalBerhenti: null,
         },
         select: {
@@ -62,8 +64,9 @@ export class JabatanGuard implements CanActivate {
       if (activePosition) {
         return true;
       } else {
+        const allowedJabatans = requiredJabatan.join(' atau ');
         throw new ForbiddenException(
-          `Akses ditolak: Anda harus memiliki jabatan "${requiredJabatan}" yang aktif.`,
+          `Akses ditolak: Anda harus memiliki jabatan "${allowedJabatans}" yang aktif.`,
         );
       }
     } catch (error) {
