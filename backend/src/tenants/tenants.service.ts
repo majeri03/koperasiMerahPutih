@@ -5,6 +5,7 @@ import {
   NotFoundException,
   forwardRef,
   Inject,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   Prisma,
@@ -12,6 +13,7 @@ import {
   TenantRegistration,
   Gender,
   TenantStatus,
+  Tenant,
 } from '@prisma/client';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import * as bcrypt from 'bcrypt';
@@ -31,6 +33,9 @@ export class TenantsService {
   findPending() {
     return this.prisma.tenant.findMany({
       where: { status: 'PENDING' },
+      include: {
+        registration: true,
+      },
     });
   }
   async approve(tenantId: string) {
@@ -330,6 +335,71 @@ export class TenantsService {
         'Terjadi kesalahan saat menolak pendaftaran koperasi.',
       );
     }
+  }
+
+  /**
+   * (Super Admin) Menonaktifkan tenant yang sudah aktif.
+   * Mengubah status Tenant menjadi SUSPENDED.
+   * @param tenantId ID Tenant yang akan dinonaktifkan
+   */
+  async suspend(tenantId: string): Promise<Tenant> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
+
+    if (!tenant) {
+      throw new NotFoundException(
+        `Tenant dengan ID ${tenantId} tidak ditemukan.`,
+      );
+    }
+
+    if (tenant.status === TenantStatus.PENDING) {
+      throw new BadRequestException(
+        'Tenant ini masih PENDING. Gunakan "reject" untuk menolak.',
+      );
+    }
+
+    if (tenant.status === TenantStatus.SUSPENDED) {
+      return tenant; // Sudah nonaktif, tidak perlu diubah
+    }
+
+    return this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { status: TenantStatus.SUSPENDED },
+    });
+  }
+
+  /**
+   * (Super Admin) Mengaktifkan kembali tenant yang ditangguhkan.
+   * Mengubah status Tenant menjadi ACTIVE.
+   * @param tenantId ID Tenant yang akan diaktifkan
+   */
+  async activate(tenantId: string): Promise<Tenant> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
+
+    if (!tenant) {
+      throw new NotFoundException(
+        `Tenant dengan ID ${tenantId} tidak ditemukan.`,
+      );
+    }
+
+    if (tenant.status === TenantStatus.PENDING) {
+      throw new BadRequestException(
+        'Tenant ini masih PENDING. Gunakan "approve" untuk mengaktifkan.',
+      );
+    }
+
+    if (tenant.status === TenantStatus.ACTIVE) {
+      return tenant; // Sudah aktif, tidak perlu diubah
+    }
+
+    // Hanya ubah status, tidak perlu setup database lagi
+    return this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { status: TenantStatus.ACTIVE },
+    });
   }
 
   private async createTenantTables(
@@ -1281,6 +1351,13 @@ export class TenantsService {
   }
 
   findAll() {
-    return this.prisma.tenant.findMany();
+    return this.prisma.tenant.findMany({
+      include: {
+        registration: true, // <-- Tambahkan include ini
+      },
+      orderBy: {
+        createdAt: 'desc', // Urutkan berdasarkan yang terbaru
+      },
+    });
   }
 }

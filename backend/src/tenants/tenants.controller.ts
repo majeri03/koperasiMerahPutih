@@ -58,4 +58,20 @@ export class TenantsController {
   ) {
     return this.tenantsService.rejectTenant(id, rejectDto.reason);
   }
+
+  @Post(':id/suspend')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '(Super Admin) Menonaktifkan (suspend) tenant' })
+  @ApiParam({ name: 'id', description: 'ID Tenant (UUID)' })
+  suspend(@Param('id', ParseUUIDPipe) id: string) {
+    return this.tenantsService.suspend(id);
+  }
+
+  @Post(':id/activate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '(Super Admin) Mengaktifkan kembali tenant' })
+  @ApiParam({ name: 'id', description: 'ID Tenant (UUID)' })
+  activate(@Param('id', ParseUUIDPipe) id: string) {
+    return this.tenantsService.activate(id);
+  }
 }

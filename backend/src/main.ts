@@ -21,6 +21,7 @@ async function bootstrap() {
   const allowedOrigins = [
     `${protocol}://${frontendDomain}`,
     `http://localhost:${BACKEND_PORT}`,
+    `http://127.0.0.1:${BACKEND_PORT}`,
   ];
 
   const prismaPublic = new PrismaClient();
@@ -32,11 +33,15 @@ async function bootstrap() {
       select: { subdomain: true },
     });
 
-    const tenantOrigins = activeTenants.map(
+    const tenantFrontendOrigins = activeTenants.map(
       (tenant) => `${protocol}://${tenant.subdomain}.${frontendDomain}`,
     );
+    const tenantBackendOrigins = activeTenants.map(
+      (tenant) => `http://${tenant.subdomain}.localhost:${BACKEND_PORT}`,
+    );
 
-    allowedOrigins.push(...tenantOrigins);
+    allowedOrigins.push(...tenantFrontendOrigins);
+    allowedOrigins.push(...tenantBackendOrigins);
 
     console.log('[Bootstrap] CORS Whitelist successfully built:');
     console.log(allowedOrigins);
