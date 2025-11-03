@@ -91,7 +91,9 @@ export class BoardPositionsController {
   }
 
   @Delete(':id')
+  @UseGuards(JabatanGuard)
   @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Ketua, JabatanPengurus.Sekretaris)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Menonaktifkan posisi pengurus (soft delete)' })
   @ApiParam({ name: 'id', description: 'ID Posisi Pengurus', type: String })

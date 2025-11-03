@@ -40,8 +40,7 @@ export class BoardMeetingNotesController {
 
   @Post()
   @Roles(Role.Pengurus) // Hanya Pengurus (Sekretaris/Ketua sesuai PDF)
-  @Jabatan(JabatanPengurus.Ketua)
-  @Jabatan(JabatanPengurus.Sekretaris)
+  @Jabatan(JabatanPengurus.Ketua, JabatanPengurus.Sekretaris)
   @ApiOperation({ summary: 'Membuat notulen rapat pengurus baru' })
   @ApiBody({ type: CreateBoardMeetingNoteDto })
   create(@Body() createDto: CreateBoardMeetingNoteDto) {
@@ -50,8 +49,7 @@ export class BoardMeetingNotesController {
 
   @Get()
   @Roles(Role.Pengurus) // Hanya Pengurus yang boleh lihat
-  @Jabatan(JabatanPengurus.Ketua)
-  @Jabatan(JabatanPengurus.Sekretaris)
+  @Jabatan(JabatanPengurus.Ketua, JabatanPengurus.Sekretaris)
   @ApiOperation({ summary: 'Mendapatkan daftar semua notulen rapat pengurus' })
   findAll() {
     return this.boardMeetingNotesService.findAll();
@@ -59,8 +57,7 @@ export class BoardMeetingNotesController {
 
   @Get(':id')
   @Roles(Role.Pengurus)
-  @Jabatan(JabatanPengurus.Ketua)
-  @Jabatan(JabatanPengurus.Sekretaris)
+  @Jabatan(JabatanPengurus.Ketua, JabatanPengurus.Sekretaris)
   @ApiOperation({ summary: 'Mendapatkan detail satu notulen rapat pengurus' })
   @ApiParam({ name: 'id', description: 'ID Notulen (UUID)', type: String })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
@@ -69,8 +66,7 @@ export class BoardMeetingNotesController {
 
   @Patch(':id')
   @Roles(Role.Pengurus) // Hanya Pengurus
-  @Jabatan(JabatanPengurus.Ketua)
-  @Jabatan(JabatanPengurus.Sekretaris)
+  @Jabatan(JabatanPengurus.Ketua, JabatanPengurus.Sekretaris)
   @ApiOperation({ summary: 'Memperbarui data notulen rapat pengurus' })
   @ApiParam({ name: 'id', description: 'ID Notulen (UUID)', type: String })
   @ApiBody({ type: UpdateBoardMeetingNoteDto })
@@ -83,8 +79,7 @@ export class BoardMeetingNotesController {
 
   @Delete(':id')
   @Roles(Role.Pengurus)
-  @Jabatan(JabatanPengurus.Ketua)
-  @Jabatan(JabatanPengurus.Sekretaris)
+  @Jabatan(JabatanPengurus.Ketua, JabatanPengurus.Sekretaris)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Menghapus data notulen rapat pengurus' })
   @ApiParam({ name: 'id', description: 'ID Notulen (UUID)', type: String })

@@ -78,8 +78,7 @@ export class SupervisoryMeetingNotesController {
 
   @Patch(':id')
   @Roles(Role.Pengurus) // Hanya Pengurus
-  @Jabatan(JabatanPengurus.Ketua)
-  @Jabatan(JabatanPengurus.Sekretaris)
+  @Jabatan(JabatanPengurus.Ketua, JabatanPengurus.Sekretaris)
   @ApiOperation({ summary: 'Memperbarui data notulen rapat pengawas' })
   @ApiParam({ name: 'id', description: 'ID Notulen (UUID)', type: String })
   @ApiBody({ type: UpdateSupervisoryMeetingNoteDto }) // Gunakan DTO yang benar
@@ -91,8 +90,7 @@ export class SupervisoryMeetingNotesController {
   }
 
   @Delete(':id')
-  @Jabatan(JabatanPengurus.Ketua)
-  @Jabatan(JabatanPengurus.Sekretaris)
+  @Jabatan(JabatanPengurus.Ketua, JabatanPengurus.Sekretaris)
   @Roles(Role.Pengurus) // Hanya Pengurus
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Menghapus data notulen rapat pengawas' })
@@ -103,8 +101,7 @@ export class SupervisoryMeetingNotesController {
 
   @Post(':id/document') // Endpoint baru: POST /supervisory-meeting-notes/:id/document
   @Roles(Role.Pengurus)
-  @Jabatan(JabatanPengurus.Ketua)
-  @Jabatan(JabatanPengurus.Sekretaris)
+  @Jabatan(JabatanPengurus.Ketua, JabatanPengurus.Sekretaris)
   @UseInterceptors(FileInterceptor('file')) // Menangkap file dari key 'file'
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
