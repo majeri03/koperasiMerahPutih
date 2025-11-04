@@ -38,7 +38,7 @@ export class InventoryController {
 
   @Post()
   @Roles(Role.Pengurus)
-  @Jabatan(JabatanPengurus.Sekretaris, JabatanPengurus.Bendahara)
+  @Jabatan(JabatanPengurus.Sekretaris)
   @ApiOperation({ summary: 'Membuat data item inventaris baru' })
   @ApiBody({ type: CreateInventoryDto })
   create(@Body() createInventoryDto: CreateInventoryDto) {
@@ -49,7 +49,8 @@ export class InventoryController {
   @Get()
   // Pengurus bisa lihat semua. Anggota & Tamu? Sesuai PDF, Tamu bisa lihat read-only* via landing page.
   // Untuk API internal, kita batasi ke Pengurus dulu, atau perlu filter role.
-  @Roles(Role.Pengurus, Role.Anggota, Role.Pengawas) // Sementara batasi ke Pengurus untuk API internal
+  @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Sekretaris, JabatanPengurus.Bendahara)
   @ApiOperation({
     summary: 'Mendapatkan daftar semua item inventaris (Pengurus)',
   })
@@ -58,7 +59,7 @@ export class InventoryController {
   }
 
   @Get(':id')
-  @Roles(Role.Pengurus) // Sementara batasi ke Pengurus untuk API internal
+  @Roles(Role.Pengurus)
   @Jabatan(JabatanPengurus.Sekretaris, JabatanPengurus.Bendahara)
   @ApiOperation({
     summary: 'Mendapatkan detail satu item inventaris berdasarkan ID',
@@ -73,8 +74,8 @@ export class InventoryController {
   }
 
   @Patch(':id')
-  @Roles(Role.Pengurus) // Hanya Pengurus (Sekretaris)
-  @Jabatan(JabatanPengurus.Sekretaris, JabatanPengurus.Bendahara)
+  @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Sekretaris)
   @ApiOperation({ summary: 'Memperbarui data item inventaris' })
   @ApiParam({
     name: 'id',
@@ -91,8 +92,8 @@ export class InventoryController {
   }
 
   @Delete(':id')
-  @Roles(Role.Pengurus) // Hanya Pengurus (Sekretaris)
-  @Jabatan(JabatanPengurus.Sekretaris, JabatanPengurus.Bendahara)
+  @Roles(Role.Pengurus)
+  @Jabatan(JabatanPengurus.Sekretaris)
   @HttpCode(HttpStatus.NO_CONTENT) // Status 204 jika berhasil hapus
   @ApiOperation({ summary: 'Menghapus data item inventaris' })
   @ApiParam({
