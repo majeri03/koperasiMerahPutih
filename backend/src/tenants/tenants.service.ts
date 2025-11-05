@@ -20,6 +20,7 @@ import * as bcrypt from 'bcrypt';
 import { MidtransService } from 'src/midtrans/midtrans.service';
 import { v4 as uuidv4 } from 'uuid';
 import { EmailService } from 'src/email/email.service';
+import { generateUniqueMemberNumber } from '../utils/generators';
 @Injectable()
 export class TenantsService {
   private readonly prisma = new PrismaClient();
@@ -1150,7 +1151,7 @@ export class TenantsService {
     }
 
     // 3. Buat Member yang bersesuaian (Menggunakan Raw SQL)
-    const memberNumber = `PGRS-${Date.now().toString().slice(-6)}`;
+    const memberNumber = generateUniqueMemberNumber();
 
     try {
       const query = `

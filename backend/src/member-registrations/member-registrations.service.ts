@@ -20,6 +20,7 @@ import {
   RegistrationStatus,
 } from '@prisma/client';
 import { EmailService } from 'src/email/email.service';
+import { generateUniqueMemberNumber } from '../utils/generators';
 // --- BUAT SERVICE MENJADI REQUEST SCOPED ---
 @Injectable({ scope: Scope.REQUEST })
 export class MemberRegistrationsService {
@@ -317,7 +318,7 @@ export class MemberRegistrationsService {
         //    Gunakan data dari 'registration'. Pastikan field cocok!
         const newMember = await tx.member.create({
           data: {
-            memberNumber: `AGT-${Date.now()}`,
+            memberNumber: generateUniqueMemberNumber(),
             fullName: registration.fullName,
             nik: registration.nik,
             gender: registration.gender, // Langsung gunakan dari registrasi
