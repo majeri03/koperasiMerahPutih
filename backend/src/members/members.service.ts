@@ -7,6 +7,7 @@ import { CreateMemberDto } from './dto/create-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Member, Prisma, PrismaClient } from '@prisma/client';
+import { generateUniqueMemberNumber } from '../utils/generators';
 @Injectable()
 export class MembersService {
   constructor(private prisma: PrismaService) {}
@@ -14,7 +15,7 @@ export class MembersService {
   async create(createMemberDto: CreateMemberDto): Promise<Member> {
     const prismaTenant = await this.prisma.getTenantClient();
 
-    const memberNumber = `AGT-${Date.now()}`;
+    const memberNumber = generateUniqueMemberNumber();
     const existingNik = await prismaTenant.member.findUnique({
       where: { nik: createMemberDto.nik },
       select: { id: true },
