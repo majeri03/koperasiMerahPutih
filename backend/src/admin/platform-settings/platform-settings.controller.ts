@@ -34,7 +34,6 @@ const MAX_PLATFORM_IMAGE_SIZE_BYTES = MAX_PLATFORM_IMAGE_SIZE_MB * 1024 * 1024;
 const ALLOWED_PLATFORM_IMAGE_TYPES = /(jpg|jpeg|png|webp|svg)$/; // Izinkan SVG untuk logo?
 
 @ApiTags('Admin - Platform Settings') // Tag Swagger
-@UseGuards(CombinedSuperAdminGuard()) // Terapkan guard ke seluruh controller
 @ApiBearerAuth('superadmin-jwt') // Terapkan skema auth ke seluruh controller
 @Controller('admin/platform-settings') // Prefix route
 export class PlatformSettingsController {
@@ -43,6 +42,7 @@ export class PlatformSettingsController {
   ) {}
 
   @Get()
+  @UseGuards(CombinedSuperAdminGuard())
   @ApiOperation({ summary: 'Get all platform settings (Super Admin)' })
   @ApiResponse({
     status: 200,
@@ -53,6 +53,7 @@ export class PlatformSettingsController {
   }
 
   @Patch()
+  @UseGuards(CombinedSuperAdminGuard())
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Update one or more platform settings (Super Admin)',
@@ -73,6 +74,7 @@ export class PlatformSettingsController {
 
   // --- TAMBAHKAN ENDPOINT UPLOAD BARU ---
   @Post('upload-image')
+  @UseGuards(CombinedSuperAdminGuard())
   @UseInterceptors(FileInterceptor('file')) // Tangkap file dari form-data dengan key 'file'
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -118,4 +120,10 @@ export class PlatformSettingsController {
     );
   }
   // --- AKHIR ENDPOINT UPLOAD ---
+
+  @Get('public')
+  findAllPublic() {
+    // Hapus @Query('key') dan panggil fungsi baru
+    return this.platformSettingsService.findAllPublic();
+  }
 }
