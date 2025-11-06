@@ -34,7 +34,6 @@ const ALLOWED_LOGO_TYPES = /(jpg|jpeg|png|webp)$/;
 
 @ApiTags('Cooperative Profile (Tenant)')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
 // Hapus @Roles(Role.Pengurus) dari level class agar kita bisa set per method
 @Controller('cooperative-profile')
 export class CooperativeProfileController {
@@ -47,6 +46,7 @@ export class CooperativeProfileController {
    * Bisa diakses oleh Anggota dan Pengurus.
    */
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.Pengurus, Role.Anggota) // <-- Perbolehkan Anggota melihat
   @ApiOperation({
     summary: 'Mendapatkan data profil koperasi (Pengurus & Anggota)',
@@ -60,6 +60,7 @@ export class CooperativeProfileController {
    * Hanya bisa diakses oleh Pengurus.
    */
   @Patch()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.Pengurus) // <-- HANYA Pengurus yang boleh update
   @ApiOperation({
     summary: 'Memperbarui data profil koperasi (Hanya Pengurus)',
@@ -74,6 +75,7 @@ export class CooperativeProfileController {
    * Menggunakan PATCH agar semantik (memperbarui sebagian resource profile).
    */
   @Patch('logo')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.Pengurus) // Hanya Pengurus
   @UseInterceptors(FileInterceptor('file')) // Menangkap file dari key 'file'
   @HttpCode(HttpStatus.OK)
@@ -105,5 +107,11 @@ export class CooperativeProfileController {
     file: Express.Multer.File,
   ) {
     return this.cooperativeProfileService.updateLogo(file);
+  }
+
+  @Get('public')
+  findOnePublic() {
+    // Fungsi ini tidak memiliki @UseGuards, jadi ini publik
+    return this.cooperativeProfileService.findOnePublic();
   }
 }

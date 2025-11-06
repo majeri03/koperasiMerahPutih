@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config'; // <-- Import ConfigService
-import { PrismaClient, PlatformSetting } from '@prisma/client';
+import { Prisma, PrismaClient, PlatformSetting } from '@prisma/client';
 import { UploadsService } from 'src/uploads/uploads.service'; // <-- Import UploadsService
 import { UpdatePlatformSettingDto } from './dto/update-platform-setting.dto';
 
@@ -178,5 +178,37 @@ export class PlatformSettingsService {
   // Pastikan disconnect saat aplikasi berhenti
   async onModuleDestroy() {
     await this.prismaPublic.$disconnect();
+  }
+
+  async findAllPublic(): Promise<Record<string, string>> {
+    try {
+      // 1. Menggunakan 'this.prismaPublic' seperti di 'updateSettings'
+      const settings = await this.prismaPublic.platformSetting.findMany();
+
+      // 2. Ubah jadi objek, dengan tipe eksplisit untuk linter
+      const settingsMap = settings.reduce(
+        (acc: Record<string, string>, setting) => {
+          // Model di schema.prisma menggunakan 'settingKey' dan 'settingValue'
+          acc[setting.key] = setting.value ?? '';
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+
+      return settingsMap;
+    } catch (error: unknown) {
+      // 3. Menggunakan 'this.logger' seperti di 'updateSettings'
+      this.logger.error('Failed to fetch public platform settings', error);
+
+      // 4. Error handling yang konsisten
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new InternalServerErrorException(
+          `Prisma Error ${error.code}: ${error.message}`,
+        );
+      }
+      throw new InternalServerErrorException(
+        'Gagal mengambil pengaturan platform publik.',
+      );
+    }
   }
 }

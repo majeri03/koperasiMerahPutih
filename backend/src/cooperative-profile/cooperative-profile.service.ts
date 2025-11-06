@@ -91,4 +91,20 @@ export class CooperativeProfileService {
     // 2. Panggil service update (reuse logic)
     return this.updateProfile({ logoUrl: url });
   }
+
+  async findOnePublic(): Promise<{ displayName: string }> {
+    const prismaTenant: PrismaClient = await this.prisma.getTenantClient();
+
+    const profile = await prismaTenant.cooperativeProfile.findFirst({
+      select: {
+        displayName: true,
+      },
+    });
+
+    if (!profile) {
+      return { displayName: 'Koperasi Merah Putih' };
+    }
+
+    return profile;
+  }
 }
