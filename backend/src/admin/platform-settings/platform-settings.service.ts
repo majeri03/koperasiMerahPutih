@@ -2,7 +2,6 @@
 import {
   Injectable,
   InternalServerErrorException,
-  NotFoundException,
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config'; // <-- Import ConfigService
@@ -94,15 +93,15 @@ export class PlatformSettingsService {
   ): Promise<PlatformSetting> {
     const folderPath = 'platform/images'; // <-- Path di R2 untuk gambar platform (bukan tenant)
 
-    // --- Validasi Key (Opsional tapi bagus) ---
-    // Anda bisa menambahkan daftar key yang valid untuk gambar di sini
-    const validImageKeys = ['hero_image_url', 'platform_logo_url']; // Contoh
-    if (!validImageKeys.includes(key)) {
-      throw new NotFoundException(
-        `Kunci pengaturan gambar '${key}' tidak valid.`,
-      );
-    }
-    // --- Akhir Validasi Key ---
+    // // --- Validasi Key (Opsional tapi bagus) ---
+    // // Anda bisa menambahkan daftar key yang valid untuk gambar di sini
+    // const validImageKeys = ['hero_image_url', 'platform_logo_url']; // Contoh
+    // if (!validImageKeys.includes(key)) {
+    //   throw new NotFoundException(
+    //     `Kunci pengaturan gambar '${key}' tidak valid.`,
+    //   );
+    // }
+    // // --- Akhir Validasi Key ---
 
     let uploadedUrl: string;
     try {
